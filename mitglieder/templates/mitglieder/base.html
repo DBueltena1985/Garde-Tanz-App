@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Garde Tanz{% endblock %}</title>
+
+    <link rel="manifest" href="{% static 'mitglieder/manifest.json' %}">
+    <link rel="icon" href="{% static 'mitglieder/icons/icon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'mitglieder/icons/icon-192.png' %}">
+    <meta name="theme-color" content="#7a2159">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Garde Tanz">
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 700px; margin: 0 auto; padding: 1rem; background: #faf7fb; color: #222; }
+        nav { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+        nav a { text-decoration: none; color: #7a2159; font-weight: 600; }
+        nav a.brand { font-size: 1.2rem; margin-right: auto; }
+        .card { background: white; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .status-zugesagt { color: #1a7a3c; font-weight: 600; }
+        .status-abgesagt { color: #b3261e; font-weight: 600; }
+        .status-offen { color: #8a6d00; font-weight: 600; }
+        .btn { display: inline-block; padding: 0.4rem 0.8rem; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; font-size: 0.9rem; margin-right: 0.3rem; }
+        .btn-zusagen { background: #d7f0dd; color: #1a7a3c; }
+        .btn-absagen { background: #f7d9d6; color: #b3261e; }
+        .banner-warn { background: #fff3cd; border: 1px solid #ffe08a; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; }
+        input, textarea, select { width: 100%; padding: 0.4rem; margin-top: 0.2rem; margin-bottom: 0.8rem; box-sizing: border-box; }
+        label { font-weight: 600; }
+        .messages { list-style: none; padding: 0; }
+        .messages li { background: #e6f4ea; padding: 0.5rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a class="brand" href="{% url 'dashboard' %}">💃 Garde Tanz</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}">Termine</a>
+            <a href="{% url 'news_liste' %}">News</a>
+            <a href="{% url 'profil_bearbeiten' %}">Meine Stammdaten</a>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background:#eee;">Logout ({{ user.first_name|default:user.username }})</button>
+            </form>
+        {% endif %}
+    </nav>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</body>
+</html>

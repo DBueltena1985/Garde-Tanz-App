@@ -1,0 +1,12 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Login – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Anmelden</button>
+    </form>
+</div>
+{% endblock %}

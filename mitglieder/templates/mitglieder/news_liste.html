@@ -1,0 +1,15 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}News – Garde Tanz{% endblock %}
+{% block content %}
+<h2>News</h2>
+{% if not news %}
+<p>Noch keine News vorhanden.</p>
+{% endif %}
+{% for beitrag in news %}
+<div class="card">
+    <strong>{{ beitrag.titel }}</strong>
+    <p style="white-space: pre-line;">{{ beitrag.text }}</p>
+    <small>{{ beitrag.erstellt_am|date:"d.m.Y H:i" }} Uhr{% if beitrag.autor %} – {{ beitrag.autor.first_name|default:beitrag.autor.username }}{% endif %}</small>
+</div>
+{% endfor %}
+{% endblock %}

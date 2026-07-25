@@ -1,0 +1,45 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Termine – Garde Tanz{% endblock %}
+{% block content %}
+
+{% if profil.bestaetigung_faellig %}
+<div class="banner-warn">
+    ⚠️ Deine Stammdaten sind seit über 3 Monaten nicht bestätigt worden (oder fehlen noch).
+    <a href="{% url 'profil_bearbeiten' %}">Jetzt prüfen &amp; bestätigen</a>
+</div>
+{% endif %}
+
+<h2>Anstehende Termine</h2>
+
+{% if not termin_liste %}
+<p>Aktuell sind keine Termine geplant.</p>
+{% endif %}
+
+{% for eintrag in termin_liste %}
+<div class="card">
+    <strong>{{ eintrag.termin.titel }}</strong> ({{ eintrag.termin.get_art_display }})<br>
+    {{ eintrag.termin.beginn|date:"d.m.Y H:i" }} Uhr
+    {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
+    {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
+
+    <p>
+        Dein Status:
+        <span class="status-{{ eintrag.status }}">
+            {% if eintrag.status == "zugesagt" %}Zugesagt
+            {% elif eintrag.status == "abgesagt" %}Abgesagt
+            {% else %}Noch offen{% endif %}
+        </span>
+    </p>
+
+    <form method="post" action="{% url 'termin_zusage' eintrag.termin.id 'zugesagt' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-zusagen">Zusagen</button>
+    </form>
+    <form method="post" action="{% url 'termin_zusage' eintrag.termin.id 'abgesagt' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-absagen">Absagen</button>
+    </form>
+</div>
+{% endfor %}
+
+{% endblock %}
