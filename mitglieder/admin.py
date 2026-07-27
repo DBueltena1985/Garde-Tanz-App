@@ -114,8 +114,9 @@ class AnmeldepunktInline(admin.TabularInline):
 
 @admin.register(Termin)
 class TerminAdmin(admin.ModelAdmin):
-    list_display = ("titel", "art", "gruppe_anzeige", "beginn", "ende", "ort", "anzahl_zusagen", "anzahl_absagen")
+    list_display = ("titel", "art", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am", "anzahl_zusagen", "anzahl_absagen")
     list_filter = ("art", "gruppe")
+    search_fields = ("titel",)
     date_hierarchy = "beginn"
     ordering = ("-beginn",)
     inlines = [AnmeldepunktInline]
