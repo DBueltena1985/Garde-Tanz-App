@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -261,6 +263,24 @@ def anmeldepunkt_austragen(request, punkt_id):
     return redirect("dashboard")
 
 
+def _admins_ueber_registrierung_benachrichtigen(user):
+    admin_emails = list(User.objects.filter(is_staff=True).exclude(email="").values_list("email", flat=True))
+    if not admin_emails:
+        return
+    send_mail(
+        subject=f"Neue Registrierung: {user.first_name or user.username}",
+        message=(
+            f"Es hat sich ein neues Mitglied registriert:\n\n"
+            f"Name: {user.first_name} {user.last_name}\n"
+            f"Benutzername: {user.username}\n"
+            f"E-Mail: {user.email or '(keine angegeben)'}\n\n"
+            "Im Admin-Bereich unter Benutzer einsehbar."
+        ),
+        from_email=None,
+        recipient_list=admin_emails,
+    )
+
+
 def registrieren(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -269,6 +289,7 @@ def registrieren(request):
         form = RegistrierenForm(request.POST)
         if form.is_valid():
             user = form.save()
+            _admins_ueber_registrierung_benachrichtigen(user)
             login(request, user)
             messages.success(request, "Konto erfolgreich erstellt! Leg jetzt dein(e) Kind(er) an.")
             return redirect("kinder_liste")
