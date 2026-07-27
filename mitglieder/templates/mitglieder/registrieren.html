@@ -1,0 +1,14 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Registrieren – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Konto erstellen</h2>
+    <p>Für Eltern der Abteilung Garde Tanz. Nach der Registrierung kannst du dein(e) Kind(er) anlegen.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Registrieren</button>
+    </form>
+    <p><a href="{% url 'login' %}">Schon ein Konto? Hier einloggen</a></p>
+</div>
+{% endblock %}

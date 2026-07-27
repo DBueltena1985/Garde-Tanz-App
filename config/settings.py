@@ -144,3 +144,8 @@ LOGOUT_REDIRECT_URL = 'login'
 # Für den echten Versand später z.B. Brevo/SMTP hier eintragen.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'Garde Tanz <noreply@garde-tanz.example>'
+
+# Code, den Eltern bei der Selbstregistrierung eingeben müssen (z.B. zusammen mit
+# dem Registrierungslink in der WhatsApp-Gruppe teilen). Auf dem Server per
+# Umgebungsvariable überschreiben, um den Code jederzeit zu ändern.
+EINLADUNGSCODE = os.environ.get('DJANGO_EINLADUNGSCODE', 'gardetanz')

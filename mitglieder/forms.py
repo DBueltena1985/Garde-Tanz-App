@@ -1,7 +1,28 @@
 from django import forms
+from django.conf import settings
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 from .models import Taenzerin
+
+
+class RegistrierenForm(UserCreationForm):
+    einladungscode = forms.CharField(label="Einladungscode")
+    email = forms.EmailField(label="E-Mail", required=False)
+    first_name = forms.CharField(label="Vorname", required=False)
+    last_name = forms.CharField(label="Nachname", required=False)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "first_name", "last_name", "email")
+
+    field_order = ["username", "first_name", "last_name", "email", "password1", "password2", "einladungscode"]
+
+    def clean_einladungscode(self):
+        code = self.cleaned_data.get("einladungscode", "")
+        if code != settings.EINLADUNGSCODE:
+            raise forms.ValidationError("Der Einladungscode ist nicht korrekt.")
+        return code
 
 
 class KontoForm(forms.ModelForm):

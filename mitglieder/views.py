@@ -2,14 +2,14 @@ import calendar
 from datetime import date
 
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import KontoForm, TaenzerinForm
+from .forms import KontoForm, RegistrierenForm, TaenzerinForm
 from .models import Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, Zusage
 
 MONATSNAMEN = [
@@ -202,6 +202,23 @@ def anmeldepunkt_austragen(request, punkt_id):
         messages.success(request, f"Du hast dich bei '{punkt.titel}' ausgetragen.")
 
     return redirect("dashboard")
+
+
+def registrieren(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = RegistrierenForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Konto erfolgreich erstellt! Leg jetzt dein(e) Kind(er) an.")
+            return redirect("kinder_liste")
+    else:
+        form = RegistrierenForm()
+
+    return render(request, "mitglieder/registrieren.html", {"form": form})
 
 
 @login_required
