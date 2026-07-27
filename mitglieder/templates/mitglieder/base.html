@@ -31,6 +31,20 @@
         label { font-weight: 600; }
         .messages { list-style: none; padding: 0; }
         .messages li { background: #e6f4ea; padding: 0.5rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; }
+
+        .kalender-kopf { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+        .kalender-nav { font-size: 1.2rem; padding: 0.1rem 0.6rem; background: #f3e8ee; border-radius: 6px; }
+        .kalender-scroll { overflow-x: auto; }
+        table.kalender { width: 100%; min-width: 480px; border-collapse: collapse; table-layout: fixed; }
+        table.kalender th { font-size: 0.8rem; color: #7a2159; padding: 0.3rem; text-align: center; }
+        table.kalender td { border: 1px solid #f0e8ec; vertical-align: top; height: 4.2rem; padding: 0.2rem; width: 14.28%; }
+        .kalender-leer { background: #fafafa; }
+        .kalender-tagnummer { font-size: 0.75rem; color: #999; margin-bottom: 0.2rem; }
+        .kalender-heute { background: #fdf1f6; border: 2px solid #7a2159; }
+        .kalender-heute .kalender-tagnummer { color: #7a2159; font-weight: 700; }
+        .kalender-termin { display: block; font-size: 0.68rem; padding: 0.1rem 0.25rem; margin-bottom: 0.15rem; border-radius: 4px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kalender-termin-training { background: #d7f0dd; color: #1a5c30; }
+        .kalender-termin-veranstaltung { background: #dbe6fb; color: #1a3d7a; }
     </style>
 </head>
 <body>

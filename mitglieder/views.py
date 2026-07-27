@@ -1,3 +1,6 @@
+import calendar
+from datetime import date
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -5,6 +8,31 @@ from django.utils import timezone
 
 from .forms import TaenzerinForm
 from .models import NewsPost, Taenzerin, Termin, Zusage
+
+MONATSNAMEN = [
+    "Januar", "Februar", "März", "April", "Mai", "Juni",
+    "Juli", "August", "September", "Oktober", "November", "Dezember",
+]
+
+
+def _kalender_monat(jahr, monat):
+    """Baut ein Wochenraster (Mo-So) für den Monat, inkl. Termine pro Tag."""
+    termine_im_monat = Termin.objects.filter(beginn__year=jahr, beginn__month=monat)
+    termine_nach_tag = {}
+    for termin in termine_im_monat:
+        termine_nach_tag.setdefault(termin.beginn.day, []).append(termin)
+
+    wochen = []
+    woche = []
+    for tag in calendar.Calendar(firstweekday=0).itermonthdates(jahr, monat):
+        if tag.month == monat:
+            woche.append({"datum": tag, "termine": termine_nach_tag.get(tag.day, [])})
+        else:
+            woche.append(None)
+        if len(woche) == 7:
+            wochen.append(woche)
+            woche = []
+    return wochen
 
 
 @login_required
@@ -30,10 +58,27 @@ def dashboard(request):
 
     faellige_kinder = [kind for kind in kinder if kind.bestaetigung_faellig]
 
+    heute = timezone.localdate()
+    try:
+        jahr = int(request.GET.get("jahr", heute.year))
+        monat = int(request.GET.get("monat", heute.month))
+        date(jahr, monat, 1)
+    except (ValueError, TypeError):
+        jahr, monat = heute.year, heute.month
+
+    vorheriger_monat = (jahr, monat - 1) if monat > 1 else (jahr - 1, 12)
+    naechster_monat = (jahr, monat + 1) if monat < 12 else (jahr + 1, 1)
+
     return render(request, "mitglieder/dashboard.html", {
         "kinder": kinder,
         "termin_liste": termin_liste,
         "faellige_kinder": faellige_kinder,
+        "kalender_wochen": _kalender_monat(jahr, monat),
+        "kalender_monat_name": MONATSNAMEN[monat - 1],
+        "kalender_jahr": jahr,
+        "kalender_heute": heute,
+        "vorheriger_monat": vorheriger_monat,
+        "naechster_monat": naechster_monat,
     })
 
 

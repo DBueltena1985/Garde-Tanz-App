@@ -16,6 +16,39 @@
 </div>
 {% endif %}
 
+<div class="card">
+    <div class="kalender-kopf">
+        <a href="?jahr={{ vorheriger_monat.0 }}&monat={{ vorheriger_monat.1 }}" class="kalender-nav">&laquo;</a>
+        <strong>{{ kalender_monat_name }} {{ kalender_jahr }}</strong>
+        <a href="?jahr={{ naechster_monat.0 }}&monat={{ naechster_monat.1 }}" class="kalender-nav">&raquo;</a>
+    </div>
+    <div class="kalender-scroll">
+        <table class="kalender">
+            <thead>
+                <tr><th>Mo</th><th>Di</th><th>Mi</th><th>Do</th><th>Fr</th><th>Sa</th><th>So</th></tr>
+            </thead>
+            <tbody>
+                {% for woche in kalender_wochen %}
+                <tr>
+                    {% for tag in woche %}
+                        {% if tag %}
+                        <td class="{% if tag.datum == kalender_heute %}kalender-heute{% endif %}">
+                            <div class="kalender-tagnummer">{{ tag.datum.day }}</div>
+                            {% for termin in tag.termine %}
+                            <a href="#termin-{{ termin.id }}" class="kalender-termin kalender-termin-{{ termin.art }}">{{ termin.beginn|date:"H:i" }} {{ termin.titel }}</a>
+                            {% endfor %}
+                        </td>
+                        {% else %}
+                        <td class="kalender-leer"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <h2>Anstehende Termine</h2>
 
 {% if not termin_liste %}
@@ -23,7 +56,7 @@
 {% endif %}
 
 {% for eintrag in termin_liste %}
-<div class="card">
+<div class="card" id="termin-{{ eintrag.termin.id }}">
     <strong>{{ eintrag.termin.titel }}</strong> ({{ eintrag.termin.get_art_display }})<br>
     {{ eintrag.termin.beginn|date:"d.m.Y H:i" }} Uhr
     {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
