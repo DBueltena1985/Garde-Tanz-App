@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import KontoForm, TaenzerinForm
-from .models import NewsPost, Taenzerin, Termin, Zusage
+from .models import Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, Zusage
 
 MONATSNAMEN = [
     "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -51,7 +51,8 @@ def dashboard(request):
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
     termine = _fuer_gruppen_relevant(
-        Termin.objects.filter(beginn__gte=timezone.now()), kinder_gruppen
+        Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        kinder_gruppen,
     ).order_by("beginn")
 
     zusagen = {
@@ -70,7 +71,22 @@ def dashboard(request):
                 "kind": kind,
                 "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
             })
-        termin_liste.append({"termin": termin, "kinder_status": kinder_status})
+
+        anmeldepunkte_info = []
+        for punkt in termin.anmeldepunkte.all():
+            anmeldungen = list(punkt.anmeldungen.all())
+            eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == request.user.id), None)
+            anmeldepunkte_info.append({
+                "punkt": punkt,
+                "anmeldungen": anmeldungen,
+                "eigene_anmeldung": eigene_anmeldung,
+            })
+
+        termin_liste.append({
+            "termin": termin,
+            "kinder_status": kinder_status,
+            "anmeldepunkte": anmeldepunkte_info,
+        })
 
     termin_gruppen = []
     for eintrag in termin_liste:
@@ -119,6 +135,37 @@ def termin_zusage(request, termin_id, kind_id, status):
     zusage.status = status
     zusage.save()
     messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
+    return redirect("dashboard")
+
+
+@login_required
+def anmeldepunkt_eintragen(request, punkt_id):
+    punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
+
+    if request.method == "POST":
+        bereits_angemeldet = Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).exists()
+        if not bereits_angemeldet and punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
+            messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
+            return redirect("dashboard")
+
+        kommentar = request.POST.get("kommentar", "").strip()
+        Anmeldung.objects.update_or_create(
+            anmeldepunkt=punkt, eltern=request.user,
+            defaults={"kommentar": kommentar},
+        )
+        messages.success(request, f"Du hast dich bei '{punkt.titel}' eingetragen.")
+
+    return redirect("dashboard")
+
+
+@login_required
+def anmeldepunkt_austragen(request, punkt_id):
+    punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
+
+    if request.method == "POST":
+        Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).delete()
+        messages.success(request, f"Du hast dich bei '{punkt.titel}' ausgetragen.")
+
     return redirect("dashboard")
 
 

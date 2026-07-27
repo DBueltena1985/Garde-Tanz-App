@@ -10,7 +10,7 @@ from django.urls import path
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import NewsPost, Taenzerin, Termin, Zusage
+from .models import Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, Zusage
 
 
 class TaenzerinInline(admin.TabularInline):
@@ -106,12 +106,19 @@ class SerienTerminForm(forms.Form):
         return cleaned
 
 
+class AnmeldepunktInline(admin.TabularInline):
+    model = Anmeldepunkt
+    extra = 0
+    fields = ("titel", "beschreibung", "max_anzahl")
+
+
 @admin.register(Termin)
 class TerminAdmin(admin.ModelAdmin):
     list_display = ("titel", "art", "gruppe_anzeige", "beginn", "ende", "ort", "anzahl_zusagen", "anzahl_absagen")
     list_filter = ("art", "gruppe")
     date_hierarchy = "beginn"
     ordering = ("-beginn",)
+    inlines = [AnmeldepunktInline]
 
     def gruppe_anzeige(self, obj):
         return obj.get_gruppe_display()
@@ -180,6 +187,25 @@ class TerminAdmin(admin.ModelAdmin):
             "admin/mitglieder/serie_erstellen.html",
             {"form": form, "opts": self.model._meta, "title": "Terminserie erstellen"},
         )
+
+
+class AnmeldungInline(admin.TabularInline):
+    model = Anmeldung
+    extra = 0
+    fields = ("eltern", "kommentar", "erstellt_am")
+    readonly_fields = ("erstellt_am",)
+
+
+@admin.register(Anmeldepunkt)
+class AnmeldepunktAdmin(admin.ModelAdmin):
+    list_display = ("titel", "termin", "max_anzahl", "anzahl_angemeldet")
+    list_filter = ("termin",)
+    inlines = [AnmeldungInline]
+
+    def anzahl_angemeldet(self, obj):
+        return obj.anmeldungen.count()
+
+    anzahl_angemeldet.short_description = "Angemeldet"
 
 
 @admin.register(Zusage)

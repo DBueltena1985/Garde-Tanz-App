@@ -142,6 +142,54 @@ class Zusage(models.Model):
         return f"{self.taenzerin} - {self.termin} - {self.get_status_display()}"
 
 
+class Anmeldepunkt(models.Model):
+    """Ein Punkt auf einer Helfer- oder Mitbringliste zu einem Termin, z.B. 'Kuchen' oder 'Aufbauhelfer'."""
+
+    termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="anmeldepunkte")
+    titel = models.CharField("Titel", max_length=200, help_text="z.B. 'Kuchen mitbringen', 'Aufbauhelfer', 'Fahrdienst'")
+    beschreibung = models.TextField("Beschreibung", blank=True)
+    max_anzahl = models.PositiveIntegerField(
+        "Benötigte Anzahl", null=True, blank=True,
+        help_text="Leer lassen für unbegrenzt viele Anmeldungen",
+    )
+
+    class Meta:
+        verbose_name = "Helfer-/Mitbringpunkt"
+        verbose_name_plural = "Helfer-/Mitbringpunkte"
+
+    def __str__(self):
+        return f"{self.titel} ({self.termin.titel})"
+
+    @property
+    def anzahl_angemeldet(self):
+        return self.anmeldungen.count()
+
+    @property
+    def plaetze_frei(self):
+        if self.max_anzahl is None:
+            return None
+        return max(self.max_anzahl - self.anzahl_angemeldet, 0)
+
+
+class Anmeldung(models.Model):
+    """Die Anmeldung eines Elternteils zu einem Anmeldepunkt (helfen/mitbringen/fahren)."""
+
+    anmeldepunkt = models.ForeignKey(Anmeldepunkt, on_delete=models.CASCADE, related_name="anmeldungen")
+    eltern = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="helfer_anmeldungen"
+    )
+    kommentar = models.CharField("Kommentar", max_length=300, blank=True, help_text="z.B. was du mitbringst")
+    erstellt_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Anmeldung"
+        verbose_name_plural = "Anmeldungen"
+        unique_together = ("anmeldepunkt", "eltern")
+
+    def __str__(self):
+        return f"{self.eltern} - {self.anmeldepunkt}"
+
+
 class NewsPost(models.Model):
     titel = models.CharField("Titel", max_length=200)
     text = models.TextField("Text")
