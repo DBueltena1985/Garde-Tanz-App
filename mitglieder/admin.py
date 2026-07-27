@@ -152,7 +152,7 @@ class SerieLoeschenForm(forms.Form):
 class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
-    fields = ("titel", "beschreibung", "max_anzahl")
+    fields = ("titel", "beschreibung", "max_anzahl", "mit_kommentar")
 
 
 class TerminAdminBase(admin.ModelAdmin):
@@ -437,8 +437,8 @@ class AnmeldungInline(admin.TabularInline):
 
 @admin.register(Anmeldepunkt)
 class AnmeldepunktAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "max_anzahl", "anzahl_angemeldet")
-    list_filter = ("termin",)
+    list_display = ("titel", "termin", "mit_kommentar", "max_anzahl", "anzahl_angemeldet")
+    list_filter = ("termin", "mit_kommentar")
     inlines = [AnmeldungInline]
 
     def anzahl_angemeldet(self, obj):

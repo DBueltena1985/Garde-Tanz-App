@@ -49,11 +49,16 @@
                 {% csrf_token %}
                 <button type="submit" class="btn btn-absagen">Austragen</button>
             </form>
-            {% else %}
+            {% elif ap.punkt.mit_kommentar %}
             <form method="post" action="{% url 'anmeldepunkt_eintragen' ap.punkt.id %}" style="display:flex; gap:0.4rem;">
                 {% csrf_token %}
                 <input type="text" name="kommentar" placeholder="z.B. was du mitbringst (optional)" style="margin:0;">
                 <button type="submit" class="btn btn-zusagen" style="white-space:nowrap;">Eintragen</button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'anmeldepunkt_eintragen' ap.punkt.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-zusagen">Ich helfe mit</button>
             </form>
             {% endif %}
         </div>

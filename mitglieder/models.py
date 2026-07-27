@@ -184,6 +184,10 @@ class Anmeldepunkt(models.Model):
         "Benötigte Anzahl", null=True, blank=True,
         help_text="Leer lassen für unbegrenzt viele Anmeldungen",
     )
+    mit_kommentar = models.BooleanField(
+        "Mit Kommentar (z.B. für Mitbringen)", default=True,
+        help_text="Aktiviert: Eltern können angeben, was sie mitbringen. Deaktiviert: reine Helferliste, einfach nur eintragen.",
+    )
 
     class Meta:
         verbose_name = "Helfer-/Mitbringpunkt"
