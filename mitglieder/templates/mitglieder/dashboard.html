@@ -66,6 +66,21 @@
 
 <h2>Anstehendes Training</h2>
 
+{% if kinder and training_gruppen %}
+<div class="card" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+    <strong>Schnellzusage:</strong>
+    {% for kind in kinder %}
+    <form method="post" action="{% url 'alle_trainings_zusagen' kind.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-zusagen">Alle offenen Trainings für {{ kind.vorname }} zusagen</button>
+    </form>
+    {% endfor %}
+</div>
+<p style="font-size:0.85rem; color:#777; margin-top:-0.5rem;">
+    Bereits getroffene Absagen bleiben erhalten – du musst danach nur noch die Termine absagen, an denen du nicht kannst.
+</p>
+{% endif %}
+
 {% if not training_gruppen %}
 <p>Aktuell ist kein Training geplant.</p>
 {% endif %}

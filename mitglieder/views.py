@@ -151,6 +151,29 @@ def termin_zusage(request, termin_id, kind_id, status):
 
 
 @login_required
+def alle_trainings_zusagen(request, kind_id):
+    kind = get_object_or_404(Taenzerin, pk=kind_id, eltern=request.user)
+
+    if request.method == "POST":
+        termine = _fuer_gruppen_relevant(
+            Termin.objects.filter(art=Termin.ART_TRAINING, beginn__gte=timezone.now()),
+            {kind.gruppe} if kind.gruppe else set(),
+        )
+
+        aktualisiert = 0
+        for termin in termine:
+            zusage, neu = Zusage.objects.get_or_create(taenzerin=kind, termin=termin)
+            if neu or zusage.status == Zusage.STATUS_OFFEN:
+                zusage.status = Zusage.STATUS_ZUGESAGT
+                zusage.save()
+                aktualisiert += 1
+
+        messages.success(request, f"{aktualisiert} offene Trainings für {kind.vorname} wurden zugesagt.")
+
+    return redirect("dashboard")
+
+
+@login_required
 def anmeldepunkt_eintragen(request, punkt_id):
     punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
 

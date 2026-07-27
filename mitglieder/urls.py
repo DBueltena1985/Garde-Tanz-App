@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("termine/<int:termin_id>/<int:kind_id>/<str:status>/", views.termin_zusage, name="termin_zusage"),
+    path("kinder/<int:kind_id>/alle-trainings-zusagen/", views.alle_trainings_zusagen, name="alle_trainings_zusagen"),
     path("anmeldepunkte/<int:punkt_id>/eintragen/", views.anmeldepunkt_eintragen, name="anmeldepunkt_eintragen"),
     path("anmeldepunkte/<int:punkt_id>/austragen/", views.anmeldepunkt_austragen, name="anmeldepunkt_austragen"),
     path("kinder/", views.kinder_liste, name="kinder_liste"),
