@@ -3,6 +3,7 @@
     {% if eintrag.termin.gruppe != "beide" %}({{ eintrag.termin.get_gruppe_display }}){% endif %}<br>
     {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
     {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
+    <br><span style="color:#888; font-size:0.85rem;">👥 {{ eintrag.anzahl_zusagen }} Zusage{{ eintrag.anzahl_zusagen|pluralize:",n" }}</span>
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
     {% for ks in eintrag.kinder_status %}

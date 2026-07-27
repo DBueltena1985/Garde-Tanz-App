@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -74,6 +74,13 @@ def dashboard(request):
         for z in Zusage.objects.filter(taenzerin__in=kinder, termin__in=termine)
     }
 
+    zusagen_anzahl = {
+        row["termin_id"]: row["anzahl"]
+        for row in Zusage.objects.filter(termin__in=termine, status=Zusage.STATUS_ZUGESAGT)
+        .values("termin_id")
+        .annotate(anzahl=Count("id"))
+    }
+
     termin_liste = []
     for termin in termine:
         kinder_status = []
@@ -87,19 +94,21 @@ def dashboard(request):
             })
 
         anmeldepunkte_info = []
-        for punkt in termin.anmeldepunkte.all():
-            anmeldungen = list(punkt.anmeldungen.all())
-            eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == request.user.id), None)
-            anmeldepunkte_info.append({
-                "punkt": punkt,
-                "anmeldungen": anmeldungen,
-                "eigene_anmeldung": eigene_anmeldung,
-            })
+        if termin.art == Termin.ART_VERANSTALTUNG:
+            for punkt in termin.anmeldepunkte.all():
+                anmeldungen = list(punkt.anmeldungen.all())
+                eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == request.user.id), None)
+                anmeldepunkte_info.append({
+                    "punkt": punkt,
+                    "anmeldungen": anmeldungen,
+                    "eigene_anmeldung": eigene_anmeldung,
+                })
 
         termin_liste.append({
             "termin": termin,
             "kinder_status": kinder_status,
             "anmeldepunkte": anmeldepunkte_info,
+            "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
         })
 
     try:
