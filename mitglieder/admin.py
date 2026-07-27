@@ -10,7 +10,7 @@ from django.db.models import Count
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
 from django.utils import timezone
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
@@ -152,7 +152,19 @@ class SerieLoeschenForm(forms.Form):
 class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
-    fields = ("titel", "beschreibung", "max_anzahl", "mit_kommentar")
+    fields = ("titel", "beschreibung", "max_anzahl", "mit_kommentar", "status_anzeige")
+    readonly_fields = ("status_anzeige",)
+
+    def status_anzeige(self, obj):
+        if not obj or not obj.pk:
+            return "–"
+        if obj.max_anzahl is None:
+            return f"{obj.anzahl_angemeldet} angemeldet"
+        if obj.plaetze_frei == 0:
+            return format_html('<span style="color:#1a7a3c; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – voll")
+        return format_html('<span style="color:#b3261e; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – {obj.plaetze_frei} offen")
+
+    status_anzeige.short_description = "Status"
 
 
 class TerminAdminBase(admin.ModelAdmin):
@@ -432,9 +444,10 @@ class VeranstaltungAdmin(TerminAdminBase):
         offene = [a for a in obj.anmeldepunkte.all() if a.max_anzahl is not None and a.plaetze_frei > 0]
         if not offene:
             return "–"
-        return format_html(
-            '<span style="color:#b3261e;">⚠️ {}</span>',
-            ", ".join(f"{a.titel} ({a.plaetze_frei})" for a in offene),
+        return format_html_join(
+            "",
+            '<div style="color:#b3261e; white-space:nowrap;">⚠️ {} ({} offen)</div>',
+            ((a.titel, a.plaetze_frei) for a in offene),
         )
 
     offene_helferpunkte.short_description = "Noch offene Helferpunkte"
