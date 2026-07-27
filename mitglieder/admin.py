@@ -25,7 +25,7 @@ class TaenzerinInline(admin.TabularInline):
 
 class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline]
-    list_display = ("username", "first_name", "last_name", "is_staff", "anzahl_kinder")
+    list_display = ("username", "first_name", "last_name", "is_staff", "is_superuser", "anzahl_kinder")
 
     def anzahl_kinder(self, obj):
         return obj.kinder.count()
