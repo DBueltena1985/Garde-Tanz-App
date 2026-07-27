@@ -3,6 +3,7 @@ from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -15,9 +16,16 @@ MONATSNAMEN = [
 ]
 
 
-def _kalender_monat(jahr, monat):
-    """Baut ein Wochenraster (Mo-So) für den Monat, inkl. Termine pro Tag."""
-    termine_im_monat = Termin.objects.filter(beginn__year=jahr, beginn__month=monat)
+def _fuer_gruppen_relevant(queryset, gruppen):
+    """Schränkt Termine auf 'Beide Gruppen' plus die übergebenen Gruppen ein."""
+    return queryset.filter(Q(gruppe=Termin.GRUPPE_BEIDE) | Q(gruppe__in=gruppen))
+
+
+def _kalender_monat(jahr, monat, gruppen):
+    """Baut ein Wochenraster (Mo-So) für den Monat, inkl. relevanter Termine pro Tag."""
+    termine_im_monat = _fuer_gruppen_relevant(
+        Termin.objects.filter(beginn__year=jahr, beginn__month=monat), gruppen
+    )
     termine_nach_tag = {}
     for termin in termine_im_monat:
         termine_nach_tag.setdefault(termin.beginn.day, []).append(termin)
@@ -38,7 +46,11 @@ def _kalender_monat(jahr, monat):
 @login_required
 def dashboard(request):
     kinder = Taenzerin.objects.filter(eltern=request.user)
-    termine = Termin.objects.filter(beginn__gte=timezone.now()).order_by("beginn")
+    kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
+
+    termine = _fuer_gruppen_relevant(
+        Termin.objects.filter(beginn__gte=timezone.now()), kinder_gruppen
+    ).order_by("beginn")
 
     zusagen = {
         (z.termin_id, z.taenzerin_id): z
@@ -49,6 +61,8 @@ def dashboard(request):
     for termin in termine:
         kinder_status = []
         for kind in kinder:
+            if termin.gruppe != Termin.GRUPPE_BEIDE and kind.gruppe != termin.gruppe:
+                continue
             zusage = zusagen.get((termin.id, kind.id))
             kinder_status.append({
                 "kind": kind,
@@ -73,7 +87,7 @@ def dashboard(request):
         "kinder": kinder,
         "termin_liste": termin_liste,
         "faellige_kinder": faellige_kinder,
-        "kalender_wochen": _kalender_monat(jahr, monat),
+        "kalender_wochen": _kalender_monat(jahr, monat, kinder_gruppen),
         "kalender_monat_name": MONATSNAMEN[monat - 1],
         "kalender_jahr": jahr,
         "kalender_heute": heute,

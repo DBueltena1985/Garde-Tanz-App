@@ -9,7 +9,8 @@
 
 {% for kind in kinder %}
 <div class="card">
-    <strong>{{ kind.vorname }} {{ kind.nachname }}</strong><br>
+    <strong>{{ kind.vorname }} {{ kind.nachname }}</strong>
+    {% if kind.geburtsjahr %}– Gruppe {{ kind.gruppe_anzeige }}{% endif %}<br>
     {% if kind.stammdaten_bestaetigt_am %}
         Stammdaten zuletzt bestätigt am {{ kind.stammdaten_bestaetigt_am|date:"d.m.Y H:i" }} Uhr.
     {% else %}

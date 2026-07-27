@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<p>Legt automatisch einen Termin pro Woche für den gewählten Wochentag im angegebenen Zeitraum an
+(z.B. jeden Montag von August bis Dezember).</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Serie erstellen" class="default">
+</form>
+{% endblock %}

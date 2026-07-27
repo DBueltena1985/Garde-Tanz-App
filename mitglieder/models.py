@@ -6,12 +6,21 @@ from django.utils import timezone
 class Taenzerin(models.Model):
     """Ein Kind, das von einem Elternaccount verwaltet wird, inkl. Stammdaten."""
 
+    GRUPPE_JUGEND = "jugend"
+    GRUPPE_JUNIOREN = "junioren"
+    # Jahrgang 2016 und juenger zaehlt zur Jugend, 2015 und aelter zu den Junioren.
+    JUGEND_JAHRGANG_AB = 2016
+
     eltern = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="kinder"
     )
 
     vorname = models.CharField("Vorname", max_length=100)
     nachname = models.CharField("Nachname", max_length=100)
+    geburtsjahr = models.PositiveIntegerField(
+        "Geburtsjahr", null=True, blank=True,
+        help_text="Bestimmt die Trainingsgruppe (Jugend/Junioren).",
+    )
 
     # Notfallkontakt
     notfallkontakt_name = models.CharField("Notfallkontakt Name", max_length=200, blank=True)
@@ -53,6 +62,19 @@ class Taenzerin(models.Model):
         self.stammdaten_bestaetigt_am = timezone.now()
         self.save(update_fields=["stammdaten_bestaetigt_am"])
 
+    @property
+    def gruppe(self):
+        if not self.geburtsjahr:
+            return None
+        return self.GRUPPE_JUGEND if self.geburtsjahr >= self.JUGEND_JAHRGANG_AB else self.GRUPPE_JUNIOREN
+
+    @property
+    def gruppe_anzeige(self):
+        return {
+            self.GRUPPE_JUGEND: "Jugend",
+            self.GRUPPE_JUNIOREN: "Junioren",
+        }.get(self.gruppe, "unbekannt")
+
 
 class Termin(models.Model):
     ART_TRAINING = "training"
@@ -62,9 +84,20 @@ class Termin(models.Model):
         (ART_VERANSTALTUNG, "Veranstaltung"),
     ]
 
+    GRUPPE_BEIDE = "beide"
+    GRUPPE_JUGEND = "jugend"
+    GRUPPE_JUNIOREN = "junioren"
+    GRUPPE_CHOICES = [
+        (GRUPPE_BEIDE, "Beide Gruppen"),
+        (GRUPPE_JUGEND, "Jugend"),
+        (GRUPPE_JUNIOREN, "Junioren"),
+    ]
+
     titel = models.CharField("Titel", max_length=200)
     art = models.CharField("Art", max_length=20, choices=ART_CHOICES, default=ART_TRAINING)
+    gruppe = models.CharField("Gruppe", max_length=20, choices=GRUPPE_CHOICES, default=GRUPPE_BEIDE)
     beginn = models.DateTimeField("Beginn")
+    ende = models.DateTimeField("Ende", null=True, blank=True)
     ort = models.CharField("Ort", max_length=200, blank=True)
     beschreibung = models.TextField("Beschreibung", blank=True)
     erstellt_von = models.ForeignKey(

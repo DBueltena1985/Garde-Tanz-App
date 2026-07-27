@@ -57,8 +57,9 @@
 
 {% for eintrag in termin_liste %}
 <div class="card" id="termin-{{ eintrag.termin.id }}">
-    <strong>{{ eintrag.termin.titel }}</strong> ({{ eintrag.termin.get_art_display }})<br>
-    {{ eintrag.termin.beginn|date:"d.m.Y H:i" }} Uhr
+    <strong>{{ eintrag.termin.titel }}</strong>
+    ({{ eintrag.termin.get_art_display }}{% if eintrag.termin.gruppe != "beide" %} – {{ eintrag.termin.get_gruppe_display }}{% endif %})<br>
+    {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
     {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 

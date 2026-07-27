@@ -9,6 +9,7 @@ class TaenzerinForm(forms.ModelForm):
         fields = [
             "vorname",
             "nachname",
+            "geburtsjahr",
             "notfallkontakt_name",
             "notfallkontakt_telefon",
             "notfallkontakt_beziehung",
