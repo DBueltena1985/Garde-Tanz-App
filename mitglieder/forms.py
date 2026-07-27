@@ -14,6 +14,7 @@ class TaenzerinForm(forms.ModelForm):
             "notfallkontakt_telefon",
             "notfallkontakt_beziehung",
             "schuhgroesse",
+            "kleidergroesse",
             "allergien",
             "medikamente",
             "sonstige_hinweise",

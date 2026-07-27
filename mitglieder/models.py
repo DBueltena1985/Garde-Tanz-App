@@ -32,6 +32,7 @@ class Taenzerin(models.Model):
 
     # Weitere Stammdaten
     schuhgroesse = models.CharField("Schuhgröße", max_length=10, blank=True)
+    kleidergroesse = models.CharField("Kleidergröße", max_length=10, blank=True)
     allergien = models.TextField("Allergien", blank=True)
     medikamente = models.TextField("Medikamente", blank=True)
     sonstige_hinweise = models.TextField(

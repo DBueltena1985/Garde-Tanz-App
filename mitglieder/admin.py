@@ -16,7 +16,7 @@ class TaenzerinInline(admin.TabularInline):
     model = Taenzerin
     fk_name = "eltern"
     extra = 0
-    fields = ("vorname", "nachname", "schuhgroesse", "stammdaten_bestaetigt_am")
+    fields = ("vorname", "nachname", "schuhgroesse", "kleidergroesse", "stammdaten_bestaetigt_am")
     show_change_link = True
 
 
@@ -50,13 +50,13 @@ class TaenzerinStatusFilter(admin.SimpleListFilter):
 
 @admin.register(Taenzerin)
 class TaenzerinAdmin(admin.ModelAdmin):
-    list_display = ("vorname", "nachname", "eltern", "gruppe_anzeige", "schuhgroesse", "stammdaten_status")
+    list_display = ("vorname", "nachname", "eltern", "gruppe_anzeige", "schuhgroesse", "kleidergroesse", "stammdaten_status")
     list_filter = (TaenzerinStatusFilter,)
     search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
     fields = (
         "eltern", "vorname", "nachname", "geburtsjahr",
         "notfallkontakt_name", "notfallkontakt_telefon", "notfallkontakt_beziehung",
-        "schuhgroesse", "allergien", "medikamente", "sonstige_hinweise",
+        "schuhgroesse", "kleidergroesse", "allergien", "medikamente", "sonstige_hinweise",
         "stammdaten_bestaetigt_am",
     )
 
