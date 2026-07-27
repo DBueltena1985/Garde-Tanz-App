@@ -45,18 +45,18 @@ def _feiertage_fuer_monat(jahr, monat):
 
 
 def _ferien_fuer_monat(jahr, monat):
-    """Liefert {tag: name} für Tage, die in einen gepflegten Ferienzeitraum fallen."""
+    """Liefert ({tag: name}, [Ferienzeitraum, ...]) für einen Monat."""
     monatsanfang = date(jahr, monat, 1)
     monatsende = date(jahr, monat, calendar.monthrange(jahr, monat)[1])
+    zeitraeume = list(Ferienzeitraum.objects.filter(start_datum__lte=monatsende, end_datum__gte=monatsanfang))
     ferien_nach_tag = {}
-    zeitraeume = Ferienzeitraum.objects.filter(start_datum__lte=monatsende, end_datum__gte=monatsanfang)
     for zeitraum in zeitraeume:
         tag = max(zeitraum.start_datum, monatsanfang)
         ende = min(zeitraum.end_datum, monatsende)
         while tag <= ende:
             ferien_nach_tag[tag.day] = zeitraum.name
             tag += timedelta(days=1)
-    return ferien_nach_tag
+    return ferien_nach_tag, zeitraeume
 
 
 def _kalender_monat(jahr, monat, gruppen):
@@ -69,7 +69,7 @@ def _kalender_monat(jahr, monat, gruppen):
         termine_nach_tag.setdefault(termin.beginn.day, []).append(termin)
 
     feiertage_nach_tag = _feiertage_fuer_monat(jahr, monat)
-    ferien_nach_tag = _ferien_fuer_monat(jahr, monat)
+    ferien_nach_tag, ferien_zeitraeume = _ferien_fuer_monat(jahr, monat)
 
     wochen = []
     woche = []
@@ -86,7 +86,12 @@ def _kalender_monat(jahr, monat, gruppen):
         if len(woche) == 7:
             wochen.append(woche)
             woche = []
-    return wochen
+
+    legende = [f"{date(jahr, monat, tag):%d.%m.} {name}" for tag, name in sorted(feiertage_nach_tag.items())]
+    legende += [
+        f"{z.name} ({z.start_datum:%d.%m.}–{z.end_datum:%d.%m.})" for z in ferien_zeitraeume
+    ]
+    return wochen, legende
 
 
 @login_required
@@ -166,12 +171,15 @@ def dashboard(request):
     vorheriger_monat = (jahr, monat - 1) if monat > 1 else (jahr - 1, 12)
     naechster_monat = (jahr, monat + 1) if monat < 12 else (jahr + 1, 1)
 
+    kalender_wochen, kalender_legende = _kalender_monat(jahr, monat, kinder_gruppen)
+
     return render(request, "mitglieder/dashboard.html", {
         "kinder": kinder,
         "veranstaltungen_gruppen": veranstaltungen_gruppen,
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,
-        "kalender_wochen": _kalender_monat(jahr, monat, kinder_gruppen),
+        "kalender_wochen": kalender_wochen,
+        "kalender_legende": kalender_legende,
         "kalender_monat_name": MONATSNAMEN[monat - 1],
         "kalender_jahr": jahr,
         "kalender_heute": heute,

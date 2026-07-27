@@ -17,10 +17,22 @@
     <meta name="apple-mobile-web-app-title" content="Garde Tanz">
     <style>
         body { font-family: system-ui, sans-serif; max-width: 700px; margin: 0 auto; padding: 1rem; background: #faf7fb; color: #222; }
-        nav { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+        nav {
+            display: flex; gap: 0.6rem 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;
+            background: white; padding: 0.7rem 1rem; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
         nav a { text-decoration: none; color: #7a2159; font-weight: 600; }
         nav a.brand { font-size: 1.2rem; margin-right: auto; display: flex; align-items: center; gap: 0.5rem; }
-        .logo { height: 40px; width: 40px; border-radius: 50%; }
+        .nav-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+        .logo { height: 40px; width: 40px; border-radius: 50%; filter: invert(1); }
+        .btn-logout { background: #f7d9d6; color: #b3261e; font-weight: 600; }
+        @media (max-width: 600px) {
+            nav { gap: 0.4rem 0.6rem; padding: 0.6rem 0.8rem; }
+            nav a.brand { width: 100%; margin-right: 0; margin-bottom: 0.1rem; }
+            .nav-links { gap: 0.35rem 0.6rem; font-size: 0.85rem; width: 100%; }
+            .logout-form { width: 100%; margin-top: 0.2rem; }
+            .btn-logout { width: 100%; text-align: center; }
+        }
         .card { background: white; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .status-zugesagt { color: #1a7a3c; font-weight: 600; }
         .status-abgesagt { color: #b3261e; font-weight: 600; }
@@ -49,6 +61,8 @@
         .kalender-ferien { background: #fdf3d8; }
         .kalender-ferien .kalender-tagnummer { color: #8a6d00; }
         .kalender-heute.kalender-feiertag, .kalender-heute.kalender-ferien { border: 2px solid #7a2159; }
+        .kalender-legende { list-style: none; padding: 0; margin: 0.7rem 0 0; font-size: 0.8rem; color: #666; }
+        .kalender-legende li { padding: 0.1rem 0; }
         .kalender-termin { display: block; font-size: 0.68rem; padding: 0.1rem 0.25rem; margin-bottom: 0.15rem; border-radius: 4px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .kalender-termin-training { background: #d7f0dd; color: #1a5c30; }
         .kalender-termin-veranstaltung { background: #dbe6fb; color: #1a3d7a; }
@@ -79,16 +93,18 @@
             Garde Tanz
         </a>
         {% if user.is_authenticated %}
-            <a href="{% url 'dashboard' %}">Termine</a>
-            <a href="{% url 'news_liste' %}">News</a>
-            <a href="{% url 'kinder_liste' %}">Meine Kinder</a>
-            <a href="{% url 'konto_bearbeiten' %}">Mein Konto</a>
-            <a href="{% url 'feedback_senden' %}">Feedback</a>
-            {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
-            <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn" style="background:#eee;">Logout ({{ user.first_name|default:user.username }})</button>
-            </form>
+            <div class="nav-links">
+                <a href="{% url 'dashboard' %}">Termine</a>
+                <a href="{% url 'news_liste' %}">News</a>
+                <a href="{% url 'kinder_liste' %}">Meine Kinder</a>
+                <a href="{% url 'konto_bearbeiten' %}">Mein Konto</a>
+                <a href="{% url 'feedback_senden' %}">Feedback</a>
+                {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
+                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-logout">Logout ({{ user.first_name|default:user.username }})</button>
+                </form>
+            </div>
         {% endif %}
     </nav>
 

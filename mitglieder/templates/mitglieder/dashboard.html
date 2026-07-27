@@ -47,6 +47,11 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if kalender_legende %}
+        <ul class="kalender-legende">
+            {% for eintrag in kalender_legende %}<li>{{ eintrag }}</li>{% endfor %}
+        </ul>
+        {% endif %}
     </div>
 </div>
 
