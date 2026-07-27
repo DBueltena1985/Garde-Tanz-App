@@ -170,9 +170,17 @@ class TerminAdmin(admin.ModelAdmin):
 
 @admin.register(Zusage)
 class ZusageAdmin(admin.ModelAdmin):
-    list_display = ("termin", "taenzerin", "status", "aktualisiert_am")
+    list_display = ("termin_datum", "termin", "taenzerin", "status", "aktualisiert_am")
     list_filter = ("status", "termin")
     search_fields = ("taenzerin__vorname", "taenzerin__nachname")
+    date_hierarchy = "termin__beginn"
+    ordering = ("termin__beginn", "taenzerin__vorname")
+
+    def termin_datum(self, obj):
+        return obj.termin.beginn
+
+    termin_datum.short_description = "Datum"
+    termin_datum.admin_order_field = "termin__beginn"
 
 
 @admin.register(NewsPost)
