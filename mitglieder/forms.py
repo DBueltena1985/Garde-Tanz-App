@@ -1,6 +1,19 @@
 from django import forms
+from django.contrib.auth.models import User
 
 from .models import Taenzerin
+
+
+class KontoForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email"]
+        labels = {
+            "username": "Benutzername",
+            "first_name": "Vorname",
+            "last_name": "Nachname",
+            "email": "E-Mail",
+        }
 
 
 class TaenzerinForm(forms.ModelForm):

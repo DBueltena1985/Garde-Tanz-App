@@ -54,6 +54,7 @@
             <a href="{% url 'dashboard' %}">Termine</a>
             <a href="{% url 'news_liste' %}">News</a>
             <a href="{% url 'kinder_liste' %}">Meine Kinder</a>
+            <a href="{% url 'konto_bearbeiten' %}">Mein Konto</a>
             {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}

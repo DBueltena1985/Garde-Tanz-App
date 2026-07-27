@@ -1,0 +1,17 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Mein Konto – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Meine Kontodaten</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Speichern</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Passwort ändern</h2>
+    <p><a href="{% url 'passwort_aendern' %}" class="btn btn-zusagen">Passwort ändern</a></p>
+</div>
+{% endblock %}

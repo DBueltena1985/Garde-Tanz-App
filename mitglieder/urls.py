@@ -9,4 +9,6 @@ urlpatterns = [
     path("kinder/neu/", views.kind_bearbeiten, name="kind_neu"),
     path("kinder/<int:kind_id>/", views.kind_bearbeiten, name="kind_bearbeiten"),
     path("news/", views.news_liste, name="news_liste"),
+    path("konto/", views.konto_bearbeiten, name="konto_bearbeiten"),
+    path("konto/passwort/", views.passwort_aendern, name="passwort_aendern"),
 ]
