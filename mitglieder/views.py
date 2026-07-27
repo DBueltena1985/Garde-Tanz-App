@@ -72,6 +72,13 @@ def dashboard(request):
             })
         termin_liste.append({"termin": termin, "kinder_status": kinder_status})
 
+    termin_gruppen = []
+    for eintrag in termin_liste:
+        monat_label = f"{MONATSNAMEN[eintrag['termin'].beginn.month - 1]} {eintrag['termin'].beginn.year}"
+        if not termin_gruppen or termin_gruppen[-1]["monat_label"] != monat_label:
+            termin_gruppen.append({"monat_label": monat_label, "eintraege": []})
+        termin_gruppen[-1]["eintraege"].append(eintrag)
+
     faellige_kinder = [kind for kind in kinder if kind.bestaetigung_faellig]
 
     heute = timezone.localdate()
@@ -87,7 +94,7 @@ def dashboard(request):
 
     return render(request, "mitglieder/dashboard.html", {
         "kinder": kinder,
-        "termin_liste": termin_liste,
+        "termin_gruppen": termin_gruppen,
         "faellige_kinder": faellige_kinder,
         "kalender_wochen": _kalender_monat(jahr, monat, kinder_gruppen),
         "kalender_monat_name": MONATSNAMEN[monat - 1],

@@ -51,11 +51,14 @@
 
 <h2>Anstehende Termine</h2>
 
-{% if not termin_liste %}
+{% if not termin_gruppen %}
 <p>Aktuell sind keine Termine geplant.</p>
 {% endif %}
 
-{% for eintrag in termin_liste %}
+{% for gruppe in termin_gruppen %}
+<h3 class="monats-ueberschrift">{{ gruppe.monat_label }}</h3>
+
+{% for eintrag in gruppe.eintraege %}
 <div class="card" id="termin-{{ eintrag.termin.id }}">
     <strong>{{ eintrag.termin.titel }}</strong>
     ({{ eintrag.termin.get_art_display }}{% if eintrag.termin.gruppe != "beide" %} – {{ eintrag.termin.get_gruppe_display }}{% endif %})<br>
@@ -83,6 +86,7 @@
     </div>
     {% endfor %}
 </div>
+{% endfor %}
 {% endfor %}
 
 {% endblock %}

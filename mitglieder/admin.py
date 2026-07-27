@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils import timezone
+from django.utils.html import format_html
 
 from .models import NewsPost, Taenzerin, Termin, Zusage
 
@@ -50,7 +51,10 @@ class TaenzerinStatusFilter(admin.SimpleListFilter):
 
 @admin.register(Taenzerin)
 class TaenzerinAdmin(admin.ModelAdmin):
-    list_display = ("vorname", "nachname", "eltern", "gruppe_anzeige", "schuhgroesse", "kleidergroesse", "stammdaten_status")
+    list_display = (
+        "vorname", "nachname", "eltern", "gruppe_anzeige",
+        "notfallkontakt_anruf", "schuhgroesse", "kleidergroesse", "stammdaten_status",
+    )
     list_filter = (TaenzerinStatusFilter,)
     search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
     fields = (
@@ -64,6 +68,16 @@ class TaenzerinAdmin(admin.ModelAdmin):
         return "fällig" if obj.bestaetigung_faellig else "aktuell"
 
     stammdaten_status.short_description = "Stammdaten"
+
+    def notfallkontakt_anruf(self, obj):
+        if not obj.notfallkontakt_telefon:
+            return "–"
+        telefon_waehlbar = "".join(ch for ch in obj.notfallkontakt_telefon if ch.isdigit() or ch == "+")
+        return format_html(
+            '<a href="tel:{}">📞 {}</a>', telefon_waehlbar, obj.notfallkontakt_telefon
+        )
+
+    notfallkontakt_anruf.short_description = "Notfallkontakt"
 
 
 class SerienTerminForm(forms.Form):
