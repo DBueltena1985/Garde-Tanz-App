@@ -1,8 +1,12 @@
 from django.core.mail import send_mail
 from django.db.models.signals import post_save, pre_delete
-from django.dispatch import receiver
 
-from .models import Taenzerin, Termin, Zusage
+from .models import Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
+
+# Django sendet Signale für Proxy-Modelle mit dem Proxy als "sender" (nicht dem
+# Basis-Modell). Da Termine im Admin über die Proxys TrainingTermin/VeranstaltungTermin
+# angelegt/gelöscht werden, müssen wir auf alle drei Klassen hören, sonst feuert das Signal nie.
+TERMIN_MODELLE = (Termin, TrainingTermin, VeranstaltungTermin)
 
 
 def _zeitraum_text(termin):
@@ -15,7 +19,6 @@ def _zeitraum_text(termin):
     return text
 
 
-@receiver(pre_delete, sender=Termin)
 def termin_absage_benachrichtigen(sender, instance, **kwargs):
     """Informiert Eltern per E-Mail, wenn ein Termin gestrichen wird, für den zugesagt wurde."""
     zusagen = instance.zusagen.filter(status=Zusage.STATUS_ZUGESAGT).select_related("taenzerin__eltern")
@@ -37,7 +40,6 @@ def termin_absage_benachrichtigen(sender, instance, **kwargs):
         )
 
 
-@receiver(post_save, sender=Termin)
 def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
     """Informiert passende Eltern per E-Mail über neu angelegte Veranstaltungen."""
     if not created or instance.art != Termin.ART_VERANSTALTUNG:
@@ -62,3 +64,8 @@ def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
             from_email=None,
             recipient_list=[email],
         )
+
+
+for _modell in TERMIN_MODELLE:
+    pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
+    post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
