@@ -98,3 +98,21 @@ class NewsPostAdmin(admin.ModelAdmin):
         if not obj.pk:
             obj.autor = request.user
         super().save_model(request, obj, form, change)
+
+
+_get_app_list_ohne_anzahl = admin.site.get_app_list
+
+
+def _get_app_list_mit_anzahl(request, app_label=None):
+    """Zeigt vor jedem Modellnamen im Admin-Menü die Anzahl der Datensätze an."""
+    app_list = _get_app_list_ohne_anzahl(request, app_label=app_label)
+    for app in app_list:
+        for model in app["models"]:
+            model_class = model.get("model")
+            if model_class is not None:
+                anzahl = model_class._default_manager.count()
+                model["name"] = f"{anzahl} {model['name']}"
+    return app_list
+
+
+admin.site.get_app_list = _get_app_list_mit_anzahl
