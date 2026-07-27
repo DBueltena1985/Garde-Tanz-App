@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
@@ -10,8 +10,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from .feiertage import bayerische_feiertage
 from .forms import FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
-from .models import Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, Zusage
+from .models import Anmeldepunkt, Anmeldung, Ferienzeitraum, NewsPost, Taenzerin, Termin, Zusage
 
 MONATSNAMEN = [
     "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -37,6 +38,27 @@ def _nach_monat_gruppieren(termin_liste, offener_termin_id=None):
     return gruppen
 
 
+def _feiertage_fuer_monat(jahr, monat):
+    """Liefert {tag: name} der bayerischen Feiertage, die in den Monat fallen."""
+    feiertage = bayerische_feiertage(jahr)
+    return {datum.day: name for datum, name in feiertage.items() if datum.month == monat}
+
+
+def _ferien_fuer_monat(jahr, monat):
+    """Liefert {tag: name} für Tage, die in einen gepflegten Ferienzeitraum fallen."""
+    monatsanfang = date(jahr, monat, 1)
+    monatsende = date(jahr, monat, calendar.monthrange(jahr, monat)[1])
+    ferien_nach_tag = {}
+    zeitraeume = Ferienzeitraum.objects.filter(start_datum__lte=monatsende, end_datum__gte=monatsanfang)
+    for zeitraum in zeitraeume:
+        tag = max(zeitraum.start_datum, monatsanfang)
+        ende = min(zeitraum.end_datum, monatsende)
+        while tag <= ende:
+            ferien_nach_tag[tag.day] = zeitraum.name
+            tag += timedelta(days=1)
+    return ferien_nach_tag
+
+
 def _kalender_monat(jahr, monat, gruppen):
     """Baut ein Wochenraster (Mo-So) für den Monat, inkl. relevanter Termine pro Tag."""
     termine_im_monat = _fuer_gruppen_relevant(
@@ -46,11 +68,19 @@ def _kalender_monat(jahr, monat, gruppen):
     for termin in termine_im_monat:
         termine_nach_tag.setdefault(termin.beginn.day, []).append(termin)
 
+    feiertage_nach_tag = _feiertage_fuer_monat(jahr, monat)
+    ferien_nach_tag = _ferien_fuer_monat(jahr, monat)
+
     wochen = []
     woche = []
     for tag in calendar.Calendar(firstweekday=0).itermonthdates(jahr, monat):
         if tag.month == monat:
-            woche.append({"datum": tag, "termine": termine_nach_tag.get(tag.day, [])})
+            woche.append({
+                "datum": tag,
+                "termine": termine_nach_tag.get(tag.day, []),
+                "feiertag": feiertage_nach_tag.get(tag.day),
+                "ferien": ferien_nach_tag.get(tag.day),
+            })
         else:
             woche.append(None)
         if len(woche) == 7:

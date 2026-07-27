@@ -32,7 +32,8 @@
                 <tr>
                     {% for tag in woche %}
                         {% if tag %}
-                        <td class="{% if tag.datum == kalender_heute %}kalender-heute{% endif %}">
+                        <td class="{% if tag.datum == kalender_heute %}kalender-heute{% endif %}{% if tag.feiertag %} kalender-feiertag{% elif tag.ferien %} kalender-ferien{% endif %}"
+                            {% if tag.feiertag %}title="{{ tag.feiertag }}"{% elif tag.ferien %}title="{{ tag.ferien }}"{% endif %}>
                             <div class="kalender-tagnummer">{{ tag.datum.day }}</div>
                             {% for termin in tag.termine %}
                             <a href="#termin-{{ termin.id }}" class="kalender-termin kalender-termin-{{ termin.art }}">{{ termin.beginn|date:"H:i" }} {{ termin.titel }}</a>

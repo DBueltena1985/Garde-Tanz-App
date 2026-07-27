@@ -299,3 +299,20 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"{self.absender}: {self.betreff or self.nachricht[:40]}"
+
+
+class Ferienzeitraum(models.Model):
+    """Schulferien in Bayern. Werden jährlich vom Kultusministerium neu festgelegt,
+    darum hier manuell pflegen (aktuelle Termine unter www.km.bayern.de)."""
+
+    name = models.CharField("Name", max_length=100, help_text="z.B. 'Sommerferien 2026'")
+    start_datum = models.DateField("Von")
+    end_datum = models.DateField("Bis (einschließlich)")
+
+    class Meta:
+        verbose_name = "Ferienzeitraum"
+        verbose_name_plural = "Ferienzeiträume (Bayern)"
+        ordering = ["start_datum"]
+
+    def __str__(self):
+        return f"{self.name} ({self.start_datum:%d.%m.%Y} – {self.end_datum:%d.%m.%Y})"

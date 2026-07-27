@@ -13,8 +13,8 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin,
-    Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, Ferienzeitraum, NewsPost, Taenzerin, Termin, TrainingTermin,
+    VeranstaltungTermin, Zusage,
 )
 
 
@@ -652,6 +652,12 @@ class FeedbackAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(Ferienzeitraum)
+class FerienzeitraumAdmin(admin.ModelAdmin):
+    list_display = ("name", "start_datum", "end_datum")
+    ordering = ("start_datum",)
 
 
 _get_app_list_ohne_anzahl = admin.site.get_app_list
