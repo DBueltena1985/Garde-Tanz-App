@@ -45,7 +45,15 @@
         .kalender-termin { display: block; font-size: 0.68rem; padding: 0.1rem 0.25rem; margin-bottom: 0.15rem; border-radius: 4px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .kalender-termin-training { background: #d7f0dd; color: #1a5c30; }
         .kalender-termin-veranstaltung { background: #dbe6fb; color: #1a3d7a; }
-        .monats-ueberschrift { color: #7a2159; border-bottom: 2px solid #f0e0ea; padding-bottom: 0.3rem; margin-top: 1.5rem; }
+        .monats-gruppe { margin-top: 1rem; }
+        .monats-ueberschrift {
+            color: #7a2159; border-bottom: 2px solid #f0e0ea; padding-bottom: 0.5rem; margin-top: 1.5rem;
+            font-size: 1.15rem; font-weight: 700; cursor: pointer; list-style: none;
+        }
+        .monats-ueberschrift::-webkit-details-marker { display: none; }
+        .monats-ueberschrift::before { content: "▸ "; }
+        .monats-gruppe[open] > .monats-ueberschrift::before { content: "▾ "; }
+        .monats-gruppe .card:first-of-type { margin-top: 0.8rem; }
     </style>
 </head>
 <body>

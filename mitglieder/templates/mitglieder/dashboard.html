@@ -56,37 +56,39 @@
 {% endif %}
 
 {% for gruppe in termin_gruppen %}
-<h3 class="monats-ueberschrift">{{ gruppe.monat_label }}</h3>
+<details class="monats-gruppe" {% if forloop.first %}open{% endif %}>
+    <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
 
-{% for eintrag in gruppe.eintraege %}
-<div class="card" id="termin-{{ eintrag.termin.id }}">
-    <strong>{{ eintrag.termin.titel }}</strong>
-    ({{ eintrag.termin.get_art_display }}{% if eintrag.termin.gruppe != "beide" %} – {{ eintrag.termin.get_gruppe_display }}{% endif %})<br>
-    {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
-    {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
-    {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
+    {% for eintrag in gruppe.eintraege %}
+    <div class="card" id="termin-{{ eintrag.termin.id }}">
+        <strong>{{ eintrag.termin.titel }}</strong>
+        ({{ eintrag.termin.get_art_display }}{% if eintrag.termin.gruppe != "beide" %} – {{ eintrag.termin.get_gruppe_display }}{% endif %})<br>
+        {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
+        {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
+        {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
-    {% for ks in eintrag.kinder_status %}
-    <div style="margin-top:0.7rem; padding-top:0.6rem; border-top:1px solid #eee;">
-        <strong>{{ ks.kind.vorname }}</strong> –
-        <span class="status-{{ ks.status }}">
-            {% if ks.status == "zugesagt" %}Zugesagt
-            {% elif ks.status == "abgesagt" %}Abgesagt
-            {% else %}Noch offen{% endif %}
-        </span>
-        <br>
-        <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-zusagen">Zusagen</button>
-        </form>
-        <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'abgesagt' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-absagen">Absagen</button>
-        </form>
+        {% for ks in eintrag.kinder_status %}
+        <div style="margin-top:0.7rem; padding-top:0.6rem; border-top:1px solid #eee;">
+            <strong>{{ ks.kind.vorname }}</strong> –
+            <span class="status-{{ ks.status }}">
+                {% if ks.status == "zugesagt" %}Zugesagt
+                {% elif ks.status == "abgesagt" %}Abgesagt
+                {% else %}Noch offen{% endif %}
+            </span>
+            <br>
+            <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-zusagen">Zusagen</button>
+            </form>
+            <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'abgesagt' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-absagen">Absagen</button>
+            </form>
+        </div>
+        {% endfor %}
     </div>
     {% endfor %}
-</div>
-{% endfor %}
+</details>
 {% endfor %}
 
 {% endblock %}
