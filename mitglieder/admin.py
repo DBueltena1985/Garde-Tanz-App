@@ -132,6 +132,19 @@ class SerieBearbeitenForm(forms.Form):
         self.fields["titel"].choices = titel_choices or []
 
 
+class SerieLoeschenForm(forms.Form):
+    titel = forms.ChoiceField(label="Serie (Titel)")
+    ab_datum = forms.DateField(
+        label="Nur löschen ab (optional)", required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        help_text="Leer lassen, um alle Termine dieser Serie zu löschen.",
+    )
+
+    def __init__(self, *args, titel_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["titel"].choices = titel_choices or []
+
+
 class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
@@ -174,8 +187,46 @@ class TerminAdmin(admin.ModelAdmin):
             path("serie-erstellen/", self.admin_site.admin_view(self.serie_erstellen), name="mitglieder_termin_serie"),
             path("duplikate/", self.admin_site.admin_view(self.duplikate_bereinigen), name="mitglieder_termin_duplikate"),
             path("serie-bearbeiten/", self.admin_site.admin_view(self.serie_bearbeiten), name="mitglieder_termin_serie_bearbeiten"),
+            path("serie-loeschen/", self.admin_site.admin_view(self.serie_loeschen), name="mitglieder_termin_serie_loeschen"),
         ]
         return eigene_urls + super().get_urls()
+
+    def serie_loeschen(self, request):
+        if not self.has_delete_permission(request):
+            raise PermissionDenied
+
+        titel_choices = [
+            (t, t) for t in Termin.objects.order_by("titel").values_list("titel", flat=True).distinct()
+        ]
+
+        vorschau = None
+        if request.method == "POST":
+            form = SerieLoeschenForm(request.POST, titel_choices=titel_choices)
+            if form.is_valid():
+                daten = form.cleaned_data
+                passende = Termin.objects.filter(titel=daten["titel"])
+                if daten["ab_datum"]:
+                    passende = passende.filter(beginn__date__gte=daten["ab_datum"])
+
+                if request.POST.get("bestaetigt") == "1":
+                    anzahl = passende.count()
+                    passende.delete()
+                    messages.success(request, f"{anzahl} Termine der Serie '{daten['titel']}' wurden gelöscht.")
+                    return redirect("admin:mitglieder_termin_changelist")
+
+                vorschau = {
+                    "titel": daten["titel"],
+                    "ab_datum": daten["ab_datum"],
+                    "termine": list(passende.order_by("beginn")),
+                }
+        else:
+            form = SerieLoeschenForm(titel_choices=titel_choices)
+
+        return render(
+            request,
+            "admin/mitglieder/serie_loeschen.html",
+            {"form": form, "vorschau": vorschau, "opts": self.model._meta, "title": "Terminserie löschen"},
+        )
 
     def serie_bearbeiten(self, request):
         if not self.has_change_permission(request):

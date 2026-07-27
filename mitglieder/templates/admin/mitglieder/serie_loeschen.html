@@ -1,0 +1,42 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<p>Löscht alle Termine einer Serie (gleicher Titel), optional nur ab einem bestimmten Datum.</p>
+
+{% if not vorschau %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Termine anzeigen" class="default">
+</form>
+{% else %}
+    {% if not vorschau.termine %}
+    <p>Keine Termine gefunden.</p>
+    <p><a href="{% url 'admin:mitglieder_termin_serie_loeschen' %}">&laquo; Zurück</a></p>
+    {% else %}
+    <p>
+        <strong>{{ vorschau.termine|length }}</strong> Termine der Serie
+        "{{ vorschau.titel }}"{% if vorschau.ab_datum %} ab {{ vorschau.ab_datum }}{% endif %} gefunden:
+    </p>
+    <ul>
+        {% for termin in vorschau.termine %}
+        <li>{{ termin.beginn|date:"d.m.Y H:i" }} – {{ termin.ort }}</li>
+        {% endfor %}
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="titel" value="{{ vorschau.titel }}">
+        {% if vorschau.ab_datum %}<input type="hidden" name="ab_datum" value="{{ vorschau.ab_datum|date:'Y-m-d' }}">{% endif %}
+        <input type="hidden" name="bestaetigt" value="1">
+        <input
+            type="submit"
+            value="Ja, {{ vorschau.termine|length }} Termine endgültig löschen"
+            class="default"
+            style="background:#ba2121;"
+            onclick="return confirm('Wirklich {{ vorschau.termine|length }} Termine endgültig löschen? Das kann nicht rückgängig gemacht werden.');"
+        >
+    </form>
+    <p><a href="{% url 'admin:mitglieder_termin_serie_loeschen' %}">&laquo; Zurück</a></p>
+    {% endif %}
+{% endif %}
+{% endblock %}

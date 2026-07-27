@@ -3,6 +3,7 @@
 {% block object-tools-items %}
     <li><a href="{% url 'admin:mitglieder_termin_duplikate' %}">Duplikate bereinigen</a></li>
     <li><a href="{% url 'admin:mitglieder_termin_serie_bearbeiten' %}">Serie bearbeiten</a></li>
+    <li><a href="{% url 'admin:mitglieder_termin_serie_loeschen' %}">Serie löschen</a></li>
     <li><a href="{% url 'admin:mitglieder_termin_serie' %}" class="addlink">Serie erstellen</a></li>
     {{ block.super }}
 {% endblock %}
