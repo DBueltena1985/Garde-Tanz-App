@@ -149,3 +149,7 @@ DEFAULT_FROM_EMAIL = 'Garde Tanz <noreply@garde-tanz.example>'
 # dem Registrierungslink in der WhatsApp-Gruppe teilen). Auf dem Server per
 # Umgebungsvariable überschreiben, um den Code jederzeit zu ändern.
 EINLADUNGSCODE = os.environ.get('DJANGO_EINLADUNGSCODE', 'gardetanz')
+
+# Der Pfad-Teil der Registrierungs-URL (z.B. 'registrieren' -> /registrieren/).
+# Auf dem Server per Umgebungsvariable überschreiben, um den Link umzubenennen.
+REGISTRIERUNGS_SLUG = os.environ.get('DJANGO_REGISTRIERUNGS_SLUG', 'registrieren')

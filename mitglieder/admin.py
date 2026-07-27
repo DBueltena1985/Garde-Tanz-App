@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.shortcuts import redirect, render
-from django.urls import path
+from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
@@ -473,3 +474,18 @@ def _get_app_list_mit_anzahl(request, app_label=None):
 
 
 admin.site.get_app_list = _get_app_list_mit_anzahl
+
+
+_each_context_ohne_einladung = admin.site.each_context
+
+
+def _each_context_mit_einladung(request):
+    """Ergänzt Registrierungslink und Einladungscode im Admin-Kontext (für die Startseite)."""
+    context = _each_context_ohne_einladung(request)
+    context["einladungscode"] = settings.EINLADUNGSCODE
+    context["registrierungslink"] = request.build_absolute_uri(reverse("registrieren"))
+    return context
+
+
+admin.site.each_context = _each_context_mit_einladung
+admin.site.index_template = "admin/mitglieder_index.html"

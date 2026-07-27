@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from .forms import KontoForm, RegistrierenForm, TaenzerinForm
@@ -23,14 +24,16 @@ def _fuer_gruppen_relevant(queryset, gruppen):
     return queryset.filter(Q(gruppe=Termin.GRUPPE_BEIDE) | Q(gruppe__in=gruppen))
 
 
-def _nach_monat_gruppieren(termin_liste):
+def _nach_monat_gruppieren(termin_liste, offener_termin_id=None):
     """Gruppiert eine Liste von Termin-Einträgen nach Monat (Reihenfolge bleibt erhalten)."""
     gruppen = []
     for eintrag in termin_liste:
         monat_label = f"{MONATSNAMEN[eintrag['termin'].beginn.month - 1]} {eintrag['termin'].beginn.year}"
         if not gruppen or gruppen[-1]["monat_label"] != monat_label:
-            gruppen.append({"monat_label": monat_label, "eintraege": []})
+            gruppen.append({"monat_label": monat_label, "eintraege": [], "force_open": False})
         gruppen[-1]["eintraege"].append(eintrag)
+        if offener_termin_id and eintrag["termin"].id == offener_termin_id:
+            gruppen[-1]["force_open"] = True
     return gruppen
 
 
@@ -99,11 +102,16 @@ def dashboard(request):
             "anmeldepunkte": anmeldepunkte_info,
         })
 
+    try:
+        offener_termin_id = int(request.GET.get("offener_termin", 0)) or None
+    except (ValueError, TypeError):
+        offener_termin_id = None
+
     veranstaltungen_gruppen = _nach_monat_gruppieren(
-        [e for e in termin_liste if e["termin"].art == Termin.ART_VERANSTALTUNG]
+        [e for e in termin_liste if e["termin"].art == Termin.ART_VERANSTALTUNG], offener_termin_id
     )
     training_gruppen = _nach_monat_gruppieren(
-        [e for e in termin_liste if e["termin"].art == Termin.ART_TRAINING]
+        [e for e in termin_liste if e["termin"].art == Termin.ART_TRAINING], offener_termin_id
     )
 
     faellige_kinder = [kind for kind in kinder if kind.bestaetigung_faellig]
@@ -147,7 +155,7 @@ def termin_zusage(request, termin_id, kind_id, status):
     zusage.status = status
     zusage.save()
     messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
-    return redirect("dashboard")
+    return redirect(f"{reverse('dashboard')}?offener_termin={termin_id}#termin-{termin_id}")
 
 
 @login_required
@@ -181,7 +189,7 @@ def anmeldepunkt_eintragen(request, punkt_id):
         bereits_angemeldet = Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).exists()
         if not bereits_angemeldet and punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
             messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
-            return redirect("dashboard")
+            return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
 
         kommentar = request.POST.get("kommentar", "").strip()
         Anmeldung.objects.update_or_create(
@@ -189,6 +197,7 @@ def anmeldepunkt_eintragen(request, punkt_id):
             defaults={"kommentar": kommentar},
         )
         messages.success(request, f"Du hast dich bei '{punkt.titel}' eingetragen.")
+        return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
 
     return redirect("dashboard")
 
@@ -200,6 +209,7 @@ def anmeldepunkt_austragen(request, punkt_id):
     if request.method == "POST":
         Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).delete()
         messages.success(request, f"Du hast dich bei '{punkt.titel}' ausgetragen.")
+        return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
 
     return redirect("dashboard")
 

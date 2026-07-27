@@ -1,0 +1,10 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div style="background:#eef6ff; border:1px solid #b8dcff; padding:1rem; border-radius:6px; margin-bottom:1.2rem;">
+    <strong>Registrierungslink für Eltern</strong> (z.B. für die WhatsApp-Gruppe):<br>
+    <code>{{ registrierungslink }}</code><br>
+    <strong>Einladungscode:</strong> <code>{{ einladungscode }}</code>
+</div>
+{{ block.super }}
+{% endblock %}
