@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
+from django.db.models import Count
 from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils import timezone
@@ -106,6 +107,31 @@ class SerienTerminForm(forms.Form):
         return cleaned
 
 
+class SerieBearbeitenForm(forms.Form):
+    titel = forms.ChoiceField(label="Serie (Titel)")
+    ab_datum = forms.DateField(
+        label="Änderungen gelten ab (einschließlich)",
+        widget=forms.DateInput(attrs={"type": "date"}),
+        help_text="Termine vor diesem Datum bleiben unverändert.",
+    )
+    neue_startzeit = forms.TimeField(label="Neue Startzeit", required=False, widget=forms.TimeInput(attrs={"type": "time"}))
+    neue_endzeit = forms.TimeField(label="Neue Endzeit", required=False, widget=forms.TimeInput(attrs={"type": "time"}))
+    neuer_ort = forms.CharField(label="Neuer Ort", max_length=200, required=False)
+    neue_gruppe = forms.ChoiceField(
+        label="Neue Gruppe", required=False,
+        choices=[("", "— unverändert —")] + Termin.GRUPPE_CHOICES,
+    )
+    neue_art = forms.ChoiceField(
+        label="Neue Art", required=False,
+        choices=[("", "— unverändert —")] + Termin.ART_CHOICES,
+    )
+    neue_beschreibung = forms.CharField(label="Neue Beschreibung", required=False, widget=forms.Textarea(attrs={"rows": 2}))
+
+    def __init__(self, *args, titel_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["titel"].choices = titel_choices or []
+
+
 class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
@@ -141,11 +167,115 @@ class TerminAdmin(admin.ModelAdmin):
             obj.erstellt_von = request.user
         super().save_model(request, obj, form, change)
 
+    DUPLIKAT_FELDER = ["titel", "art", "gruppe", "beginn", "ende", "ort", "beschreibung"]
+
     def get_urls(self):
         eigene_urls = [
             path("serie-erstellen/", self.admin_site.admin_view(self.serie_erstellen), name="mitglieder_termin_serie"),
+            path("duplikate/", self.admin_site.admin_view(self.duplikate_bereinigen), name="mitglieder_termin_duplikate"),
+            path("serie-bearbeiten/", self.admin_site.admin_view(self.serie_bearbeiten), name="mitglieder_termin_serie_bearbeiten"),
         ]
         return eigene_urls + super().get_urls()
+
+    def serie_bearbeiten(self, request):
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+
+        titel_choices = [
+            (t, t) for t in Termin.objects.order_by("titel").values_list("titel", flat=True).distinct()
+        ]
+
+        if request.method == "POST":
+            form = SerieBearbeitenForm(request.POST, titel_choices=titel_choices)
+            if form.is_valid():
+                daten = form.cleaned_data
+                passende = Termin.objects.filter(titel=daten["titel"], beginn__date__gte=daten["ab_datum"])
+
+                aktualisiert = 0
+                for termin in passende:
+                    geaendert = False
+                    lokales_datum = timezone.localtime(termin.beginn).date()
+
+                    if daten["neue_startzeit"]:
+                        termin.beginn = timezone.make_aware(datetime.combine(lokales_datum, daten["neue_startzeit"]))
+                        geaendert = True
+                    if daten["neue_endzeit"]:
+                        termin.ende = timezone.make_aware(datetime.combine(lokales_datum, daten["neue_endzeit"]))
+                        geaendert = True
+                    if daten["neuer_ort"]:
+                        termin.ort = daten["neuer_ort"]
+                        geaendert = True
+                    if daten["neue_gruppe"]:
+                        termin.gruppe = daten["neue_gruppe"]
+                        geaendert = True
+                    if daten["neue_art"]:
+                        termin.art = daten["neue_art"]
+                        geaendert = True
+                    if daten["neue_beschreibung"]:
+                        termin.beschreibung = daten["neue_beschreibung"]
+                        geaendert = True
+
+                    if geaendert:
+                        termin.save()
+                        aktualisiert += 1
+
+                messages.success(request, f"{aktualisiert} Termine der Serie '{daten['titel']}' wurden aktualisiert.")
+                return redirect("admin:mitglieder_termin_changelist")
+        else:
+            form = SerieBearbeitenForm(titel_choices=titel_choices)
+
+        return render(
+            request,
+            "admin/mitglieder/serie_bearbeiten.html",
+            {"form": form, "opts": self.model._meta, "title": "Terminserie bearbeiten"},
+        )
+
+    def _duplikat_gruppen(self):
+        return (
+            Termin.objects.values(*self.DUPLIKAT_FELDER)
+            .annotate(anzahl=Count("id"))
+            .filter(anzahl__gt=1)
+        )
+
+    def duplikate_bereinigen(self, request):
+        if not self.has_delete_permission(request):
+            raise PermissionDenied
+
+        gruppen = list(self._duplikat_gruppen())
+
+        if request.method == "POST":
+            geloescht = 0
+            for gruppe in gruppen:
+                filter_kwargs = {feld: gruppe[feld] for feld in self.DUPLIKAT_FELDER}
+                kandidaten = list(
+                    Termin.objects.filter(**filter_kwargs)
+                    .annotate(n_zusagen=Count("zusagen", distinct=True), n_anmeldepunkte=Count("anmeldepunkte", distinct=True))
+                    .order_by("-n_zusagen", "-n_anmeldepunkte", "id")
+                    .values_list("id", flat=True)
+                )
+                zu_loeschen = kandidaten[1:]
+                geloescht += len(zu_loeschen)
+                Termin.objects.filter(id__in=zu_loeschen).delete()
+
+            messages.success(request, f"{geloescht} doppelte Termine wurden entfernt.")
+            return redirect("admin:mitglieder_termin_changelist")
+
+        vorschau = []
+        for gruppe in gruppen:
+            filter_kwargs = {feld: gruppe[feld] for feld in self.DUPLIKAT_FELDER}
+            beispiel = Termin.objects.filter(**filter_kwargs).order_by("id").first()
+            vorschau.append({"termin": beispiel, "anzahl": gruppe["anzahl"]})
+
+        return render(
+            request,
+            "admin/mitglieder/duplikate.html",
+            {
+                "vorschau": vorschau,
+                "gesamt_ueberschuss": sum(v["anzahl"] - 1 for v in vorschau),
+                "opts": self.model._meta,
+                "title": "Doppelte Termine bereinigen",
+            },
+        )
 
     def serie_erstellen(self, request):
         if not self.has_add_permission(request):

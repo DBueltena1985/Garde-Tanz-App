@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+{% if not vorschau %}
+<p>Keine doppelten Termine gefunden. Alles sauber!</p>
+{% else %}
+<p>
+    Es wurden <strong>{{ vorschau|length }}</strong> Gruppen mit doppelten Terminen gefunden
+    (gleicher Titel, Art, Gruppe, Beginn, Ende, Ort und Beschreibung) –
+    insgesamt <strong>{{ gesamt_ueberschuss }}</strong> überzählige Termine.
+</p>
+<p>Pro Gruppe wird der Termin mit den meisten Zu-/Absagen bzw. Helferlisten behalten, alle anderen werden gelöscht.</p>
+
+<table>
+    <thead>
+        <tr><th>Titel</th><th>Beginn</th><th>Ort</th><th>Gefunden</th></tr>
+    </thead>
+    <tbody>
+        {% for eintrag in vorschau %}
+        <tr>
+            <td>{{ eintrag.termin.titel }}</td>
+            <td>{{ eintrag.termin.beginn }}</td>
+            <td>{{ eintrag.termin.ort }}</td>
+            <td>{{ eintrag.anzahl }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<form method="post" style="margin-top: 1rem;">
+    {% csrf_token %}
+    <input type="submit" value="Duplikate jetzt entfernen" class="default" onclick="return confirm('Wirklich {{ gesamt_ueberschuss }} doppelte Termine löschen?');">
+</form>
+{% endif %}
+{% endblock %}
