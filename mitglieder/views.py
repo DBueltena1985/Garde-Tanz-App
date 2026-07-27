@@ -3,64 +3,82 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import ProfilForm
-from .models import NewsPost, Profil, Termin, Zusage
+from .forms import TaenzerinForm
+from .models import NewsPost, Taenzerin, Termin, Zusage
 
 
 @login_required
 def dashboard(request):
+    kinder = Taenzerin.objects.filter(eltern=request.user)
     termine = Termin.objects.filter(beginn__gte=timezone.now()).order_by("beginn")
-    eigene_zusagen = {
-        z.termin_id: z for z in Zusage.objects.filter(mitglied=request.user, termin__in=termine)
+
+    zusagen = {
+        (z.termin_id, z.taenzerin_id): z
+        for z in Zusage.objects.filter(taenzerin__in=kinder, termin__in=termine)
     }
 
     termin_liste = []
     for termin in termine:
-        zusage = eigene_zusagen.get(termin.id)
-        termin_liste.append({
-            "termin": termin,
-            "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
-        })
+        kinder_status = []
+        for kind in kinder:
+            zusage = zusagen.get((termin.id, kind.id))
+            kinder_status.append({
+                "kind": kind,
+                "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
+            })
+        termin_liste.append({"termin": termin, "kinder_status": kinder_status})
 
-    profil, _ = Profil.objects.get_or_create(user=request.user)
+    faellige_kinder = [kind for kind in kinder if kind.bestaetigung_faellig]
 
     return render(request, "mitglieder/dashboard.html", {
+        "kinder": kinder,
         "termin_liste": termin_liste,
-        "profil": profil,
-        "status_choices": Zusage.STATUS_CHOICES,
+        "faellige_kinder": faellige_kinder,
     })
 
 
 @login_required
-def termin_zusage(request, termin_id, status):
+def termin_zusage(request, termin_id, kind_id, status):
     termin = get_object_or_404(Termin, pk=termin_id)
+    kind = get_object_or_404(Taenzerin, pk=kind_id, eltern=request.user)
+
     gueltige_status = {s for s, _ in Zusage.STATUS_CHOICES}
     if status not in gueltige_status:
         messages.error(request, "Ungültiger Status.")
         return redirect("dashboard")
 
-    zusage, _ = Zusage.objects.get_or_create(mitglied=request.user, termin=termin)
+    zusage, _ = Zusage.objects.get_or_create(taenzerin=kind, termin=termin)
     zusage.status = status
     zusage.save()
-    messages.success(request, f"Antwort für '{termin.titel}' gespeichert.")
+    messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
     return redirect("dashboard")
 
 
 @login_required
-def profil_bearbeiten(request):
-    profil, _ = Profil.objects.get_or_create(user=request.user)
+def kinder_liste(request):
+    kinder = Taenzerin.objects.filter(eltern=request.user)
+    return render(request, "mitglieder/kinder_liste.html", {"kinder": kinder})
+
+
+@login_required
+def kind_bearbeiten(request, kind_id=None):
+    kind = None
+    if kind_id is not None:
+        kind = get_object_or_404(Taenzerin, pk=kind_id, eltern=request.user)
 
     if request.method == "POST":
-        form = ProfilForm(request.POST, instance=profil)
+        form = TaenzerinForm(request.POST, instance=kind)
         if form.is_valid():
-            form.save()
-            profil.stammdaten_bestaetigen()
-            messages.success(request, "Stammdaten wurden gespeichert und bestätigt.")
-            return redirect("dashboard")
+            kind = form.save(commit=False)
+            kind.eltern = request.user
+            kind.save()
+            kind.stammdaten_bestaetigen()
+            messages.success(request, f"Daten für {kind.vorname} wurden gespeichert und bestätigt.")
+            return redirect("kinder_liste")
     else:
-        form = ProfilForm(instance=profil)
+        form = TaenzerinForm(instance=kind)
 
-    return render(request, "mitglieder/profil_form.html", {"form": form, "profil": profil})
+    return render(request, "mitglieder/kind_form.html", {"form": form, "kind": kind})
 
 
 @login_required

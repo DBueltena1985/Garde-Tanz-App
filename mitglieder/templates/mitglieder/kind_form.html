@@ -1,0 +1,12 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}{% if kind %}{{ kind.vorname }} bearbeiten{% else %}Neues Kind{% endif %} – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>{% if kind %}{{ kind.vorname }} {{ kind.nachname }} bearbeiten{% else %}Neues Kind hinzufügen{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Speichern &amp; bestätigen</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Meine Kinder – Garde Tanz{% endblock %}
+{% block content %}
+<h2>Meine Kinder</h2>
+
+{% if not kinder %}
+<p>Noch kein Kind angelegt.</p>
+{% endif %}
+
+{% for kind in kinder %}
+<div class="card">
+    <strong>{{ kind.vorname }} {{ kind.nachname }}</strong><br>
+    {% if kind.stammdaten_bestaetigt_am %}
+        Stammdaten zuletzt bestätigt am {{ kind.stammdaten_bestaetigt_am|date:"d.m.Y H:i" }} Uhr.
+    {% else %}
+        Stammdaten noch nicht bestätigt.
+    {% endif %}
+    {% if kind.bestaetigung_faellig %}<span class="status-abgesagt"> (Bestätigung fällig)</span>{% endif %}
+    <br><br>
+    <a href="{% url 'kind_bearbeiten' kind.id %}" class="btn btn-zusagen">Bearbeiten</a>
+</div>
+{% endfor %}
+
+<a href="{% url 'kind_neu' %}" class="btn btn-zusagen">+ Neues Kind hinzufügen</a>
+{% endblock %}

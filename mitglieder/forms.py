@@ -1,12 +1,14 @@
 from django import forms
 
-from .models import Profil
+from .models import Taenzerin
 
 
-class ProfilForm(forms.ModelForm):
+class TaenzerinForm(forms.ModelForm):
     class Meta:
-        model = Profil
+        model = Taenzerin
         fields = [
+            "vorname",
+            "nachname",
             "notfallkontakt_name",
             "notfallkontakt_telefon",
             "notfallkontakt_beziehung",

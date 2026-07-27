@@ -1,15 +1,17 @@
 from django.conf import settings
 from django.db import models
-from django.urls import reverse
 from django.utils import timezone
 
 
-class Profil(models.Model):
-    """Stammdaten einer Tänzerin/eines Mitglieds, zusätzlich zum Django-User."""
+class Taenzerin(models.Model):
+    """Ein Kind, das von einem Elternaccount verwaltet wird, inkl. Stammdaten."""
 
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profil"
+    eltern = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="kinder"
     )
+
+    vorname = models.CharField("Vorname", max_length=100)
+    nachname = models.CharField("Nachname", max_length=100)
 
     # Notfallkontakt
     notfallkontakt_name = models.CharField("Notfallkontakt Name", max_length=200, blank=True)
@@ -33,11 +35,12 @@ class Profil(models.Model):
     )
 
     class Meta:
-        verbose_name = "Profil"
-        verbose_name_plural = "Profile"
+        verbose_name = "Tänzerin"
+        verbose_name_plural = "Tänzerinnen"
+        ordering = ["vorname", "nachname"]
 
     def __str__(self):
-        return self.user.get_full_name() or self.user.username
+        return f"{self.vorname} {self.nachname}"
 
     @property
     def bestaetigung_faellig(self):
@@ -88,8 +91,8 @@ class Zusage(models.Model):
         (STATUS_OFFEN, "Noch offen"),
     ]
 
-    mitglied = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="zusagen"
+    taenzerin = models.ForeignKey(
+        Taenzerin, on_delete=models.CASCADE, related_name="zusagen"
     )
     termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="zusagen")
     status = models.CharField("Status", max_length=20, choices=STATUS_CHOICES, default=STATUS_OFFEN)
@@ -99,10 +102,10 @@ class Zusage(models.Model):
     class Meta:
         verbose_name = "Zu-/Absage"
         verbose_name_plural = "Zu-/Absagen"
-        unique_together = ("mitglied", "termin")
+        unique_together = ("taenzerin", "termin")
 
     def __str__(self):
-        return f"{self.mitglied} - {self.termin} - {self.get_status_display()}"
+        return f"{self.taenzerin} - {self.termin} - {self.get_status_display()}"
 
 
 class NewsPost(models.Model):

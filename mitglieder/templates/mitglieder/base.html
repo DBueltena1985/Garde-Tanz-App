@@ -39,7 +39,7 @@
         {% if user.is_authenticated %}
             <a href="{% url 'dashboard' %}">Termine</a>
             <a href="{% url 'news_liste' %}">News</a>
-            <a href="{% url 'profil_bearbeiten' %}">Meine Stammdaten</a>
+            <a href="{% url 'kinder_liste' %}">Meine Kinder</a>
             {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}

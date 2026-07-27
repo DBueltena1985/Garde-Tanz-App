@@ -2,10 +2,17 @@
 {% block title %}Termine – Garde Tanz{% endblock %}
 {% block content %}
 
-{% if profil.bestaetigung_faellig %}
+{% if not kinder %}
 <div class="banner-warn">
-    ⚠️ Deine Stammdaten sind seit über 3 Monaten nicht bestätigt worden (oder fehlen noch).
-    <a href="{% url 'profil_bearbeiten' %}">Jetzt prüfen &amp; bestätigen</a>
+    Du hast noch kein Kind angelegt. <a href="{% url 'kind_neu' %}">Jetzt Kind hinzufügen</a>
+</div>
+{% endif %}
+
+{% if faellige_kinder %}
+<div class="banner-warn">
+    ⚠️ Stammdaten sind fällig für:
+    {% for kind in faellige_kinder %}{{ kind.vorname }}{% if not forloop.last %}, {% endif %}{% endfor %}
+    – <a href="{% url 'kinder_liste' %}">jetzt prüfen &amp; bestätigen</a>
 </div>
 {% endif %}
 
@@ -22,23 +29,25 @@
     {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
-    <p>
-        Dein Status:
-        <span class="status-{{ eintrag.status }}">
-            {% if eintrag.status == "zugesagt" %}Zugesagt
-            {% elif eintrag.status == "abgesagt" %}Abgesagt
+    {% for ks in eintrag.kinder_status %}
+    <div style="margin-top:0.7rem; padding-top:0.6rem; border-top:1px solid #eee;">
+        <strong>{{ ks.kind.vorname }}</strong> –
+        <span class="status-{{ ks.status }}">
+            {% if ks.status == "zugesagt" %}Zugesagt
+            {% elif ks.status == "abgesagt" %}Abgesagt
             {% else %}Noch offen{% endif %}
         </span>
-    </p>
-
-    <form method="post" action="{% url 'termin_zusage' eintrag.termin.id 'zugesagt' %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-zusagen">Zusagen</button>
-    </form>
-    <form method="post" action="{% url 'termin_zusage' eintrag.termin.id 'abgesagt' %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-absagen">Absagen</button>
-    </form>
+        <br>
+        <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-zusagen">Zusagen</button>
+        </form>
+        <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'abgesagt' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-absagen">Absagen</button>
+        </form>
+    </div>
+    {% endfor %}
 </div>
 {% endfor %}
 

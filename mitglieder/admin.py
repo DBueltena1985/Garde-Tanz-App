@@ -2,26 +2,32 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 
-from .models import NewsPost, Profil, Termin, Zusage
+from .models import NewsPost, Taenzerin, Termin, Zusage
 
 
-class ProfilInline(admin.StackedInline):
-    model = Profil
-    can_delete = False
-    verbose_name_plural = "Stammdaten"
-    fields = (
-        "notfallkontakt_name",
-        "notfallkontakt_telefon",
-        "notfallkontakt_beziehung",
-        "schuhgroesse",
-        "allergien",
-        "medikamente",
-        "sonstige_hinweise",
-        "stammdaten_bestaetigt_am",
-    )
+class TaenzerinInline(admin.TabularInline):
+    model = Taenzerin
+    fk_name = "eltern"
+    extra = 0
+    fields = ("vorname", "nachname", "schuhgroesse", "stammdaten_bestaetigt_am")
+    show_change_link = True
 
 
-class ProfilStatusFilter(admin.SimpleListFilter):
+class CustomUserAdmin(UserAdmin):
+    inlines = [TaenzerinInline]
+    list_display = ("username", "first_name", "last_name", "is_staff", "anzahl_kinder")
+
+    def anzahl_kinder(self, obj):
+        return obj.kinder.count()
+
+    anzahl_kinder.short_description = "Kinder"
+
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
+
+
+class TaenzerinStatusFilter(admin.SimpleListFilter):
     title = "Stammdaten-Status"
     parameter_name = "stammdaten_status"
 
@@ -30,25 +36,27 @@ class ProfilStatusFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "faellig":
-            return [u for u in queryset if hasattr(u, "profil") and u.profil.bestaetigung_faellig]
+            ids = [t.pk for t in queryset if t.bestaetigung_faellig]
+            return queryset.filter(pk__in=ids)
         return queryset
 
 
-class CustomUserAdmin(UserAdmin):
-    inlines = [ProfilInline]
-    list_display = ("username", "first_name", "last_name", "is_staff", "stammdaten_status")
-    list_filter = UserAdmin.list_filter + (ProfilStatusFilter,)
+@admin.register(Taenzerin)
+class TaenzerinAdmin(admin.ModelAdmin):
+    list_display = ("vorname", "nachname", "eltern", "schuhgroesse", "stammdaten_status")
+    list_filter = (TaenzerinStatusFilter,)
+    search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
+    fields = (
+        "eltern", "vorname", "nachname",
+        "notfallkontakt_name", "notfallkontakt_telefon", "notfallkontakt_beziehung",
+        "schuhgroesse", "allergien", "medikamente", "sonstige_hinweise",
+        "stammdaten_bestaetigt_am",
+    )
 
     def stammdaten_status(self, obj):
-        if not hasattr(obj, "profil"):
-            return "kein Profil"
-        return "fällig" if obj.profil.bestaetigung_faellig else "aktuell"
+        return "fällig" if obj.bestaetigung_faellig else "aktuell"
 
     stammdaten_status.short_description = "Stammdaten"
-
-
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
 
 
 @admin.register(Termin)
@@ -76,9 +84,9 @@ class TerminAdmin(admin.ModelAdmin):
 
 @admin.register(Zusage)
 class ZusageAdmin(admin.ModelAdmin):
-    list_display = ("termin", "mitglied", "status", "aktualisiert_am")
+    list_display = ("termin", "taenzerin", "status", "aktualisiert_am")
     list_filter = ("status", "termin")
-    search_fields = ("mitglied__username", "mitglied__first_name", "mitglied__last_name")
+    search_fields = ("taenzerin__vorname", "taenzerin__nachname")
 
 
 @admin.register(NewsPost)
