@@ -141,8 +141,9 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 # E-Mail: standardmäßig landen Mails nur in der Konsole/im Server-Log.
-# Für den echten Versand auf dem Server per Umgebungsvariablen auf SMTP umstellen
-# (z.B. mit einem kostenlosen Brevo-Konto), siehe Beispiel-Werte unten.
+# Ausgehende SMTP-Verbindungen sind auf dem kostenlosen PythonAnywhere-Plan blockiert,
+# darum für den echten Versand 'mitglieder.email_backend.BrevoAPIBackend' nutzen
+# (spricht die Brevo-API per HTTPS an, das ist auf dem Gratis-Plan erlaubt).
 EMAIL_BACKEND = os.environ.get(
     'DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend'
 )
@@ -152,6 +153,7 @@ EMAIL_HOST_USER = os.environ.get('DJANGO_EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('DJANGO_EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.environ.get('DJANGO_EMAIL_USE_TLS', 'True') == 'True'
 DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'Garde Tanz <noreply@garde-tanz.example>')
+BREVO_API_KEY = os.environ.get('DJANGO_BREVO_API_KEY', '')
 
 # Code, den Eltern bei der Selbstregistrierung eingeben müssen (z.B. zusammen mit
 # dem Registrierungslink in der WhatsApp-Gruppe teilen). Auf dem Server per
