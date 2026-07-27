@@ -102,7 +102,7 @@ class Termin(models.Model):
     ort = models.CharField("Ort", max_length=200, blank=True)
     beschreibung = models.TextField("Beschreibung", blank=True)
     erstellt_von = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="erstellte_termine"
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="erstellte_termine"
     )
     erstellt_am = models.DateTimeField(auto_now_add=True)
 
@@ -224,6 +224,40 @@ class Anmeldung(models.Model):
 
     def __str__(self):
         return f"{self.eltern} - {self.anmeldepunkt}"
+
+
+class Aufgabe(models.Model):
+    """To-Do-Eintrag für Admins/Betreuer, optional zu einer Veranstaltung, sonst allgemeine Planung."""
+
+    titel = models.CharField("Titel", max_length=200)
+    beschreibung = models.TextField("Beschreibung", blank=True)
+    termin = models.ForeignKey(
+        Termin, on_delete=models.CASCADE, null=True, blank=True, related_name="aufgaben",
+        limit_choices_to={"art": Termin.ART_VERANSTALTUNG},
+        help_text="Optional: zu welcher Veranstaltung gehört die Aufgabe? Leer lassen für allgemeine Planung.",
+        verbose_name="Veranstaltung",
+    )
+    erledigt = models.BooleanField("Erledigt", default=False)
+    erledigt_am = models.DateTimeField(null=True, blank=True)
+    erstellt_von = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="aufgaben"
+    )
+    erstellt_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Aufgabe"
+        verbose_name_plural = "Aufgaben (To-Do)"
+        ordering = ["erledigt", "termin__beginn", "-erstellt_am"]
+
+    def __str__(self):
+        return self.titel
+
+    def save(self, *args, **kwargs):
+        if self.erledigt and not self.erledigt_am:
+            self.erledigt_am = timezone.now()
+        elif not self.erledigt:
+            self.erledigt_am = None
+        super().save(*args, **kwargs)
 
 
 class NewsPost(models.Model):

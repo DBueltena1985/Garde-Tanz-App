@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import (
-    Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -426,6 +426,18 @@ class TrainingAdmin(TerminAdminBase):
 class VeranstaltungAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
     inlines = [AnmeldepunktInline]
+    list_display = TerminAdminBase.list_display + ("offene_helferpunkte",)
+
+    def offene_helferpunkte(self, obj):
+        offene = [a for a in obj.anmeldepunkte.all() if a.max_anzahl is not None and a.plaetze_frei > 0]
+        if not offene:
+            return "–"
+        return format_html(
+            '<span style="color:#b3261e;">⚠️ {}</span>',
+            ", ".join(f"{a.titel} ({a.plaetze_frei})" for a in offene),
+        )
+
+    offene_helferpunkte.short_description = "Noch offene Helferpunkte"
 
 
 class AnmeldungInline(admin.TabularInline):
@@ -435,16 +447,57 @@ class AnmeldungInline(admin.TabularInline):
     readonly_fields = ("erstellt_am",)
 
 
+class AnmeldepunktOffenFilter(admin.SimpleListFilter):
+    title = "Status"
+    parameter_name = "status"
+
+    def lookups(self, request, model_admin):
+        return (("offen", "Noch offen (Plätze frei)"), ("voll", "Voll"))
+
+    def queryset(self, request, queryset):
+        if self.value() == "offen":
+            ids = [a.pk for a in queryset if a.max_anzahl is not None and a.plaetze_frei > 0]
+            return queryset.filter(pk__in=ids)
+        if self.value() == "voll":
+            ids = [a.pk for a in queryset if a.max_anzahl is not None and a.plaetze_frei == 0]
+            return queryset.filter(pk__in=ids)
+        return queryset
+
+
 @admin.register(Anmeldepunkt)
 class AnmeldepunktAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "mit_kommentar", "max_anzahl", "anzahl_angemeldet")
-    list_filter = ("termin", "mit_kommentar")
+    list_display = ("titel", "termin", "mit_kommentar", "max_anzahl", "anzahl_angemeldet", "noch_offen")
+    list_filter = ("termin", "mit_kommentar", AnmeldepunktOffenFilter)
     inlines = [AnmeldungInline]
 
     def anzahl_angemeldet(self, obj):
         return obj.anmeldungen.count()
 
     anzahl_angemeldet.short_description = "Angemeldet"
+
+    def noch_offen(self, obj):
+        if obj.max_anzahl is None:
+            return "unbegrenzt"
+        if obj.plaetze_frei == 0:
+            return format_html('<span style="color:#1a7a3c;">{}</span>', "✅ voll")
+        return format_html('<span style="color:#b3261e;">⚠️ {} offen</span>', obj.plaetze_frei)
+
+    noch_offen.short_description = "Noch offen"
+
+
+@admin.register(Aufgabe)
+class AufgabeAdmin(admin.ModelAdmin):
+    list_display = ("titel", "termin", "erledigt", "erstellt_von", "erstellt_am")
+    list_display_links = ("titel",)
+    list_editable = ("erledigt",)
+    list_filter = ("erledigt", "termin")
+    search_fields = ("titel", "beschreibung")
+    ordering = ("erledigt", "termin__beginn", "-erstellt_am")
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.erstellt_von = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Zusage)
