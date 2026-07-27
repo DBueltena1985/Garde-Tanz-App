@@ -115,6 +115,38 @@ class Termin(models.Model):
         return f"{self.get_art_display()}: {self.titel} ({self.beginn:%d.%m.%Y %H:%M})"
 
 
+class TrainingManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(art=Termin.ART_TRAINING)
+
+
+class VeranstaltungManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(art=Termin.ART_VERANSTALTUNG)
+
+
+class TrainingTermin(Termin):
+    """Zeigt im Admin-Bereich nur Trainings an (gleiche Tabelle wie Termin)."""
+
+    objects = TrainingManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Training"
+        verbose_name_plural = "Trainings"
+
+
+class VeranstaltungTermin(Termin):
+    """Zeigt im Admin-Bereich nur Veranstaltungen an (gleiche Tabelle wie Termin)."""
+
+    objects = VeranstaltungManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Veranstaltung"
+        verbose_name_plural = "Veranstaltungen"
+
+
 class Zusage(models.Model):
     STATUS_ZUGESAGT = "zugesagt"
     STATUS_ABGESAGT = "abgesagt"

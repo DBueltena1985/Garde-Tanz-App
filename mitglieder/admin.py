@@ -12,7 +12,9 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, Zusage
+from .models import (
+    Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+)
 
 
 class TaenzerinInline(admin.TabularInline):
@@ -89,7 +91,6 @@ class SerienTerminForm(forms.Form):
     ]
 
     titel = forms.CharField(label="Titel", max_length=200)
-    art = forms.ChoiceField(label="Art", choices=Termin.ART_CHOICES)
     gruppe = forms.ChoiceField(label="Gruppe", choices=Termin.GRUPPE_CHOICES)
     wochentag = forms.ChoiceField(label="Wochentag", choices=WOCHENTAG_CHOICES)
     startzeit = forms.TimeField(label="Startzeit", widget=forms.TimeInput(attrs={"type": "time"}))
@@ -121,10 +122,6 @@ class SerieBearbeitenForm(forms.Form):
     neue_gruppe = forms.ChoiceField(
         label="Neue Gruppe", required=False,
         choices=[("", "— unverändert —")] + Termin.GRUPPE_CHOICES,
-    )
-    neue_art = forms.ChoiceField(
-        label="Neue Art", required=False,
-        choices=[("", "— unverändert —")] + Termin.ART_CHOICES,
     )
     neue_beschreibung = forms.CharField(label="Neue Beschreibung", required=False, widget=forms.Textarea(attrs={"rows": 2}))
     serie_verlaengern_bis = forms.DateField(
@@ -158,14 +155,19 @@ class AnmeldepunktInline(admin.TabularInline):
     fields = ("titel", "beschreibung", "max_anzahl")
 
 
-@admin.register(Termin)
-class TerminAdmin(admin.ModelAdmin):
-    list_display = ("titel", "art", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am", "anzahl_zusagen", "anzahl_absagen")
-    list_filter = ("art", "gruppe")
+class TerminAdminBase(admin.ModelAdmin):
+    """Gemeinsame Basis für die getrennten Training-/Veranstaltungs-Admins (gleiche DB-Tabelle)."""
+
+    ART_WERT = None  # in Unterklassen setzen
+    DUPLIKAT_FELDER = ["titel", "gruppe", "beginn", "ende", "ort", "beschreibung"]
+
+    list_display = ("titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am", "anzahl_zusagen", "anzahl_absagen")
+    list_filter = ("gruppe",)
     search_fields = ("titel",)
     date_hierarchy = "beginn"
     ordering = ("-beginn",)
-    inlines = [AnmeldepunktInline]
+    exclude = ("art",)
+    change_list_template = "admin/mitglieder/termin_change_list.html"
 
     def gruppe_anzeige(self, obj):
         return obj.get_gruppe_display()
@@ -183,18 +185,24 @@ class TerminAdmin(admin.ModelAdmin):
     anzahl_absagen.short_description = "Absagen"
 
     def save_model(self, request, obj, form, change):
+        obj.art = self.ART_WERT
         if not obj.pk:
             obj.erstellt_von = request.user
         super().save_model(request, obj, form, change)
 
-    DUPLIKAT_FELDER = ["titel", "art", "gruppe", "beginn", "ende", "ort", "beschreibung"]
+    def _url_name(self, suffix):
+        opts = self.model._meta
+        return f"{opts.app_label}_{opts.model_name}_{suffix}"
+
+    def _changelist_redirect(self):
+        return redirect(f"admin:{self._url_name('changelist')}")
 
     def get_urls(self):
         eigene_urls = [
-            path("serie-erstellen/", self.admin_site.admin_view(self.serie_erstellen), name="mitglieder_termin_serie"),
-            path("duplikate/", self.admin_site.admin_view(self.duplikate_bereinigen), name="mitglieder_termin_duplikate"),
-            path("serie-bearbeiten/", self.admin_site.admin_view(self.serie_bearbeiten), name="mitglieder_termin_serie_bearbeiten"),
-            path("serie-loeschen/", self.admin_site.admin_view(self.serie_loeschen), name="mitglieder_termin_serie_loeschen"),
+            path("serie-erstellen/", self.admin_site.admin_view(self.serie_erstellen), name=self._url_name("serie")),
+            path("duplikate/", self.admin_site.admin_view(self.duplikate_bereinigen), name=self._url_name("duplikate")),
+            path("serie-bearbeiten/", self.admin_site.admin_view(self.serie_bearbeiten), name=self._url_name("serie_bearbeiten")),
+            path("serie-loeschen/", self.admin_site.admin_view(self.serie_loeschen), name=self._url_name("serie_loeschen")),
         ]
         return eigene_urls + super().get_urls()
 
@@ -203,7 +211,7 @@ class TerminAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         titel_choices = [
-            (t, t) for t in Termin.objects.order_by("titel").values_list("titel", flat=True).distinct()
+            (t, t) for t in self.model.objects.order_by("titel").values_list("titel", flat=True).distinct()
         ]
 
         vorschau = None
@@ -211,7 +219,7 @@ class TerminAdmin(admin.ModelAdmin):
             form = SerieLoeschenForm(request.POST, titel_choices=titel_choices)
             if form.is_valid():
                 daten = form.cleaned_data
-                passende = Termin.objects.filter(titel=daten["titel"])
+                passende = self.model.objects.filter(titel=daten["titel"])
                 if daten["ab_datum"]:
                     passende = passende.filter(beginn__date__gte=daten["ab_datum"])
 
@@ -219,7 +227,7 @@ class TerminAdmin(admin.ModelAdmin):
                     anzahl = passende.count()
                     passende.delete()
                     messages.success(request, f"{anzahl} Termine der Serie '{daten['titel']}' wurden gelöscht.")
-                    return redirect("admin:mitglieder_termin_changelist")
+                    return self._changelist_redirect()
 
                 vorschau = {
                     "titel": daten["titel"],
@@ -240,14 +248,14 @@ class TerminAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         titel_choices = [
-            (t, t) for t in Termin.objects.order_by("titel").values_list("titel", flat=True).distinct()
+            (t, t) for t in self.model.objects.order_by("titel").values_list("titel", flat=True).distinct()
         ]
 
         if request.method == "POST":
             form = SerieBearbeitenForm(request.POST, titel_choices=titel_choices)
             if form.is_valid():
                 daten = form.cleaned_data
-                passende = Termin.objects.filter(titel=daten["titel"], beginn__date__gte=daten["ab_datum"])
+                passende = self.model.objects.filter(titel=daten["titel"], beginn__date__gte=daten["ab_datum"])
 
                 aktualisiert = 0
                 for termin in passende:
@@ -266,9 +274,6 @@ class TerminAdmin(admin.ModelAdmin):
                     if daten["neue_gruppe"]:
                         termin.gruppe = daten["neue_gruppe"]
                         geaendert = True
-                    if daten["neue_art"]:
-                        termin.art = daten["neue_art"]
-                        geaendert = True
                     if daten["neue_beschreibung"]:
                         termin.beschreibung = daten["neue_beschreibung"]
                         geaendert = True
@@ -279,7 +284,7 @@ class TerminAdmin(admin.ModelAdmin):
 
                 neu_erstellt = 0
                 if daten["serie_verlaengern_bis"]:
-                    letzter_termin = Termin.objects.filter(titel=daten["titel"]).order_by("-beginn").first()
+                    letzter_termin = self.model.objects.filter(titel=daten["titel"]).order_by("-beginn").first()
                     if letzter_termin:
                         letzter_lokal = timezone.localtime(letzter_termin.beginn)
                         startzeit = daten["neue_startzeit"] or letzter_lokal.time()
@@ -288,7 +293,6 @@ class TerminAdmin(admin.ModelAdmin):
                         )
                         ort = daten["neuer_ort"] or letzter_termin.ort
                         gruppe = daten["neue_gruppe"] or letzter_termin.gruppe
-                        art = daten["neue_art"] or letzter_termin.art
                         beschreibung = daten["neue_beschreibung"] or letzter_termin.beschreibung
 
                         naechstes_datum = letzter_lokal.date() + timedelta(days=7)
@@ -297,8 +301,8 @@ class TerminAdmin(admin.ModelAdmin):
                             neues_ende = (
                                 timezone.make_aware(datetime.combine(naechstes_datum, endzeit)) if endzeit else None
                             )
-                            Termin.objects.create(
-                                titel=daten["titel"], art=art, gruppe=gruppe,
+                            self.model.objects.create(
+                                titel=daten["titel"], art=self.ART_WERT, gruppe=gruppe,
                                 beginn=neuer_beginn, ende=neues_ende, ort=ort,
                                 beschreibung=beschreibung, erstellt_von=request.user,
                             )
@@ -313,7 +317,7 @@ class TerminAdmin(admin.ModelAdmin):
                 if not teile:
                     teile.append("keine Änderungen vorgenommen")
                 messages.success(request, f"Serie '{daten['titel']}': " + ", ".join(teile) + ".")
-                return redirect("admin:mitglieder_termin_changelist")
+                return self._changelist_redirect()
         else:
             form = SerieBearbeitenForm(titel_choices=titel_choices)
 
@@ -325,7 +329,7 @@ class TerminAdmin(admin.ModelAdmin):
 
     def _duplikat_gruppen(self):
         return (
-            Termin.objects.values(*self.DUPLIKAT_FELDER)
+            self.model.objects.values(*self.DUPLIKAT_FELDER)
             .annotate(anzahl=Count("id"))
             .filter(anzahl__gt=1)
         )
@@ -341,22 +345,22 @@ class TerminAdmin(admin.ModelAdmin):
             for gruppe in gruppen:
                 filter_kwargs = {feld: gruppe[feld] for feld in self.DUPLIKAT_FELDER}
                 kandidaten = list(
-                    Termin.objects.filter(**filter_kwargs)
+                    self.model.objects.filter(**filter_kwargs)
                     .annotate(n_zusagen=Count("zusagen", distinct=True), n_anmeldepunkte=Count("anmeldepunkte", distinct=True))
                     .order_by("-n_zusagen", "-n_anmeldepunkte", "id")
                     .values_list("id", flat=True)
                 )
                 zu_loeschen = kandidaten[1:]
                 geloescht += len(zu_loeschen)
-                Termin.objects.filter(id__in=zu_loeschen).delete()
+                self.model.objects.filter(id__in=zu_loeschen).delete()
 
             messages.success(request, f"{geloescht} doppelte Termine wurden entfernt.")
-            return redirect("admin:mitglieder_termin_changelist")
+            return self._changelist_redirect()
 
         vorschau = []
         for gruppe in gruppen:
             filter_kwargs = {feld: gruppe[feld] for feld in self.DUPLIKAT_FELDER}
-            beispiel = Termin.objects.filter(**filter_kwargs).order_by("id").first()
+            beispiel = self.model.objects.filter(**filter_kwargs).order_by("id").first()
             vorschau.append({"termin": beispiel, "anzahl": gruppe["anzahl"]})
 
         return render(
@@ -388,9 +392,9 @@ class TerminAdmin(admin.ModelAdmin):
                     ende = None
                     if daten["endzeit"]:
                         ende = timezone.make_aware(datetime.combine(aktuelles_datum, daten["endzeit"]))
-                    Termin.objects.create(
+                    self.model.objects.create(
                         titel=daten["titel"],
-                        art=daten["art"],
+                        art=self.ART_WERT,
                         gruppe=daten["gruppe"],
                         beginn=beginn,
                         ende=ende,
@@ -402,7 +406,7 @@ class TerminAdmin(admin.ModelAdmin):
                     aktuelles_datum += timedelta(days=7)
 
                 messages.success(request, f"{erstellt} Termine wurden angelegt.")
-                return redirect("admin:mitglieder_termin_changelist")
+                return self._changelist_redirect()
         else:
             form = SerienTerminForm()
 
@@ -411,6 +415,17 @@ class TerminAdmin(admin.ModelAdmin):
             "admin/mitglieder/serie_erstellen.html",
             {"form": form, "opts": self.model._meta, "title": "Terminserie erstellen"},
         )
+
+
+@admin.register(TrainingTermin)
+class TrainingAdmin(TerminAdminBase):
+    ART_WERT = Termin.ART_TRAINING
+
+
+@admin.register(VeranstaltungTermin)
+class VeranstaltungAdmin(TerminAdminBase):
+    ART_WERT = Termin.ART_VERANSTALTUNG
+    inlines = [AnmeldepunktInline]
 
 
 class AnmeldungInline(admin.TabularInline):

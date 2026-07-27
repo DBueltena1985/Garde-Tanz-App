@@ -1,4 +1,5 @@
 {% extends "admin/base_site.html" %}
+{% load admin_urls %}
 
 {% block content %}
 <p>Löscht alle Termine einer Serie (gleicher Titel), optional nur ab einem bestimmten Datum.</p>
@@ -12,7 +13,7 @@
 {% else %}
     {% if not vorschau.termine %}
     <p>Keine Termine gefunden.</p>
-    <p><a href="{% url 'admin:mitglieder_termin_serie_loeschen' %}">&laquo; Zurück</a></p>
+    <p><a href="{% url opts|admin_urlname:'serie_loeschen' %}">&laquo; Zurück</a></p>
     {% else %}
     <p>
         <strong>{{ vorschau.termine|length }}</strong> Termine der Serie
@@ -36,7 +37,7 @@
             onclick="return confirm('Wirklich {{ vorschau.termine|length }} Termine endgültig löschen? Das kann nicht rückgängig gemacht werden.');"
         >
     </form>
-    <p><a href="{% url 'admin:mitglieder_termin_serie_loeschen' %}">&laquo; Zurück</a></p>
+    <p><a href="{% url opts|admin_urlname:'serie_loeschen' %}">&laquo; Zurück</a></p>
     {% endif %}
 {% endif %}
 {% endblock %}
