@@ -1,0 +1,7 @@
+{% extends "admin/mitglieder/termin_change_list.html" %}
+{% load admin_urls %}
+
+{% block object-tools-items %}
+    <li><a href="{% url opts|admin_urlname:'teilnahme_statistik' %}">📊 Teilnahme-Statistik</a></li>
+    {{ block.super }}
+{% endblock %}

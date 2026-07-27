@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<p>
+    <strong>{{ termin.titel }}</strong> – {{ termin.beginn|date:"d.m.Y H:i" }} Uhr
+    {% if termin.ort %} – {{ termin.ort }}{% endif %}
+</p>
+
+{% if not zeilen %}
+<p>Keine Tänzerinnen in der passenden Gruppe gefunden.</p>
+{% else %}
+<form method="post">
+    {% csrf_token %}
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align:left; padding:6px 12px 6px 0;">Tänzerin</th>
+                <th style="text-align:left; padding:6px 12px;">Zu-/Absage</th>
+                <th style="text-align:left; padding:6px 12px;">Anwesend</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for zeile in zeilen %}
+            <tr>
+                <td style="padding:4px 12px 4px 0;">{{ zeile.kind.vorname }} {{ zeile.kind.nachname }}</td>
+                <td style="padding:4px 12px;">
+                    {% if zeile.status == "zugesagt" %}Zugesagt
+                    {% elif zeile.status == "abgesagt" %}Abgesagt
+                    {% else %}Noch offen{% endif %}
+                </td>
+                <td style="padding:4px 12px;">
+                    <input type="checkbox" name="anwesend_{{ zeile.kind.id }}" {% if zeile.anwesend %}checked{% endif %}>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><input type="submit" value="Anwesenheit speichern" class="default"></p>
+</form>
+{% endif %}
+{% endblock %}

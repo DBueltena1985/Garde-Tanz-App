@@ -1,0 +1,13 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Feedback – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Feedback / Nachricht an die Admins</h2>
+    <p>Hast du eine Frage, einen Verbesserungsvorschlag oder ein Problem? Schreib es hier – die Admins sehen es direkt im Admin-Bereich.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Absenden</button>
+    </form>
+</div>
+{% endblock %}

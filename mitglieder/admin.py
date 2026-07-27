@@ -6,15 +6,24 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count
-from django.shortcuts import redirect, render
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin,
+    Zusage,
 )
+
+
+def _relevante_kinder(gruppe):
+    """Liefert alle Tänzerinnen, deren Gruppe zum Termin passt (oder alle bei 'beide')."""
+    alle = Taenzerin.objects.select_related("eltern")
+    if gruppe == Termin.GRUPPE_BEIDE:
+        return list(alle)
+    return [k for k in alle if k.gruppe == gruppe]
 
 
 class TaenzerinInline(admin.TabularInline):
@@ -173,7 +182,10 @@ class TerminAdminBase(admin.ModelAdmin):
     ART_WERT = None  # in Unterklassen setzen
     DUPLIKAT_FELDER = ["titel", "gruppe", "beginn", "ende", "ort", "beschreibung"]
 
-    list_display = ("titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am", "anzahl_zusagen", "anzahl_absagen")
+    list_display = (
+        "titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
+        "anzahl_zusagen", "anzahl_absagen", "anwesenheit_link",
+    )
     list_filter = ("gruppe",)
     search_fields = ("titel",)
     date_hierarchy = "beginn"
@@ -186,15 +198,27 @@ class TerminAdminBase(admin.ModelAdmin):
 
     gruppe_anzeige.short_description = "Gruppe"
 
+    def _zusagen_link(self, obj, status):
+        anzahl = obj.zusagen.filter(status=status).count()
+        url = reverse("admin:mitglieder_zusage_changelist")
+        url += f"?termin__id__exact={obj.pk}&status__exact={status}"
+        return format_html('<a href="{}">{}</a>', url, anzahl)
+
     def anzahl_zusagen(self, obj):
-        return obj.zusagen.filter(status=Zusage.STATUS_ZUGESAGT).count()
+        return self._zusagen_link(obj, Zusage.STATUS_ZUGESAGT)
 
     anzahl_zusagen.short_description = "Zusagen"
 
     def anzahl_absagen(self, obj):
-        return obj.zusagen.filter(status=Zusage.STATUS_ABGESAGT).count()
+        return self._zusagen_link(obj, Zusage.STATUS_ABGESAGT)
 
     anzahl_absagen.short_description = "Absagen"
+
+    def anwesenheit_link(self, obj):
+        url = reverse(f"admin:{self._url_name('anwesenheit')}", args=[obj.pk])
+        return format_html('<a class="button" href="{}">📋 Anwesenheit</a>', url)
+
+    anwesenheit_link.short_description = "Anwesenheit"
 
     def save_model(self, request, obj, form, change):
         obj.art = self.ART_WERT
@@ -215,8 +239,40 @@ class TerminAdminBase(admin.ModelAdmin):
             path("duplikate/", self.admin_site.admin_view(self.duplikate_bereinigen), name=self._url_name("duplikate")),
             path("serie-bearbeiten/", self.admin_site.admin_view(self.serie_bearbeiten), name=self._url_name("serie_bearbeiten")),
             path("serie-loeschen/", self.admin_site.admin_view(self.serie_loeschen), name=self._url_name("serie_loeschen")),
+            path("<int:object_id>/anwesenheit/", self.admin_site.admin_view(self.anwesenheit), name=self._url_name("anwesenheit")),
         ]
         return eigene_urls + super().get_urls()
+
+    def anwesenheit(self, request, object_id):
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+
+        termin = get_object_or_404(self.model, pk=object_id)
+        kinder = _relevante_kinder(termin.gruppe)
+
+        if request.method == "POST":
+            for kind in kinder:
+                zusage, _ = Zusage.objects.get_or_create(taenzerin=kind, termin=termin)
+                zusage.anwesend = request.POST.get(f"anwesend_{kind.id}") == "on"
+                zusage.save()
+            messages.success(request, f"Anwesenheit für '{termin.titel}' gespeichert.")
+            return self._changelist_redirect()
+
+        zusagen = {z.taenzerin_id: z for z in Zusage.objects.filter(termin=termin)}
+        zeilen = []
+        for kind in sorted(kinder, key=lambda k: k.vorname):
+            zusage = zusagen.get(kind.id)
+            zeilen.append({
+                "kind": kind,
+                "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
+                "anwesend": zusage.anwesend if zusage else None,
+            })
+
+        return render(
+            request,
+            "admin/mitglieder/anwesenheit.html",
+            {"termin": termin, "zeilen": zeilen, "opts": self.model._meta, "title": f"Anwesenheit: {termin.titel}"},
+        )
 
     def serie_loeschen(self, request):
         if not self.has_delete_permission(request):
@@ -432,6 +488,46 @@ class TerminAdminBase(admin.ModelAdmin):
 @admin.register(TrainingTermin)
 class TrainingAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_TRAINING
+    change_list_template = "admin/mitglieder/training_change_list.html"
+
+    def get_urls(self):
+        eigene_urls = [
+            path(
+                "teilnahme-statistik/",
+                self.admin_site.admin_view(self.teilnahme_statistik),
+                name=self._url_name("teilnahme_statistik"),
+            ),
+        ]
+        return eigene_urls + super().get_urls()
+
+    def teilnahme_statistik(self, request):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        trainings_alle = Termin.objects.filter(art=Termin.ART_TRAINING)
+        zeilen = []
+        for kind in Taenzerin.objects.select_related("eltern"):
+            if kind.gruppe:
+                trainings = trainings_alle.filter(Q(gruppe=Termin.GRUPPE_BEIDE) | Q(gruppe=kind.gruppe))
+            else:
+                trainings = trainings_alle.filter(gruppe=Termin.GRUPPE_BEIDE)
+            gesamt = trainings.count()
+            zusagen_qs = Zusage.objects.filter(taenzerin=kind, termin__in=trainings)
+            zugesagt = zusagen_qs.filter(status=Zusage.STATUS_ZUGESAGT).count()
+            abgesagt = zusagen_qs.filter(status=Zusage.STATUS_ABGESAGT).count()
+            offen = gesamt - zugesagt - abgesagt
+            quote = round(zugesagt / gesamt * 100) if gesamt else None
+            zeilen.append({
+                "kind": kind, "gesamt": gesamt, "zugesagt": zugesagt,
+                "abgesagt": abgesagt, "offen": offen, "quote": quote,
+            })
+        zeilen.sort(key=lambda z: (z["quote"] is None, -(z["quote"] or 0)))
+
+        return render(
+            request,
+            "admin/mitglieder/teilnahme_statistik.html",
+            {"zeilen": zeilen, "opts": self.model._meta, "title": "Teilnahme-Statistik Training"},
+        )
 
 
 @admin.register(VeranstaltungTermin)
@@ -515,8 +611,9 @@ class AufgabeAdmin(admin.ModelAdmin):
 
 @admin.register(Zusage)
 class ZusageAdmin(admin.ModelAdmin):
-    list_display = ("termin_datum", "termin", "taenzerin", "status", "aktualisiert_am")
-    list_filter = ("status", "termin")
+    list_display = ("termin_datum", "termin", "taenzerin", "status", "anwesend", "aktualisiert_am")
+    list_editable = ("anwesend",)
+    list_filter = ("status", "anwesend", "termin")
     search_fields = ("taenzerin__vorname", "taenzerin__nachname")
     date_hierarchy = "termin__beginn"
     ordering = ("termin__beginn", "taenzerin__vorname")
@@ -537,6 +634,24 @@ class NewsPostAdmin(admin.ModelAdmin):
         if not obj.pk:
             obj.autor = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ("betreff_anzeige", "absender", "gelesen", "erstellt_am")
+    list_display_links = ("betreff_anzeige",)
+    list_editable = ("gelesen",)
+    list_filter = ("gelesen",)
+    readonly_fields = ("absender", "betreff", "nachricht", "erstellt_am")
+    ordering = ("gelesen", "-erstellt_am")
+
+    def betreff_anzeige(self, obj):
+        return obj.betreff or obj.nachricht[:60]
+
+    betreff_anzeige.short_description = "Betreff"
+
+    def has_add_permission(self, request):
+        return False
 
 
 _get_app_list_ohne_anzahl = admin.site.get_app_list

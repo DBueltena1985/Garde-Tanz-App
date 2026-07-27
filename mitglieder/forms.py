@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Taenzerin
+from .models import Feedback, Taenzerin
 
 
 class RegistrierenForm(UserCreationForm):
@@ -35,6 +35,14 @@ class KontoForm(forms.ModelForm):
             "last_name": "Nachname",
             "email": "E-Mail",
         }
+
+
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ["betreff", "nachricht"]
+        labels = {"betreff": "Betreff (optional)", "nachricht": "Nachricht"}
+        widgets = {"nachricht": forms.Textarea(attrs={"rows": 5})}
 
 
 class TaenzerinForm(forms.ModelForm):

@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import KontoForm, RegistrierenForm, TaenzerinForm
+from .forms import FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
 from .models import Anmeldepunkt, Anmeldung, NewsPost, Taenzerin, Termin, Zusage
 
 MONATSNAMEN = [
@@ -265,6 +265,22 @@ def kind_bearbeiten(request, kind_id=None):
         form = TaenzerinForm(instance=kind)
 
     return render(request, "mitglieder/kind_form.html", {"form": form, "kind": kind})
+
+
+@login_required
+def feedback_senden(request):
+    if request.method == "POST":
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.absender = request.user
+            feedback.save()
+            messages.success(request, "Danke, deine Nachricht wurde an die Admins geschickt.")
+            return redirect("dashboard")
+    else:
+        form = FeedbackForm()
+
+    return render(request, "mitglieder/feedback_form.html", {"form": form})
 
 
 @login_required

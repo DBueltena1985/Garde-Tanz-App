@@ -163,6 +163,10 @@ class Zusage(models.Model):
     termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="zusagen")
     status = models.CharField("Status", max_length=20, choices=STATUS_CHOICES, default=STATUS_OFFEN)
     kommentar = models.CharField("Kommentar", max_length=300, blank=True)
+    anwesend = models.BooleanField(
+        "Anwesend", null=True, blank=True,
+        help_text="Von Admin/Betreuer nach dem Termin bestätigt. Leer = noch nicht erfasst.",
+    )
     aktualisiert_am = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -275,3 +279,23 @@ class NewsPost(models.Model):
 
     def __str__(self):
         return self.titel
+
+
+class Feedback(models.Model):
+    """Nachricht eines Mitglieds an die Admins/Betreuer."""
+
+    absender = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="feedbacks"
+    )
+    betreff = models.CharField("Betreff", max_length=200, blank=True)
+    nachricht = models.TextField("Nachricht")
+    gelesen = models.BooleanField("Gelesen", default=False)
+    erstellt_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Feedback"
+        verbose_name_plural = "Feedback / Nachrichten"
+        ordering = ["gelesen", "-erstellt_am"]
+
+    def __str__(self):
+        return f"{self.absender}: {self.betreff or self.nachricht[:40]}"
