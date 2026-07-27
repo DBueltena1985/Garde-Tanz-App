@@ -126,6 +126,12 @@ class SerieBearbeitenForm(forms.Form):
         choices=[("", "— unverändert —")] + Termin.ART_CHOICES,
     )
     neue_beschreibung = forms.CharField(label="Neue Beschreibung", required=False, widget=forms.Textarea(attrs={"rows": 2}))
+    serie_verlaengern_bis = forms.DateField(
+        label="Serie verlängern bis (optional)", required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        help_text="Ergänzt zusätzliche Termine im gleichen Wochenrhythmus bis zu diesem Datum, "
+                   "im Anschluss an den letzten bestehenden Termin der Serie.",
+    )
 
     def __init__(self, *args, titel_choices=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -270,7 +276,42 @@ class TerminAdmin(admin.ModelAdmin):
                         termin.save()
                         aktualisiert += 1
 
-                messages.success(request, f"{aktualisiert} Termine der Serie '{daten['titel']}' wurden aktualisiert.")
+                neu_erstellt = 0
+                if daten["serie_verlaengern_bis"]:
+                    letzter_termin = Termin.objects.filter(titel=daten["titel"]).order_by("-beginn").first()
+                    if letzter_termin:
+                        letzter_lokal = timezone.localtime(letzter_termin.beginn)
+                        startzeit = daten["neue_startzeit"] or letzter_lokal.time()
+                        endzeit = daten["neue_endzeit"] or (
+                            timezone.localtime(letzter_termin.ende).time() if letzter_termin.ende else None
+                        )
+                        ort = daten["neuer_ort"] or letzter_termin.ort
+                        gruppe = daten["neue_gruppe"] or letzter_termin.gruppe
+                        art = daten["neue_art"] or letzter_termin.art
+                        beschreibung = daten["neue_beschreibung"] or letzter_termin.beschreibung
+
+                        naechstes_datum = letzter_lokal.date() + timedelta(days=7)
+                        while naechstes_datum <= daten["serie_verlaengern_bis"]:
+                            neuer_beginn = timezone.make_aware(datetime.combine(naechstes_datum, startzeit))
+                            neues_ende = (
+                                timezone.make_aware(datetime.combine(naechstes_datum, endzeit)) if endzeit else None
+                            )
+                            Termin.objects.create(
+                                titel=daten["titel"], art=art, gruppe=gruppe,
+                                beginn=neuer_beginn, ende=neues_ende, ort=ort,
+                                beschreibung=beschreibung, erstellt_von=request.user,
+                            )
+                            neu_erstellt += 1
+                            naechstes_datum += timedelta(days=7)
+
+                teile = []
+                if aktualisiert:
+                    teile.append(f"{aktualisiert} Termine aktualisiert")
+                if neu_erstellt:
+                    teile.append(f"{neu_erstellt} neue Termine ergänzt")
+                if not teile:
+                    teile.append("keine Änderungen vorgenommen")
+                messages.success(request, f"Serie '{daten['titel']}': " + ", ".join(teile) + ".")
                 return redirect("admin:mitglieder_termin_changelist")
         else:
             form = SerieBearbeitenForm(titel_choices=titel_choices)
