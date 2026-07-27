@@ -62,7 +62,7 @@
 {% endif %}
 
 {% for gruppe in veranstaltungen_gruppen %}
-<details class="monats-gruppe" open>
+<details class="monats-gruppe" {% if gruppe.force_open %}open{% endif %}>
     <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
     {% for eintrag in gruppe.eintraege %}
         {% include "mitglieder/_termin_karte.html" %}
@@ -92,7 +92,7 @@
 {% endif %}
 
 {% for gruppe in training_gruppen %}
-<details class="monats-gruppe" {% if forloop.first or gruppe.force_open %}open{% endif %}>
+<details class="monats-gruppe" {% if gruppe.force_open %}open{% endif %}>
     <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
     {% for eintrag in gruppe.eintraege %}
         {% include "mitglieder/_termin_karte.html" %}

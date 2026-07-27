@@ -27,11 +27,12 @@
         .logo { height: 40px; width: 40px; border-radius: 50%; filter: invert(1); }
         .btn-logout { background: #f7d9d6; color: #b3261e; font-weight: 600; }
         @media (max-width: 600px) {
-            nav { gap: 0.4rem 0.6rem; padding: 0.6rem 0.8rem; }
-            nav a.brand { width: 100%; margin-right: 0; margin-bottom: 0.1rem; }
+            nav { position: relative; gap: 0.4rem 0.6rem; padding: 0.6rem 0.8rem; }
+            nav a.brand { width: 100%; margin-right: 0; margin-bottom: 0.1rem; padding-right: 4.5rem; box-sizing: border-box; }
             .nav-links { gap: 0.35rem 0.6rem; font-size: 0.85rem; width: 100%; }
-            .logout-form { width: 100%; margin-top: 0.2rem; }
-            .btn-logout { width: 100%; text-align: center; }
+            .logout-form { position: absolute; top: 0.6rem; right: 0.8rem; margin-top: 0; }
+            .btn-logout { width: auto; padding: 0.3rem 0.6rem; font-size: 0.78rem; }
+            .logout-name { display: none; }
         }
         .card { background: white; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .status-zugesagt { color: #1a7a3c; font-weight: 600; }
@@ -102,7 +103,7 @@
                 {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
                 <form method="post" action="{% url 'logout' %}" class="logout-form">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-logout">Logout ({{ user.first_name|default:user.username }})</button>
+                    <button type="submit" class="btn btn-logout">Logout<span class="logout-name"> ({{ user.first_name|default:user.username }})</span></button>
                 </form>
             </div>
         {% endif %}

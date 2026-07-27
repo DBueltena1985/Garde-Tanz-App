@@ -176,12 +176,31 @@ class AnmeldepunktInline(admin.TabularInline):
     status_anzeige.short_description = "Status"
 
 
+class TerminForm(forms.ModelForm):
+    """Native Datum-/Uhrzeit-Picker für Beginn/Ende (kein Tippen von Punkten/Doppelpunkten nötig)."""
+
+    beginn = forms.SplitDateTimeField(
+        label="Beginn",
+        widget=forms.SplitDateTimeWidget(date_attrs={"type": "date"}, time_attrs={"type": "time"}),
+    )
+    ende = forms.SplitDateTimeField(
+        label="Ende",
+        required=False,
+        widget=forms.SplitDateTimeWidget(date_attrs={"type": "date"}, time_attrs={"type": "time"}),
+    )
+
+    class Meta:
+        model = Termin
+        fields = "__all__"
+
+
 class TerminAdminBase(admin.ModelAdmin):
     """Gemeinsame Basis für die getrennten Training-/Veranstaltungs-Admins (gleiche DB-Tabelle)."""
 
     ART_WERT = None  # in Unterklassen setzen
     DUPLIKAT_FELDER = ["titel", "gruppe", "beginn", "ende", "ort", "beschreibung"]
 
+    form = TerminForm
     list_display = (
         "titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
         "anzahl_zusagen", "anzahl_absagen", "anwesenheit_link",
@@ -189,7 +208,7 @@ class TerminAdminBase(admin.ModelAdmin):
     list_filter = ("gruppe",)
     search_fields = ("titel",)
     date_hierarchy = "beginn"
-    ordering = ("-beginn",)
+    ordering = ("beginn",)
     exclude = ("art",)
     change_list_template = "admin/mitglieder/termin_change_list.html"
 
