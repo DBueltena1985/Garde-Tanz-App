@@ -1,4 +1,5 @@
 {% extends "admin/index.html" %}
+{% load i18n log %}
 
 {% block content %}
 <div style="background:#eef6ff; border:1px solid #b8dcff; padding:1rem; border-radius:6px; margin-bottom:1.2rem;">
@@ -7,4 +8,38 @@
     <strong>Einladungscode:</strong> <code>{{ einladungscode }}</code>
 </div>
 {{ block.super }}
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <details>
+            <summary style="cursor:pointer; font-weight:bold; font-size:0.9rem; padding:4px 0;">{% translate 'Recent actions' %}</summary>
+            <h3>{% translate 'My actions' %}</h3>
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if not admin_log %}
+            <p>{% translate 'None available' %}</p>
+            {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                <span class="visually-hidden">{% if entry.is_addition %}{% translate 'Added:' %}{% elif entry.is_change %}{% translate 'Changed:' %}{% elif entry.is_deletion %}{% translate 'Deleted:' %}{% endif %}</span>
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    {{ entry.object_repr }}
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <br>
+                {% if entry.content_type %}
+                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+                {% else %}
+                    <span class="mini quiet">{% translate 'Unknown content' %}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </details>
+    </div>
+</div>
 {% endblock %}
