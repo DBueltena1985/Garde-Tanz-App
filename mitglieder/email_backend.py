@@ -54,5 +54,12 @@ class BrevoAPIBackend(BaseEmailBackend):
             },
             method="POST",
         )
-        with urlopen(request, timeout=10) as antwort:
-            antwort.read()
+        try:
+            with urlopen(request, timeout=10) as antwort:
+                antwort.read()
+        except HTTPError as fehler:
+            # Brevo schickt den eigentlichen Grund (z.B. "unrecognized IP address",
+            # "key not found") als JSON im Antwort-Body mit - den wollen wir im Log sehen,
+            # nicht nur den nichtssagenden HTTP-Statuscode.
+            body = fehler.read().decode("utf-8", errors="replace")
+            raise HTTPError(fehler.url, fehler.code, f"{fehler.reason} – Brevo-Antwort: {body}", fehler.headers, None) from fehler
