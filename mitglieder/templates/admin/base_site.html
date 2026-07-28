@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #changelist-filter.gt-filter-collapsed > *:not(#changelist-filter-header) { display: none; }
+    #changelist-filter-header { cursor: pointer; }
+</style>
+<script>
+    // Der "FILTER"-Kasten in Listenansichten startet zugeklappt, Klick auf die
+    // Überschrift klappt ihn auf/zu.
+    document.addEventListener('DOMContentLoaded', function () {
+        var filterBox = document.getElementById('changelist-filter');
+        var heading = document.getElementById('changelist-filter-header');
+        if (!filterBox || !heading) { return; }
+        filterBox.classList.add('gt-filter-collapsed');
+        heading.addEventListener('click', function () {
+            filterBox.classList.toggle('gt-filter-collapsed');
+        });
+    });
+</script>
+{% endblock %}
