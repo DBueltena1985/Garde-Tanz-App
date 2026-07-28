@@ -1,0 +1,18 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Familienkonto erstellen – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Familienkonto erstellen</h2>
+    <p>
+        Du wurdest von <strong>{{ einladendes_konto.first_name|default:einladendes_konto.username }}</strong>
+        eingeladen. Nach der Registrierung siehst und verwaltest du dieselben Kinder – du musst sie nicht
+        noch einmal anlegen.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Konto erstellen</button>
+    </form>
+    <p><a href="{% url 'login' %}">Schon ein Konto? Hier einloggen</a></p>
+</div>
+{% endblock %}

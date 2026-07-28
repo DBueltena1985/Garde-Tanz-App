@@ -19,25 +19,33 @@ def _zeitraum_text(termin):
     return text
 
 
+def _eltern_emails_fuer_kind(kind):
+    """Alle E-Mails der Benutzer, die dieses Kind sehen/verwalten dürfen (Eltern + Mitverwalter)."""
+    emails = {u.email for u in kind.mitverwaltet_von.all() if u.email}
+    if kind.eltern.email:
+        emails.add(kind.eltern.email)
+    return emails
+
+
 def termin_absage_benachrichtigen(sender, instance, **kwargs):
     """Informiert Eltern per E-Mail, wenn ein Termin gestrichen wird, für den zugesagt wurde."""
-    zusagen = instance.zusagen.filter(status=Zusage.STATUS_ZUGESAGT).select_related("taenzerin__eltern")
+    zusagen = instance.zusagen.filter(status=Zusage.STATUS_ZUGESAGT).select_related("taenzerin__eltern").prefetch_related(
+        "taenzerin__mitverwaltet_von"
+    )
     for zusage in zusagen:
-        eltern = zusage.taenzerin.eltern
-        if not eltern.email:
-            continue
-        send_mail(
-            subject=f"Termin abgesagt: {instance.titel}",
-            message=(
-                f"Hallo {eltern.first_name or eltern.username},\n\n"
-                f"folgender Termin, für den {zusage.taenzerin.vorname} zugesagt hatte, wurde gestrichen:\n\n"
-                f"{instance.titel} ({instance.get_art_display()})\n"
-                f"{_zeitraum_text(instance)}\n\n"
-                "Bitte den Wegfall entsprechend einplanen."
-            ),
-            from_email=None,
-            recipient_list=[eltern.email],
-        )
+        for email in _eltern_emails_fuer_kind(zusage.taenzerin):
+            send_mail(
+                subject=f"Termin abgesagt: {instance.titel}",
+                message=(
+                    f"Hallo,\n\n"
+                    f"folgender Termin, für den {zusage.taenzerin.vorname} zugesagt hatte, wurde gestrichen:\n\n"
+                    f"{instance.titel} ({instance.get_art_display()})\n"
+                    f"{_zeitraum_text(instance)}\n\n"
+                    "Bitte den Wegfall entsprechend einplanen."
+                ),
+                from_email=None,
+                recipient_list=[email],
+            )
 
 
 def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
@@ -46,10 +54,9 @@ def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
         return
 
     empfaenger_emails = set()
-    for kind in Taenzerin.objects.select_related("eltern"):
+    for kind in Taenzerin.objects.select_related("eltern").prefetch_related("mitverwaltet_von"):
         if instance.gruppe == Termin.GRUPPE_BEIDE or kind.gruppe == instance.gruppe:
-            if kind.eltern.email:
-                empfaenger_emails.add(kind.eltern.email)
+            empfaenger_emails |= _eltern_emails_fuer_kind(kind)
 
     for email in empfaenger_emails:
         send_mail(

@@ -25,6 +25,18 @@ class RegistrierenForm(UserCreationForm):
         return code
 
 
+class FamilieEinladenForm(UserCreationForm):
+    email = forms.EmailField(label="E-Mail", required=False)
+    first_name = forms.CharField(label="Vorname", required=False)
+    last_name = forms.CharField(label="Nachname", required=False)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "first_name", "last_name", "email")
+
+    field_order = ["username", "first_name", "last_name", "email", "password1", "password2"]
+
+
 class KontoForm(forms.ModelForm):
     class Meta:
         model = User

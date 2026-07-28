@@ -14,4 +14,16 @@
     <h2>Passwort ändern</h2>
     <p><a href="{% url 'passwort_aendern' %}" class="btn btn-zusagen">Passwort ändern</a></p>
 </div>
+
+<div class="card">
+    <h2>Familienmitglied einladen</h2>
+    <p>
+        Teile diesen Link z.B. mit deinem Partner/deiner Partnerin (per WhatsApp). Wer sich darüber
+        registriert, bekommt ein eigenes Login und sieht/verwaltet automatisch dieselben Kinder wie du –
+        es wird kein neues Kind angelegt.
+    </p>
+    <p style="word-break: break-all; background:#f3e8ee; padding:0.6rem 0.8rem; border-radius:6px;">
+        <code>{{ einladungslink }}</code>
+    </p>
+</div>
 {% endblock %}

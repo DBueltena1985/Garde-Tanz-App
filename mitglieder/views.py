@@ -6,6 +6,7 @@ from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
+from django.core import signing
 from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -13,8 +14,27 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .feiertage import bayerische_feiertage
-from .forms import FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
+from .forms import FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
 from .models import Anmeldepunkt, Anmeldung, Ferienzeitraum, NewsPost, Taenzerin, Termin, Zusage
+
+FAMILIEN_EINLADUNG_SALT = "familien-einladung"
+
+
+def _familien_einladungs_token(user):
+    return signing.dumps(user.id, salt=FAMILIEN_EINLADUNG_SALT)
+
+
+def _einladendes_konto_aus_token(token):
+    try:
+        user_id = signing.loads(token, salt=FAMILIEN_EINLADUNG_SALT)
+    except signing.BadSignature:
+        return None
+    return User.objects.filter(id=user_id).first()
+
+
+def _kinder_fuer_nutzer(user):
+    """Kinder, die ein Benutzer sehen/verwalten darf: eigene und mitverwaltete."""
+    return Taenzerin.objects.filter(Q(eltern=user) | Q(mitverwaltet_von=user)).distinct()
 
 MONATSNAMEN = [
     "Januar", "Februar", "März", "April", "Mai", "Juni",
@@ -98,7 +118,7 @@ def _kalender_monat(jahr, monat, gruppen):
 
 @login_required
 def dashboard(request):
-    kinder = Taenzerin.objects.filter(eltern=request.user)
+    kinder = _kinder_fuer_nutzer(request.user)
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
     termine = _fuer_gruppen_relevant(
@@ -193,7 +213,7 @@ def dashboard(request):
 @login_required
 def termin_zusage(request, termin_id, kind_id, status):
     termin = get_object_or_404(Termin, pk=termin_id)
-    kind = get_object_or_404(Taenzerin, pk=kind_id, eltern=request.user)
+    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
 
     gueltige_status = {s for s, _ in Zusage.STATUS_CHOICES}
     if status not in gueltige_status:
@@ -209,7 +229,7 @@ def termin_zusage(request, termin_id, kind_id, status):
 
 @login_required
 def alle_trainings_zusagen(request, kind_id):
-    kind = get_object_or_404(Taenzerin, pk=kind_id, eltern=request.user)
+    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
 
     if request.method == "POST":
         termine = _fuer_gruppen_relevant(
@@ -299,10 +319,41 @@ def registrieren(request):
     return render(request, "mitglieder/registrieren.html", {"form": form})
 
 
+def familie_einladen(request, token):
+    einladendes_konto = _einladendes_konto_aus_token(token)
+    if einladendes_konto is None:
+        messages.error(request, "Dieser Einladungslink ist ungültig.")
+        return redirect("login")
+
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = FamilieEinladenForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            for kind in _kinder_fuer_nutzer(einladendes_konto):
+                kind.mitverwaltet_von.add(user)
+            _admins_ueber_registrierung_benachrichtigen(user)
+            login(request, user)
+            messages.success(
+                request,
+                f"Konto erfolgreich erstellt! Du siehst jetzt dieselben Kinder wie "
+                f"{einladendes_konto.first_name or einladendes_konto.username}.",
+            )
+            return redirect("dashboard")
+    else:
+        form = FamilieEinladenForm()
+
+    return render(request, "mitglieder/familie_einladen.html", {
+        "form": form, "einladendes_konto": einladendes_konto,
+    })
+
+
 @login_required
 def offene_trainings(request):
     """Zeigt alle Trainings (auch vergangene), zu denen mindestens eines der eigenen Kinder noch keine Rückmeldung hat."""
-    kinder = Taenzerin.objects.filter(eltern=request.user)
+    kinder = _kinder_fuer_nutzer(request.user)
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
     trainings = _fuer_gruppen_relevant(
@@ -345,7 +396,7 @@ def offene_trainings(request):
 
 @login_required
 def kinder_liste(request):
-    kinder = Taenzerin.objects.filter(eltern=request.user)
+    kinder = _kinder_fuer_nutzer(request.user)
     return render(request, "mitglieder/kinder_liste.html", {"kinder": kinder})
 
 
@@ -353,13 +404,14 @@ def kinder_liste(request):
 def kind_bearbeiten(request, kind_id=None):
     kind = None
     if kind_id is not None:
-        kind = get_object_or_404(Taenzerin, pk=kind_id, eltern=request.user)
+        kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
 
     if request.method == "POST":
         form = TaenzerinForm(request.POST, instance=kind)
         if form.is_valid():
             kind = form.save(commit=False)
-            kind.eltern = request.user
+            if not kind.pk:
+                kind.eltern = request.user
             kind.save()
             kind.stammdaten_bestaetigen()
             messages.success(request, f"Daten für {kind.vorname} wurden gespeichert und bestätigt.")
@@ -403,7 +455,11 @@ def konto_bearbeiten(request):
     else:
         form = KontoForm(instance=request.user)
 
-    return render(request, "mitglieder/konto_form.html", {"form": form})
+    einladungslink = request.build_absolute_uri(
+        reverse("familie_einladen", args=[_familien_einladungs_token(request.user)])
+    )
+
+    return render(request, "mitglieder/konto_form.html", {"form": form, "einladungslink": einladungslink})
 
 
 @login_required

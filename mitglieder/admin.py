@@ -70,8 +70,9 @@ class TaenzerinAdmin(admin.ModelAdmin):
     )
     list_filter = (TaenzerinStatusFilter,)
     search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
+    filter_horizontal = ("mitverwaltet_von",)
     fields = (
-        "eltern", "vorname", "nachname", "geburtsjahr",
+        "eltern", "mitverwaltet_von", "vorname", "nachname", "geburtsjahr",
         "notfallkontakt_name", "notfallkontakt_telefon", "notfallkontakt_beziehung",
         "schuhgroesse", "kleidergroesse", "allergien", "medikamente", "sonstige_hinweise",
         "stammdaten_bestaetigt_am",

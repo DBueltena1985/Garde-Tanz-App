@@ -14,6 +14,11 @@ class Taenzerin(models.Model):
     eltern = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="kinder"
     )
+    mitverwaltet_von = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="mitverwaltete_kinder", blank=True,
+        verbose_name="Mitverwaltet von",
+        help_text="Weitere Benutzer (z.B. Partner:in), die dieses Kind ebenfalls sehen und verwalten dürfen.",
+    )
 
     vorname = models.CharField("Vorname", max_length=100)
     nachname = models.CharField("Nachname", max_length=100)
