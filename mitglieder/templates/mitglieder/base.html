@@ -117,6 +117,16 @@
         {% endif %}
     </nav>
 
+    {% if request.session.impersonator_id %}
+    <div class="banner-warn" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <span>👁️ Du siehst die App gerade als <strong>{{ user.first_name|default:user.username }}</strong> an.</span>
+        <form method="post" action="{% url 'impersonation_beenden' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-zusagen">Zurück zu meinem Admin-Konto</button>
+        </form>
+    </div>
+    {% endif %}
+
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}<li>{{ message }}</li>{% endfor %}

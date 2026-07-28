@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+{{ block.super }}
+{% if not add and request.user.is_superuser %}
+<li>
+    <form method="post" action="{% url 'admin:auth_user_impersonate_start' original.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="button">👁️ Als Mitglied ansehen</button>
+    </form>
+</li>
+{% endif %}
+{% endblock %}

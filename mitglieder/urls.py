@@ -14,6 +14,7 @@ urlpatterns = [
     path("aufgaben/<int:aufgabe_id>/erledigt/", views.aufgabe_erledigt, name="aufgabe_erledigt"),
     path("aufgaben/<int:aufgabe_id>/uebernehmen/", views.aufgabe_uebernehmen, name="aufgabe_uebernehmen"),
     path("trainings/offen/", views.offene_trainings, name="offene_trainings"),
+    path("impersonation/beenden/", views.impersonation_beenden, name="impersonation_beenden"),
     path("kinder/", views.kinder_liste, name="kinder_liste"),
     path("kinder/neu/", views.kind_bearbeiten, name="kind_neu"),
     path("kinder/<int:kind_id>/", views.kind_bearbeiten, name="kind_bearbeiten"),

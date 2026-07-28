@@ -463,6 +463,18 @@ def offene_trainings(request):
 
 
 @login_required
+def impersonation_beenden(request):
+    echter_admin_id = request.session.get("impersonator_id")
+    if not echter_admin_id:
+        return redirect("dashboard")
+
+    echter_admin = get_object_or_404(User, pk=echter_admin_id, is_superuser=True)
+    login(request, echter_admin, backend="django.contrib.auth.backends.ModelBackend")
+    messages.success(request, "Zurück in deinem Admin-Konto.")
+    return redirect("admin:index")
+
+
+@login_required
 def kinder_liste(request):
     kinder = _kinder_fuer_nutzer(request.user)
     return render(request, "mitglieder/kinder_liste.html", {"kinder": kinder})

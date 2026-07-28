@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.auth import login
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -37,6 +38,7 @@ class TaenzerinInline(admin.TabularInline):
 class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline]
     list_display = ("first_name", "last_name", "username", "orga_team", "admin_team")
+    change_form_template = "admin/mitglieder_user_change_form.html"
 
     def orga_team(self, obj):
         return obj.is_staff
@@ -51,6 +53,29 @@ class CustomUserAdmin(UserAdmin):
     admin_team.short_description = "Admin-Team"
     admin_team.boolean = True
     admin_team.admin_order_field = "is_superuser"
+
+    def get_urls(self):
+        eigene_urls = [
+            path(
+                "<int:user_id>/als-mitglied-ansehen/",
+                self.admin_site.admin_view(self.als_mitglied_ansehen),
+                name="auth_user_impersonate_start",
+            ),
+        ]
+        return eigene_urls + super().get_urls()
+
+    def als_mitglied_ansehen(self, request, user_id):
+        if not request.user.is_superuser:
+            raise PermissionDenied
+        ziel = get_object_or_404(User, pk=user_id, is_active=True)
+        if request.method != "POST":
+            raise PermissionDenied
+
+        echter_admin_id = request.user.id
+        login(request, ziel, backend="django.contrib.auth.backends.ModelBackend")
+        request.session["impersonator_id"] = echter_admin_id
+        messages.success(request, f"Du siehst die App jetzt als {ziel.first_name or ziel.username} an.")
+        return redirect("dashboard")
 
 
 admin.site.unregister(User)
