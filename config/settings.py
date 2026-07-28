@@ -66,9 +66,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # DIRS hat Vorrang vor APP_DIRS: noetig, damit unsere eigene
-        # admin/base_site.html Django-contrib.admin's gleichnamige Datei ueberschreibt.
-        'DIRS': [BASE_DIR / 'mitglieder' / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
