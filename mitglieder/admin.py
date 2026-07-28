@@ -207,14 +207,20 @@ class AufgabeInline(admin.TabularInline):
 class TerminForm(forms.ModelForm):
     """Native Datum-/Uhrzeit-Picker für Beginn/Ende (kein Tippen von Punkten/Doppelpunkten nötig)."""
 
+    # date_format="%Y-%m-%d": native <input type="date"> verlangt zwingend ISO-Format als value,
+    # sonst zeigt der Browser das Feld leer an (das deutsche Locale-Format TT.MM.JJJJ funktioniert nicht).
     beginn = forms.SplitDateTimeField(
         label="Beginn",
-        widget=forms.SplitDateTimeWidget(date_attrs={"type": "date"}, time_attrs={"type": "time"}),
+        widget=forms.SplitDateTimeWidget(
+            date_attrs={"type": "date"}, time_attrs={"type": "time"}, date_format="%Y-%m-%d",
+        ),
     )
     ende = forms.SplitDateTimeField(
         label="Ende",
         required=False,
-        widget=forms.SplitDateTimeWidget(date_attrs={"type": "date"}, time_attrs={"type": "time"}),
+        widget=forms.SplitDateTimeWidget(
+            date_attrs={"type": "date"}, time_attrs={"type": "time"}, date_format="%Y-%m-%d",
+        ),
     )
 
     class Meta:
