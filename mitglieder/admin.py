@@ -587,7 +587,17 @@ class TrainingAdmin(TerminAdminBase):
 class VeranstaltungAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
     inlines = [AnmeldepunktInline, AufgabeInline]
-    list_display = TerminAdminBase.list_display + ("offene_helferpunkte",)
+    list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
+
+    def offene_aufgaben(self, obj):
+        anzahl = obj.aufgaben.filter(erledigt=False).count()
+        if not anzahl:
+            return "–"
+        url = reverse("admin:mitglieder_aufgabe_changelist")
+        url += f"?termin__id__exact={obj.pk}&erledigt__exact=0"
+        return format_html('<a href="{}">{}</a>', url, anzahl)
+
+    offene_aufgaben.short_description = "Offene To-Dos"
 
     def save_formset(self, request, form, formset, change):
         instanzen = formset.save(commit=False)
