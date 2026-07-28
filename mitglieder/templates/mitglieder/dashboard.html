@@ -36,11 +36,12 @@
 <div class="card">
     <h2 style="margin-top:0;">🗒️ Offene allgemeine To-Dos</h2>
     <p style="font-size:0.85rem; color:#777; margin-top:-0.4rem;">
-        Sichtbar für Orga-/Admin-Team – dafür hat sich bisher noch niemand eingetragen.
+        Dafür hat sich bisher noch niemand eingetragen.
     </p>
     {% for aufgabe in offene_allgemeine_aufgaben %}
     <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid #f0e8ec;{% endif %}">
         <strong>{{ aufgabe.titel }}</strong>
+        {% if aufgabe.nur_team %}<span style="color:#8a6d00; font-size:0.8rem;">🔒 Nur Team</span>{% endif %}
         {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:#666;">{{ aufgabe.beschreibung }}</div>{% endif %}
         <form method="post" action="{% url 'aufgabe_uebernehmen' aufgabe.id %}" style="margin-top:0.4rem;">
             {% csrf_token %}

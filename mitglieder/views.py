@@ -213,11 +213,11 @@ def dashboard(request):
 
     meine_aufgaben = Aufgabe.objects.filter(zugewiesen_an=request.user, erledigt=False).select_related("termin")
 
-    offene_allgemeine_aufgaben = Aufgabe.objects.none()
-    if request.user.is_staff:
-        offene_allgemeine_aufgaben = Aufgabe.objects.filter(
-            termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
-        )
+    offene_allgemeine_aufgaben = Aufgabe.objects.filter(
+        termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
+    )
+    if not request.user.is_staff:
+        offene_allgemeine_aufgaben = offene_allgemeine_aufgaben.filter(nur_team=False)
 
     allgemeine_helferpunkte = [
         _anmeldepunkt_info(punkt, request.user)
@@ -335,7 +335,8 @@ def aufgabe_erledigt(request, aufgabe_id):
 
 @login_required
 def aufgabe_uebernehmen(request, aufgabe_id):
-    if not request.user.is_staff:
+    aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id, termin__isnull=True)
+    if aufgabe.nur_team and not request.user.is_staff:
         raise PermissionDenied
 
     if request.method == "POST":
@@ -343,7 +344,6 @@ def aufgabe_uebernehmen(request, aufgabe_id):
             pk=aufgabe_id, zugewiesen_an__isnull=True, erledigt=False,
         ).update(zugewiesen_an=request.user)
         if aktualisiert:
-            aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id)
             messages.success(request, f"Du hast '{aufgabe.titel}' übernommen.")
         else:
             messages.error(request, "Diese Aufgabe ist bereits vergeben oder existiert nicht mehr.")

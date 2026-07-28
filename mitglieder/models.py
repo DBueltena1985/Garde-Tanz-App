@@ -254,9 +254,15 @@ class Aufgabe(models.Model):
     erledigt_am = models.DateTimeField(null=True, blank=True)
     zugewiesen_an = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="zugewiesene_aufgaben", limit_choices_to={"is_staff": True},
+        related_name="zugewiesene_aufgaben",
         verbose_name="Zugewiesen an",
-        help_text="Optional: welches Orga-/Admin-Teammitglied kümmert sich darum?",
+        help_text="Optional: wer kümmert sich darum? (Wird auch automatisch gesetzt, wenn sich jemand "
+        "im Mitgliederbereich selbst einträgt.)",
+    )
+    nur_team = models.BooleanField(
+        "Nur Orga-/Admin-Team", default=False,
+        help_text="Aktiviert: nur Orga-/Admin-Team sieht diese Aufgabe im Mitgliederbereich und kann "
+        "sie übernehmen. Deaktiviert: auch Eltern können sich dafür eintragen.",
     )
     erstellt_von = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="aufgaben"

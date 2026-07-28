@@ -667,12 +667,17 @@ class AnmeldepunktAdmin(admin.ModelAdmin):
 
 @admin.register(Aufgabe)
 class AufgabeAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
+    list_display = ("titel", "termin", "nur_team", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
     list_display_links = ("titel",)
     list_editable = ("erledigt",)
-    list_filter = ("erledigt", "zugewiesen_an", "termin")
+    list_filter = ("erledigt", "nur_team", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
     ordering = ("erledigt", "termin__beginn", "-erstellt_am")
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "zugewiesen_an":
+            kwargs["queryset"] = User.objects.filter(is_staff=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:
