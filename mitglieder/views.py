@@ -9,7 +9,6 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core import signing
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -18,6 +17,7 @@ from django.utils import timezone
 from .feiertage import bayerische_feiertage
 from .forms import FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
 from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, NewsPost, Taenzerin, Termin, Zusage
+from .utils import sichere_mail_senden
 
 FAMILIEN_EINLADUNG_SALT = "familien-einladung"
 
@@ -359,7 +359,7 @@ def _admins_ueber_registrierung_benachrichtigen(user):
         admin_emails.add(settings.ADMIN_BENACHRICHTIGUNGS_EMAIL)
     if not admin_emails:
         return
-    send_mail(
+    sichere_mail_senden(
         subject=f"Neue Registrierung: {user.first_name or user.username}",
         message=(
             f"Es hat sich ein neues Mitglied registriert:\n\n"

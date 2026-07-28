@@ -1,7 +1,7 @@
-from django.core.mail import send_mail
 from django.db.models.signals import post_save, pre_delete
 
 from .models import Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
+from .utils import sichere_mail_senden
 
 # Django sendet Signale für Proxy-Modelle mit dem Proxy als "sender" (nicht dem
 # Basis-Modell). Da Termine im Admin über die Proxys TrainingTermin/VeranstaltungTermin
@@ -34,7 +34,7 @@ def termin_absage_benachrichtigen(sender, instance, **kwargs):
     )
     for zusage in zusagen:
         for email in _eltern_emails_fuer_kind(zusage.taenzerin):
-            send_mail(
+            sichere_mail_senden(
                 subject=f"Termin abgesagt: {instance.titel}",
                 message=(
                     f"Hallo,\n\n"
@@ -59,7 +59,7 @@ def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
             empfaenger_emails |= _eltern_emails_fuer_kind(kind)
 
     for email in empfaenger_emails:
-        send_mail(
+        sichere_mail_senden(
             subject=f"Neue Veranstaltung: {instance.titel}",
             message=(
                 f"Es gibt eine neue Veranstaltung:\n\n"

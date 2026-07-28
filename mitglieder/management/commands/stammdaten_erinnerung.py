@@ -1,7 +1,7 @@
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 
 from mitglieder.models import Taenzerin
+from mitglieder.utils import sichere_mail_senden
 
 
 class Command(BaseCommand):
@@ -24,7 +24,7 @@ class Command(BaseCommand):
                 ))
                 continue
 
-            send_mail(
+            sichere_mail_senden(
                 subject=f"Bitte Stammdaten von {kind.vorname} bestätigen – Garde Tanz",
                 message=(
                     f"Hallo {eltern.first_name or eltern.username},\n\n"
