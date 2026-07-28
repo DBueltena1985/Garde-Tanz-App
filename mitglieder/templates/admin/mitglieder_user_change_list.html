@@ -48,11 +48,12 @@ document.addEventListener('DOMContentLoaded', function () {
         zelle.colSpan = anzahlSpalten;
         zelle.style.fontWeight = '700';
         zelle.style.padding = '6px 10px';
-        zelle.textContent = '▾ ' + gruppe.label + ' (' + zeilen.length + ')';
+        zelle.textContent = '▸ ' + gruppe.label + ' (' + zeilen.length + ')';
         kopfzeile.appendChild(zelle);
         tbody.appendChild(kopfzeile);
 
         zeilen.forEach(function (zeile) {
+            zeile.style.display = 'none';
             tbody.appendChild(zeile);
         });
 
