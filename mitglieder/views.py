@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core import signing
+from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -212,6 +213,12 @@ def dashboard(request):
 
     meine_aufgaben = Aufgabe.objects.filter(zugewiesen_an=request.user, erledigt=False).select_related("termin")
 
+    offene_allgemeine_aufgaben = Aufgabe.objects.none()
+    if request.user.is_staff:
+        offene_allgemeine_aufgaben = Aufgabe.objects.filter(
+            termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
+        )
+
     allgemeine_helferpunkte = [
         _anmeldepunkt_info(punkt, request.user)
         for punkt in Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern")
@@ -223,6 +230,7 @@ def dashboard(request):
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,
         "meine_aufgaben": meine_aufgaben,
+        "offene_allgemeine_aufgaben": offene_allgemeine_aufgaben,
         "allgemeine_helferpunkte": allgemeine_helferpunkte,
         "kalender_wochen": kalender_wochen,
         "kalender_legende": kalender_legende,
@@ -321,6 +329,24 @@ def aufgabe_erledigt(request, aufgabe_id):
         aufgabe.erledigt = True
         aufgabe.save()
         messages.success(request, f"'{aufgabe.titel}' als erledigt markiert.")
+
+    return redirect("dashboard")
+
+
+@login_required
+def aufgabe_uebernehmen(request, aufgabe_id):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        aktualisiert = Aufgabe.objects.filter(
+            pk=aufgabe_id, zugewiesen_an__isnull=True, erledigt=False,
+        ).update(zugewiesen_an=request.user)
+        if aktualisiert:
+            aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id)
+            messages.success(request, f"Du hast '{aufgabe.titel}' übernommen.")
+        else:
+            messages.error(request, "Diese Aufgabe ist bereits vergeben oder existiert nicht mehr.")
 
     return redirect("dashboard")
 
