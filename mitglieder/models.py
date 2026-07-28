@@ -260,7 +260,7 @@ class Aufgabe(models.Model):
         "im Mitgliederbereich selbst einträgt.)",
     )
     nur_team = models.BooleanField(
-        "Nur Orga-/Admin-Team", default=False,
+        "Nur Orga-/Admin-Team", default=True,
         help_text="Aktiviert: nur Orga-/Admin-Team sieht diese Aufgabe im Mitgliederbereich und kann "
         "sie übernehmen. Deaktiviert: auch Eltern können sich dafür eintragen.",
     )
