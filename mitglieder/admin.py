@@ -60,11 +60,18 @@ class TaenzerinStatusFilter(admin.SimpleListFilter):
 @admin.register(Taenzerin)
 class TaenzerinAdmin(admin.ModelAdmin):
     list_display = (
-        "vorname", "nachname", "eltern", "gruppe_anzeige",
+        "vorname", "nachname", "eltern_name", "gruppe_anzeige",
         "notfallkontakt_anruf", "schuhgroesse", "kleidergroesse", "stammdaten_status",
     )
     list_filter = (TaenzerinStatusFilter,)
     search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
+
+    def eltern_name(self, obj):
+        voller_name = f"{obj.eltern.first_name} {obj.eltern.last_name}".strip()
+        return voller_name or obj.eltern.username
+
+    eltern_name.short_description = "Eltern"
+    eltern_name.admin_order_field = "eltern__first_name"
     filter_horizontal = ("mitverwaltet_von",)
     fields = (
         "eltern", "mitverwaltet_von", "vorname", "nachname", "geburtsjahr",
