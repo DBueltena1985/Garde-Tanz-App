@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Garde Tanz{% endblock %}</title>
 
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Garde Tanz">
+    <meta property="og:title" content="{% block og_title %}Garde Tanz{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Garde Tanz – DJK Oberasbach e.V.{% endblock %}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'mitglieder/icons/icon-512.png' %}">
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+
     <link rel="manifest" href="{% static 'mitglieder/manifest.json' %}">
     <link rel="icon" href="{% static 'mitglieder/logo.svg' %}" type="image/svg+xml">
     <link rel="icon" href="{% static 'mitglieder/icons/icon-192.png' %}">
