@@ -1,0 +1,69 @@
+{% extends "admin/change_list.html" %}
+
+{% block result_list %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('result_list');
+    if (!table) { return; }
+    var tbody = table.querySelector('tbody');
+    if (!tbody) { return; }
+
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+    var gruppen = {admin: [], orga: [], mitglied: []};
+
+    rows.forEach(function (row) {
+        var adminBild = row.querySelector('td.field-admin_team img');
+        var orgaBild = row.querySelector('td.field-orga_team img');
+        var istAdmin = adminBild && adminBild.alt === 'True';
+        var istOrga = orgaBild && orgaBild.alt === 'True';
+        if (istAdmin) {
+            gruppen.admin.push(row);
+        } else if (istOrga) {
+            gruppen.orga.push(row);
+        } else {
+            gruppen.mitglied.push(row);
+        }
+    });
+
+    // Nur gruppieren, wenn ueberhaupt die erwarteten Spalten vorhanden sind
+    // (sonst z.B. bei aktivem Spalten-Filter nichts kaputt machen).
+    if (!rows.length || !rows[0].querySelector('td.field-admin_team')) { return; }
+
+    var anzahlSpalten = table.querySelectorAll('thead th').length;
+    var reihenfolge = [
+        {schluessel: 'admin', label: 'Admin-Team'},
+        {schluessel: 'orga', label: 'Orga-Team'},
+        {schluessel: 'mitglied', label: 'Mitglieder'},
+    ];
+
+    reihenfolge.forEach(function (gruppe) {
+        var zeilen = gruppen[gruppe.schluessel];
+        if (!zeilen.length) { return; }
+
+        var kopfzeile = document.createElement('tr');
+        kopfzeile.style.cursor = 'pointer';
+        kopfzeile.style.background = 'var(--darkened-bg, #eee)';
+        var zelle = document.createElement('td');
+        zelle.colSpan = anzahlSpalten;
+        zelle.style.fontWeight = '700';
+        zelle.style.padding = '6px 10px';
+        zelle.textContent = '▾ ' + gruppe.label + ' (' + zeilen.length + ')';
+        kopfzeile.appendChild(zelle);
+        tbody.appendChild(kopfzeile);
+
+        zeilen.forEach(function (zeile) {
+            tbody.appendChild(zeile);
+        });
+
+        kopfzeile.addEventListener('click', function () {
+            var eingeklappt = zeilen[0].style.display === 'none';
+            zelle.textContent = (eingeklappt ? '▾ ' : '▸ ') + gruppe.label + ' (' + zeilen.length + ')';
+            zeilen.forEach(function (zeile) {
+                zeile.style.display = eingeklappt ? '' : 'none';
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

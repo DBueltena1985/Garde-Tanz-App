@@ -39,6 +39,7 @@ class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline]
     list_display = ("first_name", "last_name", "username", "orga_team", "admin_team")
     change_form_template = "admin/mitglieder_user_change_form.html"
+    change_list_template = "admin/mitglieder_user_change_list.html"
 
     def orga_team(self, obj):
         return obj.is_staff
