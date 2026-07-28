@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from .feiertage import bayerische_feiertage
 from .forms import FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
-from .models import Anmeldepunkt, Anmeldung, Ferienzeitraum, NewsPost, Taenzerin, Termin, Zusage
+from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, NewsPost, Taenzerin, Termin, Zusage
 
 FAMILIEN_EINLADUNG_SALT = "familien-einladung"
 
@@ -35,6 +35,12 @@ def _einladendes_konto_aus_token(token):
 def _kinder_fuer_nutzer(user):
     """Kinder, die ein Benutzer sehen/verwalten darf: eigene und mitverwaltete."""
     return Taenzerin.objects.filter(Q(eltern=user) | Q(mitverwaltet_von=user)).distinct()
+
+
+def _anmeldepunkt_info(punkt, user):
+    anmeldungen = list(punkt.anmeldungen.all())
+    eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == user.id), None)
+    return {"punkt": punkt, "anmeldungen": anmeldungen, "eigene_anmeldung": eigene_anmeldung}
 
 
 def _verbundene_mitglieder(user):
@@ -168,13 +174,7 @@ def dashboard(request):
         anmeldepunkte_info = []
         if termin.art == Termin.ART_VERANSTALTUNG:
             for punkt in termin.anmeldepunkte.all():
-                anmeldungen = list(punkt.anmeldungen.all())
-                eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == request.user.id), None)
-                anmeldepunkte_info.append({
-                    "punkt": punkt,
-                    "anmeldungen": anmeldungen,
-                    "eigene_anmeldung": eigene_anmeldung,
-                })
+                anmeldepunkte_info.append(_anmeldepunkt_info(punkt, request.user))
 
         termin_liste.append({
             "termin": termin,
@@ -210,11 +210,20 @@ def dashboard(request):
 
     kalender_wochen, kalender_legende = _kalender_monat(jahr, monat, kinder_gruppen)
 
+    meine_aufgaben = Aufgabe.objects.filter(zugewiesen_an=request.user, erledigt=False).select_related("termin")
+
+    allgemeine_helferpunkte = [
+        _anmeldepunkt_info(punkt, request.user)
+        for punkt in Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern")
+    ]
+
     return render(request, "mitglieder/dashboard.html", {
         "kinder": kinder,
         "veranstaltungen_gruppen": veranstaltungen_gruppen,
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,
+        "meine_aufgaben": meine_aufgaben,
+        "allgemeine_helferpunkte": allgemeine_helferpunkte,
         "kalender_wochen": kalender_wochen,
         "kalender_legende": kalender_legende,
         "kalender_monat_name": MONATSNAMEN[monat - 1],
@@ -265,6 +274,12 @@ def alle_trainings_zusagen(request, kind_id):
     return redirect("dashboard")
 
 
+def _redirect_nach_anmeldung(punkt):
+    if punkt.termin_id:
+        return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
+    return redirect(f"{reverse('dashboard')}#helferaufgabe-{punkt.id}")
+
+
 @login_required
 def anmeldepunkt_eintragen(request, punkt_id):
     punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
@@ -273,7 +288,7 @@ def anmeldepunkt_eintragen(request, punkt_id):
         bereits_angemeldet = Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).exists()
         if not bereits_angemeldet and punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
             messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
-            return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
+            return _redirect_nach_anmeldung(punkt)
 
         kommentar = request.POST.get("kommentar", "").strip()
         Anmeldung.objects.update_or_create(
@@ -281,7 +296,7 @@ def anmeldepunkt_eintragen(request, punkt_id):
             defaults={"kommentar": kommentar},
         )
         messages.success(request, f"Du hast dich bei '{punkt.titel}' eingetragen.")
-        return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
+        return _redirect_nach_anmeldung(punkt)
 
     return redirect("dashboard")
 
@@ -293,7 +308,19 @@ def anmeldepunkt_austragen(request, punkt_id):
     if request.method == "POST":
         Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).delete()
         messages.success(request, f"Du hast dich bei '{punkt.titel}' ausgetragen.")
-        return redirect(f"{reverse('dashboard')}?offener_termin={punkt.termin_id}#termin-{punkt.termin_id}")
+        return _redirect_nach_anmeldung(punkt)
+
+    return redirect("dashboard")
+
+
+@login_required
+def aufgabe_erledigt(request, aufgabe_id):
+    aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id, zugewiesen_an=request.user)
+
+    if request.method == "POST":
+        aufgabe.erledigt = True
+        aufgabe.save()
+        messages.success(request, f"'{aufgabe.titel}' als erledigt markiert.")
 
     return redirect("dashboard")
 

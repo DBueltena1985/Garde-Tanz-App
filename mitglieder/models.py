@@ -184,9 +184,13 @@ class Zusage(models.Model):
 
 
 class Anmeldepunkt(models.Model):
-    """Ein Punkt auf einer Helfer- oder Mitbringliste zu einem Termin, z.B. 'Kuchen' oder 'Aufbauhelfer'."""
+    """Ein Punkt auf einer Helfer- oder Mitbringliste, optional zu einem Termin, sonst allgemeine Aufgabe."""
 
-    termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="anmeldepunkte")
+    termin = models.ForeignKey(
+        Termin, on_delete=models.CASCADE, null=True, blank=True, related_name="anmeldepunkte",
+        help_text="Optional: zu welcher Veranstaltung gehört das? Leer lassen für eine allgemeine Aufgabe "
+        "(z.B. 'Leibchen waschen'), zu der sich Mitglieder unabhängig von einem Termin eintragen können.",
+    )
     titel = models.CharField("Titel", max_length=200, help_text="z.B. 'Kuchen mitbringen', 'Aufbauhelfer', 'Fahrdienst'")
     beschreibung = models.TextField("Beschreibung", blank=True)
     max_anzahl = models.PositiveIntegerField(
@@ -203,7 +207,7 @@ class Anmeldepunkt(models.Model):
         verbose_name_plural = "Helfer-/Mitbringpunkte"
 
     def __str__(self):
-        return f"{self.titel} ({self.termin.titel})"
+        return f"{self.titel} ({self.termin.titel})" if self.termin else self.titel
 
     @property
     def anzahl_angemeldet(self):

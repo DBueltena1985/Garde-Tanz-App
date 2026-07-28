@@ -16,6 +16,31 @@
 </div>
 {% endif %}
 
+{% if meine_aufgaben %}
+<div class="card">
+    <h2 style="margin-top:0;">📝 Meine Aufgaben</h2>
+    {% for aufgabe in meine_aufgaben %}
+    <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid #f0e8ec;{% endif %}">
+        <strong>{{ aufgabe.titel }}</strong>{% if aufgabe.termin %} <span style="color:#888; font-size:0.85rem;">({{ aufgabe.termin.titel }})</span>{% endif %}
+        {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:#666;">{{ aufgabe.beschreibung }}</div>{% endif %}
+        <form method="post" action="{% url 'aufgabe_erledigt' aufgabe.id %}" style="margin-top:0.4rem;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-zusagen">✅ Erledigt</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if allgemeine_helferpunkte %}
+<div class="card">
+    <h2 style="margin-top:0;">🧺 Helferaufgaben</h2>
+    {% for ap in allgemeine_helferpunkte %}
+        {% include "mitglieder/_anmeldepunkt.html" %}
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="card">
     <div class="kalender-kopf">
         <a href="?jahr={{ vorheriger_monat.0 }}&monat={{ vorheriger_monat.1 }}" class="kalender-nav">&laquo;</a>
