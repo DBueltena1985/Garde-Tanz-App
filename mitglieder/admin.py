@@ -36,7 +36,14 @@ class TaenzerinInline(admin.TabularInline):
 
 class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline]
-    list_display = ("first_name", "last_name", "username", "is_staff", "is_superuser")
+    list_display = ("first_name", "last_name", "username", "admin_team", "is_superuser")
+
+    def admin_team(self, obj):
+        return obj.is_staff
+
+    admin_team.short_description = "Admin-Team"
+    admin_team.boolean = True
+    admin_team.admin_order_field = "is_staff"
 
 
 admin.site.unregister(User)
