@@ -96,6 +96,7 @@
         {% if user.is_authenticated %}
             <div class="nav-links">
                 <a href="{% url 'dashboard' %}">Termine</a>
+                <a href="{% url 'offene_trainings' %}">Offene Trainings</a>
                 <a href="{% url 'news_liste' %}">News</a>
                 <a href="{% url 'kinder_liste' %}">Meine Kinder</a>
                 <a href="{% url 'konto_bearbeiten' %}">Mein Konto</a>

@@ -1,0 +1,20 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Offene Trainings – Garde Tanz{% endblock %}
+{% block content %}
+
+<h2>📋 Offene Trainings</h2>
+<p style="color:#666; font-size:0.9rem;">
+    Alle Trainings, zu denen für mindestens eines deiner Kinder noch keine Rückmeldung vorliegt
+    (auch bereits vergangene – dafür kannst du zwar nicht mehr zu- oder absagen, aber so siehst du,
+    welches Training noch als "offen" zählt).
+</p>
+
+{% if not termin_liste %}
+<p>🎉 Aktuell keine offenen Trainings – du hast überall zu- oder abgesagt.</p>
+{% endif %}
+
+{% for eintrag in termin_liste %}
+    {% include "mitglieder/_termin_karte.html" %}
+{% endfor %}
+
+{% endblock %}

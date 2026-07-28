@@ -300,6 +300,50 @@ def registrieren(request):
 
 
 @login_required
+def offene_trainings(request):
+    """Zeigt alle Trainings (auch vergangene), zu denen mindestens eines der eigenen Kinder noch keine Rückmeldung hat."""
+    kinder = Taenzerin.objects.filter(eltern=request.user)
+    kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
+
+    trainings = _fuer_gruppen_relevant(
+        Termin.objects.filter(art=Termin.ART_TRAINING), kinder_gruppen
+    ).order_by("-beginn")
+
+    zusagen = {
+        (z.termin_id, z.taenzerin_id): z.status
+        for z in Zusage.objects.filter(taenzerin__in=kinder, termin__in=trainings)
+    }
+    zusagen_anzahl = {
+        row["termin_id"]: row["anzahl"]
+        for row in Zusage.objects.filter(termin__in=trainings, status=Zusage.STATUS_ZUGESAGT)
+        .values("termin_id")
+        .annotate(anzahl=Count("id"))
+    }
+
+    termin_liste = []
+    for termin in trainings:
+        kinder_status = []
+        hat_offene = False
+        for kind in kinder:
+            if termin.gruppe != Termin.GRUPPE_BEIDE and kind.gruppe != termin.gruppe:
+                continue
+            status = zusagen.get((termin.id, kind.id), Zusage.STATUS_OFFEN)
+            if status == Zusage.STATUS_OFFEN:
+                hat_offene = True
+            kinder_status.append({"kind": kind, "status": status})
+
+        if hat_offene and kinder_status:
+            termin_liste.append({
+                "termin": termin,
+                "kinder_status": kinder_status,
+                "anmeldepunkte": [],
+                "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
+            })
+
+    return render(request, "mitglieder/offene_trainings.html", {"termin_liste": termin_liste})
+
+
+@login_required
 def kinder_liste(request):
     kinder = Taenzerin.objects.filter(eltern=request.user)
     return render(request, "mitglieder/kinder_liste.html", {"kinder": kinder})

@@ -10,6 +10,7 @@ urlpatterns = [
     path("kinder/<int:kind_id>/alle-trainings-zusagen/", views.alle_trainings_zusagen, name="alle_trainings_zusagen"),
     path("anmeldepunkte/<int:punkt_id>/eintragen/", views.anmeldepunkt_eintragen, name="anmeldepunkt_eintragen"),
     path("anmeldepunkte/<int:punkt_id>/austragen/", views.anmeldepunkt_austragen, name="anmeldepunkt_austragen"),
+    path("trainings/offen/", views.offene_trainings, name="offene_trainings"),
     path("kinder/", views.kinder_liste, name="kinder_liste"),
     path("kinder/neu/", views.kind_bearbeiten, name="kind_neu"),
     path("kinder/<int:kind_id>/", views.kind_bearbeiten, name="kind_bearbeiten"),
