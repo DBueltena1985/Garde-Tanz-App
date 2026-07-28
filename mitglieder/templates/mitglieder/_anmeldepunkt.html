@@ -7,21 +7,29 @@
     {% if ap.anmeldungen %}
     <ul style="margin:0.3rem 0; padding-left:1.2rem; font-size:0.9rem;">
         {% for anmeldung in ap.anmeldungen %}
-        <li>{{ anmeldung.eltern.first_name|default:anmeldung.eltern.username }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}</li>
+        <li>
+            {{ anmeldung.eltern.first_name|default:anmeldung.eltern.username }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}
+            {% if ap.punkt.mit_kommentar and anmeldung.eltern_id == request.user.id %}
+            <form method="post" action="{% url 'anmeldepunkt_austragen' anmeldung.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-absagen" style="padding:0.05rem 0.4rem; font-size:0.75rem;">✕</button>
+            </form>
+            {% endif %}
+        </li>
         {% endfor %}
     </ul>
     {% endif %}
 
-    {% if ap.eigene_anmeldung %}
-    <form method="post" action="{% url 'anmeldepunkt_austragen' ap.punkt.id %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-absagen">Austragen</button>
-    </form>
-    {% elif ap.punkt.mit_kommentar %}
+    {% if ap.punkt.mit_kommentar %}
     <form method="post" action="{% url 'anmeldepunkt_eintragen' ap.punkt.id %}" style="display:flex; gap:0.4rem;">
         {% csrf_token %}
         <input type="text" name="kommentar" placeholder="z.B. was du mitbringst (optional)" style="margin:0;">
         <button type="submit" class="btn btn-zusagen" style="white-space:nowrap;">Eintragen</button>
+    </form>
+    {% elif ap.eigene_anmeldung %}
+    <form method="post" action="{% url 'anmeldepunkt_austragen' ap.eigene_anmeldung.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-absagen">Austragen</button>
     </form>
     {% else %}
     <form method="post" action="{% url 'anmeldepunkt_eintragen' ap.punkt.id %}">

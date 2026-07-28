@@ -233,7 +233,6 @@ class Anmeldung(models.Model):
     class Meta:
         verbose_name = "Anmeldung"
         verbose_name_plural = "Anmeldungen"
-        unique_together = ("anmeldepunkt", "eltern")
 
     def __str__(self):
         return f"{self.eltern} - {self.anmeldepunkt}"

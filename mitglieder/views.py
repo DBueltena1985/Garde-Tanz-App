@@ -293,16 +293,17 @@ def anmeldepunkt_eintragen(request, punkt_id):
     punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
 
     if request.method == "POST":
-        bereits_angemeldet = Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).exists()
-        if not bereits_angemeldet and punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
+        if punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
             messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
             return _redirect_nach_anmeldung(punkt)
 
         kommentar = request.POST.get("kommentar", "").strip()
-        Anmeldung.objects.update_or_create(
-            anmeldepunkt=punkt, eltern=request.user,
-            defaults={"kommentar": kommentar},
-        )
+        if punkt.mit_kommentar:
+            # Mitbringliste: mehrere Eintraege pro Person erlaubt (z.B. 2x Kuchen).
+            Anmeldung.objects.create(anmeldepunkt=punkt, eltern=request.user, kommentar=kommentar)
+        else:
+            # Reine Helferliste: jede Person nur einmal.
+            Anmeldung.objects.get_or_create(anmeldepunkt=punkt, eltern=request.user)
         messages.success(request, f"Du hast dich bei '{punkt.titel}' eingetragen.")
         return _redirect_nach_anmeldung(punkt)
 
@@ -310,15 +311,15 @@ def anmeldepunkt_eintragen(request, punkt_id):
 
 
 @login_required
-def anmeldepunkt_austragen(request, punkt_id):
-    punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
+def anmeldepunkt_austragen(request, anmeldung_id):
+    anmeldung = get_object_or_404(Anmeldung, pk=anmeldung_id, eltern=request.user)
+    punkt = anmeldung.anmeldepunkt
 
     if request.method == "POST":
-        Anmeldung.objects.filter(anmeldepunkt=punkt, eltern=request.user).delete()
+        anmeldung.delete()
         messages.success(request, f"Du hast dich bei '{punkt.titel}' ausgetragen.")
-        return _redirect_nach_anmeldung(punkt)
 
-    return redirect("dashboard")
+    return _redirect_nach_anmeldung(punkt)
 
 
 @login_required
