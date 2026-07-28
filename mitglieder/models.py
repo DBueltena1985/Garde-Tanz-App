@@ -248,6 +248,12 @@ class Aufgabe(models.Model):
     )
     erledigt = models.BooleanField("Erledigt", default=False)
     erledigt_am = models.DateTimeField(null=True, blank=True)
+    zugewiesen_an = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="zugewiesene_aufgaben", limit_choices_to={"is_staff": True},
+        verbose_name="Zugewiesen an",
+        help_text="Optional: welches Orga-/Admin-Teammitglied kümmert sich darum?",
+    )
     erstellt_von = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="aufgaben"
     )

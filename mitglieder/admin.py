@@ -36,14 +36,21 @@ class TaenzerinInline(admin.TabularInline):
 
 class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline]
-    list_display = ("first_name", "last_name", "username", "admin_team", "is_superuser")
+    list_display = ("first_name", "last_name", "username", "orga_team", "admin_team")
+
+    def orga_team(self, obj):
+        return obj.is_staff
+
+    orga_team.short_description = "Orga-Team"
+    orga_team.boolean = True
+    orga_team.admin_order_field = "is_staff"
 
     def admin_team(self, obj):
-        return obj.is_staff
+        return obj.is_superuser
 
     admin_team.short_description = "Admin-Team"
     admin_team.boolean = True
-    admin_team.admin_order_field = "is_staff"
+    admin_team.admin_order_field = "is_superuser"
 
 
 admin.site.unregister(User)
@@ -184,6 +191,17 @@ class AnmeldepunktInline(admin.TabularInline):
         return format_html('<span style="color:#b3261e; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – {obj.plaetze_frei} offen")
 
     status_anzeige.short_description = "Status"
+
+
+class AufgabeInline(admin.TabularInline):
+    model = Aufgabe
+    extra = 0
+    fields = ("titel", "beschreibung", "zugewiesen_an", "erledigt")
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form.base_fields["zugewiesen_an"].queryset = User.objects.filter(is_staff=True)
+        return formset
 
 
 class TerminForm(forms.ModelForm):
@@ -562,8 +580,16 @@ class TrainingAdmin(TerminAdminBase):
 @admin.register(VeranstaltungTermin)
 class VeranstaltungAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
-    inlines = [AnmeldepunktInline]
+    inlines = [AnmeldepunktInline, AufgabeInline]
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte",)
+
+    def save_formset(self, request, form, formset, change):
+        instanzen = formset.save(commit=False)
+        for instanz in instanzen:
+            if isinstance(instanz, Aufgabe) and not instanz.pk:
+                instanz.erstellt_von = request.user
+            instanz.save()
+        formset.save_m2m()
 
     def offene_helferpunkte(self, obj):
         offene = [a for a in obj.anmeldepunkte.all() if a.max_anzahl is not None and a.plaetze_frei > 0]
@@ -625,10 +651,10 @@ class AnmeldepunktAdmin(admin.ModelAdmin):
 
 @admin.register(Aufgabe)
 class AufgabeAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "erledigt", "erstellt_von", "erstellt_am")
+    list_display = ("titel", "termin", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
     list_display_links = ("titel",)
     list_editable = ("erledigt",)
-    list_filter = ("erledigt", "termin")
+    list_filter = ("erledigt", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
     ordering = ("erledigt", "termin__beginn", "-erstellt_am")
 
