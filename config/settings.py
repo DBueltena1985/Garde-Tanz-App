@@ -165,3 +165,9 @@ EINLADUNGSCODE = os.environ.get('DJANGO_EINLADUNGSCODE', 'gardetanz')
 # Der Pfad-Teil der Registrierungs-URL (z.B. 'registrieren' -> /registrieren/).
 # Auf dem Server per Umgebungsvariable überschreiben, um den Link umzubenennen.
 REGISTRIERUNGS_SLUG = os.environ.get('DJANGO_REGISTRIERUNGS_SLUG', 'registrieren')
+
+# Feste Zusatz-Adresse für System-Benachrichtigungen (z.B. neue Registrierung).
+# Wird IMMER zusätzlich zu den E-Mail-Adressen aller Admin-/Betreuer-Konten benutzt,
+# damit eine Benachrichtigung nicht ausbleibt, nur weil bei einem Konto keine
+# E-Mail-Adresse hinterlegt ist. Optional, auf dem Server per Umgebungsvariable setzen.
+ADMIN_BENACHRICHTIGUNGS_EMAIL = os.environ.get('DJANGO_ADMIN_BENACHRICHTIGUNGS_EMAIL', '')

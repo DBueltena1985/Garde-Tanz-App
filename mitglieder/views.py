@@ -1,6 +1,7 @@
 import calendar
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -353,7 +354,9 @@ def aufgabe_uebernehmen(request, aufgabe_id):
 
 
 def _admins_ueber_registrierung_benachrichtigen(user):
-    admin_emails = list(User.objects.filter(is_staff=True).exclude(email="").values_list("email", flat=True))
+    admin_emails = set(User.objects.filter(is_staff=True).exclude(email="").values_list("email", flat=True))
+    if settings.ADMIN_BENACHRICHTIGUNGS_EMAIL:
+        admin_emails.add(settings.ADMIN_BENACHRICHTIGUNGS_EMAIL)
     if not admin_emails:
         return
     send_mail(
@@ -366,7 +369,7 @@ def _admins_ueber_registrierung_benachrichtigen(user):
             "Im Admin-Bereich unter Benutzer einsehbar."
         ),
         from_email=None,
-        recipient_list=admin_emails,
+        recipient_list=list(admin_emails),
     )
 
 
