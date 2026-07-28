@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, pre_delete, pre_save
+from django.db.models.signals import post_save, pre_delete
 
 from .models import NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
 from .utils import eltern_emails_fuer_kind, sichere_mail_senden
@@ -69,29 +69,15 @@ def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
         )
 
 
-def termin_geaendert_benachrichtigen(sender, instance, **kwargs):
-    """Informiert passende Eltern per E-Mail, wenn sich bei einem bestehenden Termin
-    Zeit oder Beschreibung ändern."""
-    if not instance.pk:
-        return
-    try:
-        alt = Termin.objects.get(pk=instance.pk)
-    except Termin.DoesNotExist:
-        return
-
-    geaendert = []
-    if alt.beginn != instance.beginn or alt.ende != instance.ende:
-        geaendert.append("die Zeit")
-    if alt.beschreibung != instance.beschreibung:
-        geaendert.append("die Beschreibung")
-    if not geaendert:
-        return
-
+def termin_update_benachrichtigen(instance):
+    """Informiert passende Eltern per E-Mail über eine Aktualisierung eines Termins.
+    Wird NICHT automatisch bei jedem Speichern ausgelöst, sondern nur, wenn im Admin
+    bewusst der Button 'Speichern und Mitglieder benachrichtigen' genutzt wurde."""
     for email in _alle_kinder_emails(instance.gruppe):
         sichere_mail_senden(
-            subject=f"Termin geändert: {instance.titel}",
+            subject=f"Termin aktualisiert: {instance.titel}",
             message=(
-                f"Bei folgendem Termin hat sich {' und '.join(geaendert)} geändert:\n\n"
+                f"Es gibt eine Aktualisierung zu folgendem Termin:\n\n"
                 f"{instance.titel} ({instance.get_art_display()})\n"
                 f"{_zeitraum_text(instance)}"
                 + (f"\n\n{instance.beschreibung}" if instance.beschreibung else "")
@@ -124,6 +110,5 @@ def neue_news_benachrichtigen(sender, instance, created, **kwargs):
 for _modell in TERMIN_MODELLE:
     pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
     post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
-    pre_save.connect(termin_geaendert_benachrichtigen, sender=_modell)
 
 post_save.connect(neue_news_benachrichtigen, sender=NewsPost)

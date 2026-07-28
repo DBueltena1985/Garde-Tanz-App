@@ -1,0 +1,15 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+{{ block.super }}
+{% if change %}
+<div class="submit-row">
+    <input type="submit" value="Speichern und Mitglieder benachrichtigen" name="_save_and_notify" class="default">
+</div>
+<p style="font-size:0.85rem; color:#777; margin-top:-0.5rem;">
+    Schickt allen passenden Eltern (nach Gruppe) eine E-Mail über diese Änderung – z.B. sinnvoll bei
+    Zeit- oder Beschreibungsänderungen. Für kleine Korrekturen (Tippfehler etc.) einfach den normalen
+    "Sichern"-Button oben verwenden.
+</p>
+{% endif %}
+{% endblock %}

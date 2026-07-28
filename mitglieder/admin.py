@@ -299,11 +299,17 @@ class TerminAdminBase(admin.ModelAdmin):
 
     anwesenheit_link.short_description = "Anwesenheit"
 
+    change_form_template = "admin/mitglieder_termin_change_form.html"
+
     def save_model(self, request, obj, form, change):
         obj.art = self.ART_WERT
         if not obj.pk:
             obj.erstellt_von = request.user
         super().save_model(request, obj, form, change)
+        if change and "_save_and_notify" in request.POST:
+            from .signals import termin_update_benachrichtigen
+            termin_update_benachrichtigen(obj)
+            messages.success(request, "Mitglieder wurden per E-Mail über die Änderung informiert.")
 
     def _url_name(self, suffix):
         opts = self.model._meta
