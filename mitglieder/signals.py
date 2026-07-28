@@ -1,7 +1,7 @@
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, pre_save
 
-from .models import Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
-from .utils import sichere_mail_senden
+from .models import NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
+from .utils import eltern_emails_fuer_kind, sichere_mail_senden
 
 # Django sendet Signale für Proxy-Modelle mit dem Proxy als "sender" (nicht dem
 # Basis-Modell). Da Termine im Admin über die Proxys TrainingTermin/VeranstaltungTermin
@@ -19,12 +19,13 @@ def _zeitraum_text(termin):
     return text
 
 
-def _eltern_emails_fuer_kind(kind):
-    """Alle E-Mails der Benutzer, die dieses Kind sehen/verwalten dürfen (Eltern + Mitverwalter)."""
-    emails = {u.email for u in kind.mitverwaltet_von.all() if u.email}
-    if kind.eltern.email:
-        emails.add(kind.eltern.email)
-    return emails
+def _alle_kinder_emails(gruppe=None):
+    """E-Mails aller Eltern/Mitverwalter, optional eingeschränkt auf eine Gruppe."""
+    empfaenger_emails = set()
+    for kind in Taenzerin.objects.select_related("eltern").prefetch_related("mitverwaltet_von"):
+        if gruppe is None or gruppe == Termin.GRUPPE_BEIDE or kind.gruppe == gruppe:
+            empfaenger_emails |= eltern_emails_fuer_kind(kind)
+    return empfaenger_emails
 
 
 def termin_absage_benachrichtigen(sender, instance, **kwargs):
@@ -33,7 +34,7 @@ def termin_absage_benachrichtigen(sender, instance, **kwargs):
         "taenzerin__mitverwaltet_von"
     )
     for zusage in zusagen:
-        for email in _eltern_emails_fuer_kind(zusage.taenzerin):
+        for email in eltern_emails_fuer_kind(zusage.taenzerin):
             sichere_mail_senden(
                 subject=f"Termin abgesagt: {instance.titel}",
                 message=(
@@ -53,12 +54,7 @@ def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
     if not created or instance.art != Termin.ART_VERANSTALTUNG:
         return
 
-    empfaenger_emails = set()
-    for kind in Taenzerin.objects.select_related("eltern").prefetch_related("mitverwaltet_von"):
-        if instance.gruppe == Termin.GRUPPE_BEIDE or kind.gruppe == instance.gruppe:
-            empfaenger_emails |= _eltern_emails_fuer_kind(kind)
-
-    for email in empfaenger_emails:
+    for email in _alle_kinder_emails(instance.gruppe):
         sichere_mail_senden(
             subject=f"Neue Veranstaltung: {instance.titel}",
             message=(
@@ -73,6 +69,61 @@ def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
         )
 
 
+def termin_geaendert_benachrichtigen(sender, instance, **kwargs):
+    """Informiert passende Eltern per E-Mail, wenn sich bei einem bestehenden Termin
+    Zeit oder Beschreibung ändern."""
+    if not instance.pk:
+        return
+    try:
+        alt = Termin.objects.get(pk=instance.pk)
+    except Termin.DoesNotExist:
+        return
+
+    geaendert = []
+    if alt.beginn != instance.beginn or alt.ende != instance.ende:
+        geaendert.append("die Zeit")
+    if alt.beschreibung != instance.beschreibung:
+        geaendert.append("die Beschreibung")
+    if not geaendert:
+        return
+
+    for email in _alle_kinder_emails(instance.gruppe):
+        sichere_mail_senden(
+            subject=f"Termin geändert: {instance.titel}",
+            message=(
+                f"Bei folgendem Termin hat sich {' und '.join(geaendert)} geändert:\n\n"
+                f"{instance.titel} ({instance.get_art_display()})\n"
+                f"{_zeitraum_text(instance)}"
+                + (f"\n\n{instance.beschreibung}" if instance.beschreibung else "")
+                + "\n\nLogg dich in der Garde-Tanz-App ein, um die Details zu sehen."
+            ),
+            from_email=None,
+            recipient_list=[email],
+        )
+
+
+def neue_news_benachrichtigen(sender, instance, created, **kwargs):
+    """Informiert alle Mitglieder per E-Mail über neue News-Beiträge."""
+    if not created:
+        return
+
+    for email in _alle_kinder_emails():
+        sichere_mail_senden(
+            subject=f"Neuer Beitrag: {instance.titel}",
+            message=(
+                f"Es gibt einen neuen Beitrag in der Garde-Tanz-App:\n\n"
+                f"{instance.titel}\n\n"
+                f"{instance.text}\n\n"
+                "Logg dich ein, um mehr zu sehen."
+            ),
+            from_email=None,
+            recipient_list=[email],
+        )
+
+
 for _modell in TERMIN_MODELLE:
     pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
     post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
+    pre_save.connect(termin_geaendert_benachrichtigen, sender=_modell)
+
+post_save.connect(neue_news_benachrichtigen, sender=NewsPost)

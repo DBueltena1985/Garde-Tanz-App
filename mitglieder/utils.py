@@ -13,3 +13,11 @@ def sichere_mail_senden(**kwargs):
         send_mail(**kwargs)
     except Exception:
         logger.exception("E-Mail-Versand fehlgeschlagen (Betreff: %s)", kwargs.get("subject"))
+
+
+def eltern_emails_fuer_kind(kind):
+    """Alle E-Mails der Benutzer, die dieses Kind sehen/verwalten dürfen (Eltern + Mitverwalter)."""
+    emails = {u.email for u in kind.mitverwaltet_von.all() if u.email}
+    if kind.eltern.email:
+        emails.add(kind.eltern.email)
+    return emails
