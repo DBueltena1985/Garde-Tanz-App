@@ -36,6 +36,21 @@ def _kinder_fuer_nutzer(user):
     """Kinder, die ein Benutzer sehen/verwalten darf: eigene und mitverwaltete."""
     return Taenzerin.objects.filter(Q(eltern=user) | Q(mitverwaltet_von=user)).distinct()
 
+
+def _verbundene_mitglieder(user):
+    """Andere Benutzer, die über eine Familien-Einladung mit diesem Konto verbunden sind."""
+    mitverwalter = set()
+    for kind in Taenzerin.objects.filter(eltern=user).prefetch_related("mitverwaltet_von"):
+        mitverwalter |= set(kind.mitverwaltet_von.all())
+
+    einladende = set()
+    for kind in Taenzerin.objects.filter(mitverwaltet_von=user).select_related("eltern"):
+        if kind.eltern_id != user.id:
+            einladende.add(kind.eltern)
+
+    return mitverwalter, einladende
+
+
 MONATSNAMEN = [
     "Januar", "Februar", "März", "April", "Mai", "Juni",
     "Juli", "August", "September", "Oktober", "November", "Dezember",
@@ -458,8 +473,14 @@ def konto_bearbeiten(request):
     einladungslink = request.build_absolute_uri(
         reverse("familie_einladen", args=[_familien_einladungs_token(request.user)])
     )
+    verbundene_mitverwalter, verbundene_einladende = _verbundene_mitglieder(request.user)
 
-    return render(request, "mitglieder/konto_form.html", {"form": form, "einladungslink": einladungslink})
+    return render(request, "mitglieder/konto_form.html", {
+        "form": form,
+        "einladungslink": einladungslink,
+        "verbundene_mitverwalter": verbundene_mitverwalter,
+        "verbundene_einladende": verbundene_einladende,
+    })
 
 
 @login_required

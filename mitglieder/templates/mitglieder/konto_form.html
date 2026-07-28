@@ -25,5 +25,22 @@
     <p style="word-break: break-all; background:#f3e8ee; padding:0.6rem 0.8rem; border-radius:6px;">
         <code>{{ einladungslink }}</code>
     </p>
+
+    {% if verbundene_mitverwalter %}
+    <p style="margin-top:1rem;"><strong>✅ Bereits verbunden:</strong></p>
+    <ul style="margin-top:0.3rem;">
+        {% for u in verbundene_mitverwalter %}
+        <li>{{ u.first_name|default:u.username }}{% if u.last_name %} {{ u.last_name }}{% endif %}{% if u.email %} ({{ u.email }}){% endif %}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if verbundene_einladende %}
+    <p style="margin-top:1rem;">
+        ✅ Du bist mit den Kindern von
+        {% for u in verbundene_einladende %}{{ u.first_name|default:u.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        verbunden.
+    </p>
+    {% endif %}
 </div>
 {% endblock %}
