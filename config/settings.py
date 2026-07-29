@@ -146,8 +146,18 @@ CLOUDINARY_STORAGE = {
     'API_KEY': os.environ.get('DJANGO_CLOUDINARY_API_KEY', ''),
     'API_SECRET': os.environ.get('DJANGO_CLOUDINARY_API_SECRET', ''),
 }
-if CLOUDINARY_STORAGE['CLOUD_NAME']:
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Django 4.2+ konfiguriert den Datei-Speicher über STORAGES statt der alten
+# (in Django 6 entfernten) Einstellung DEFAULT_FILE_STORAGE.
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        if CLOUDINARY_STORAGE['CLOUD_NAME']
+        else 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
