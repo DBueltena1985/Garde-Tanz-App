@@ -1,4 +1,5 @@
 from django.db.models.signals import post_save, pre_delete
+from django.utils import timezone
 
 from .models import NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
 from .utils import eltern_emails_fuer_kind, sichere_mail_senden
@@ -10,9 +11,10 @@ TERMIN_MODELLE = (Termin, TrainingTermin, VeranstaltungTermin)
 
 
 def _zeitraum_text(termin):
-    text = f"{termin.beginn:%d.%m.%Y %H:%M}"
+    beginn_lokal = timezone.localtime(termin.beginn)
+    text = f"{beginn_lokal:%d.%m.%Y %H:%M}"
     if termin.ende:
-        text += f"–{termin.ende:%H:%M}"
+        text += f"–{timezone.localtime(termin.ende):%H:%M}"
     text += " Uhr"
     if termin.ort:
         text += f"\nOrt: {termin.ort}"

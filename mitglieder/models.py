@@ -128,7 +128,8 @@ class Termin(models.Model):
         ordering = ["beginn"]
 
     def __str__(self):
-        return f"{self.get_art_display()}: {self.titel} ({self.beginn:%d.%m.%Y %H:%M})"
+        lokal = timezone.localtime(self.beginn)
+        return f"{self.get_art_display()}: {self.titel} ({lokal:%d.%m.%Y %H:%M})"
 
 
 class TrainingManager(models.Manager):
