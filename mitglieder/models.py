@@ -102,6 +102,10 @@ class Termin(models.Model):
     titel = models.CharField("Titel", max_length=200)
     art = models.CharField("Art", max_length=20, choices=ART_CHOICES, default=ART_TRAINING)
     gruppe = models.CharField("Gruppe", max_length=20, choices=GRUPPE_CHOICES, default=GRUPPE_BEIDE)
+    taenzerinnen_erforderlich = models.BooleanField(
+        "Tänzerinnen müssen anwesend sein (Auftritt)", default=True,
+        help_text="Deaktivieren bei Veranstaltungen ohne Auftritt der Tänzerinnen, z.B. 'Ladies Night'.",
+    )
     beginn = models.DateTimeField("Beginn")
     ende = models.DateTimeField("Ende", null=True, blank=True)
     ort = models.CharField("Ort", max_length=200, blank=True)

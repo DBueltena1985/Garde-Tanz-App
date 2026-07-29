@@ -3,9 +3,14 @@
     {% if eintrag.termin.gruppe != "beide" %}({{ eintrag.termin.get_gruppe_display }}){% endif %}<br>
     {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
     {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
+    {% if eintrag.termin.taenzerinnen_erforderlich %}
     <div class="zusagen-badge">👥 {{ eintrag.anzahl_zusagen }} Zusage{{ eintrag.anzahl_zusagen|pluralize:",n" }}</div>
+    {% else %}
+    <div style="margin-top:0.4rem; font-size:0.85rem; color:#8a6d00;">ℹ️ Kein Auftritt der Tänzerinnen bei dieser Veranstaltung</div>
+    {% endif %}
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
+    {% if eintrag.termin.taenzerinnen_erforderlich %}
     {% for ks in eintrag.kinder_status %}
     <div style="margin-top:0.7rem; padding-top:0.6rem; border-top:1px solid #eee;">
         <strong>{{ ks.kind.vorname }}</strong> –
@@ -25,6 +30,7 @@
         </form>
     </div>
     {% endfor %}
+    {% endif %}
 
     {% if eintrag.anmeldepunkte %}
     <div style="margin-top:0.9rem; padding-top:0.7rem; border-top:2px dashed #eee;">
