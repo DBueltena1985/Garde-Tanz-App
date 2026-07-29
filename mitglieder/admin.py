@@ -633,6 +633,10 @@ class VeranstaltungAdmin(TerminAdminBase):
 
     def save_formset(self, request, form, formset, change):
         instanzen = formset.save(commit=False)
+        # commit=False speichert Loeschungen NICHT automatisch (anders als bei einem
+        # einzelnen ModelForm) - muessen wir hier explizit selbst ausfuehren.
+        for geloescht in formset.deleted_objects:
+            geloescht.delete()
         for instanz in instanzen:
             if isinstance(instanz, Aufgabe) and not instanz.pk:
                 instanz.erstellt_von = request.user
