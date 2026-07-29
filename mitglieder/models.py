@@ -253,6 +253,11 @@ class Aufgabe(models.Model):
         help_text="Optional: zu welcher Veranstaltung gehört die Aufgabe? Leer lassen für allgemeine Planung.",
         verbose_name="Veranstaltung",
     )
+    faellig_am = models.DateField(
+        "Fällig am", null=True, blank=True,
+        help_text="Optional: bis wann soll die Aufgabe erledigt sein? (z.B. 'Leibchen waschen' bis zum "
+        "nächsten Training).",
+    )
     erledigt = models.BooleanField("Erledigt", default=False)
     erledigt_am = models.DateTimeField(null=True, blank=True)
     zugewiesen_an = models.ForeignKey(
@@ -279,6 +284,10 @@ class Aufgabe(models.Model):
 
     def __str__(self):
         return self.titel
+
+    @property
+    def ueberfaellig(self):
+        return bool(self.faellig_am and not self.erledigt and self.faellig_am < timezone.localdate())
 
     def save(self, *args, **kwargs):
         if self.erledigt and not self.erledigt_am:

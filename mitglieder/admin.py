@@ -222,7 +222,7 @@ class AnmeldepunktInline(admin.TabularInline):
 class AufgabeInline(admin.TabularInline):
     model = Aufgabe
     extra = 0
-    fields = ("titel", "beschreibung", "zugewiesen_an", "erledigt")
+    fields = ("titel", "beschreibung", "faellig_am", "zugewiesen_an", "erledigt")
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -708,12 +708,12 @@ class AnmeldepunktAdmin(admin.ModelAdmin):
 
 @admin.register(Aufgabe)
 class AufgabeAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "nur_team", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
+    list_display = ("titel", "termin", "faellig_am", "nur_team", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
     list_display_links = ("titel",)
     list_editable = ("erledigt",)
     list_filter = ("erledigt", "nur_team", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
-    ordering = ("erledigt", "termin__beginn", "-erstellt_am")
+    ordering = ("erledigt", "faellig_am", "termin__beginn", "-erstellt_am")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "zugewiesen_an":
