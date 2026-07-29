@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from .feiertage import bayerische_feiertage
 from .forms import FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
-from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, NewsPost, Taenzerin, Termin, Zusage
+from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, Galeriebild, NewsPost, Taenzerin, Termin, Zusage
 from .utils import sichere_mail_senden
 
 FAMILIEN_EINLADUNG_SALT = "familien-einladung"
@@ -526,6 +526,23 @@ def feedback_senden(request):
 def news_liste(request):
     news = NewsPost.objects.all()
     return render(request, "mitglieder/news_liste.html", {"news": news})
+
+
+@login_required
+def galerie(request):
+    bilder = Galeriebild.objects.select_related("termin")
+
+    allgemeine_bilder = [b for b in bilder if b.termin_id is None]
+
+    nach_veranstaltung = {}
+    for b in bilder:
+        if b.termin_id:
+            nach_veranstaltung.setdefault(b.termin, []).append(b)
+
+    return render(request, "mitglieder/galerie.html", {
+        "allgemeine_bilder": allgemeine_bilder,
+        "veranstaltungs_bilder": nach_veranstaltung,
+    })
 
 
 @login_required

@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     'mitglieder',
 ]
 
@@ -131,9 +133,21 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Von Nutzerinnen hochgeladene Dateien (aktuell ungenutzt, aber vorbereitet)
+# Von Nutzerinnen hochgeladene Dateien (Galeriebilder). Werden bei gesetzten
+# Zugangsdaten automatisch zu Cloudinary hochgeladen (kostenloser externer
+# Bilder-Hosting-Dienst), damit sie nicht das PythonAnywhere-Speicherlimit
+# belasten. Ohne gesetzte Zugangsdaten (z.B. lokal) landen sie stattdessen
+# ganz normal im lokalen 'media'-Ordner.
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('DJANGO_CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.environ.get('DJANGO_CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.environ.get('DJANGO_CLOUDINARY_API_SECRET', ''),
+}
+if CLOUDINARY_STORAGE['CLOUD_NAME']:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

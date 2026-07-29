@@ -14,8 +14,8 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, Ferienzeitraum, NewsPost, Taenzerin, Termin, TrainingTermin,
-    VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Taenzerin, Termin,
+    TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -228,6 +228,20 @@ class AufgabeInline(admin.TabularInline):
         formset = super().get_formset(request, obj, **kwargs)
         formset.form.base_fields["zugewiesen_an"].queryset = User.objects.filter(is_staff=True)
         return formset
+
+
+class GaleriebildInline(admin.TabularInline):
+    model = Galeriebild
+    extra = 1
+    fields = ("bild", "vorschau", "beschreibung")
+    readonly_fields = ("vorschau",)
+
+    def vorschau(self, obj):
+        if obj and obj.pk and obj.bild:
+            return format_html('<img src="{}" style="height:60px; border-radius:4px;">', obj.bild.url)
+        return "–"
+
+    vorschau.short_description = "Vorschau"
 
 
 class TerminForm(forms.ModelForm):
@@ -624,7 +638,7 @@ class TrainingAdmin(TerminAdminBase):
 @admin.register(VeranstaltungTermin)
 class VeranstaltungAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
-    inlines = [AnmeldepunktInline, AufgabeInline]
+    inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline]
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
 
     def offene_aufgaben(self, obj):
@@ -646,6 +660,8 @@ class VeranstaltungAdmin(TerminAdminBase):
         for instanz in instanzen:
             if isinstance(instanz, Aufgabe) and not instanz.pk:
                 instanz.erstellt_von = request.user
+            if isinstance(instanz, Galeriebild) and not instanz.pk:
+                instanz.hochgeladen_von = request.user
             instanz.save()
         formset.save_m2m()
 
@@ -751,6 +767,34 @@ class NewsPostAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not obj.pk:
             obj.autor = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(Galeriebild)
+class GaleriebildAdmin(admin.ModelAdmin):
+    list_display = ("thumbnail", "termin", "beschreibung", "hochgeladen_von", "hochgeladen_am")
+    list_display_links = ("thumbnail", "beschreibung")
+    list_filter = ("termin",)
+    readonly_fields = ("vorschau", "hochgeladen_von", "hochgeladen_am")
+    fields = ("termin", "bild", "vorschau", "beschreibung", "hochgeladen_von", "hochgeladen_am")
+
+    def thumbnail(self, obj):
+        if obj.bild:
+            return format_html('<img src="{}" style="height:50px; border-radius:4px;">', obj.bild.url)
+        return "–"
+
+    thumbnail.short_description = "Bild"
+
+    def vorschau(self, obj):
+        if obj.bild:
+            return format_html('<img src="{}" style="max-width:400px; border-radius:6px;">', obj.bild.url)
+        return "–"
+
+    vorschau.short_description = "Vorschau"
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.hochgeladen_von = request.user
         super().save_model(request, obj, form, change)
 
 

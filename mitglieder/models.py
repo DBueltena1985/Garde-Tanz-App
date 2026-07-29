@@ -357,3 +357,30 @@ class Ferienzeitraum(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.start_datum:%d.%m.%Y} – {self.end_datum:%d.%m.%Y})"
+
+
+class Galeriebild(models.Model):
+    """Ein Foto in der Bildergalerie, optional einer Veranstaltung zugeordnet."""
+
+    termin = models.ForeignKey(
+        Termin, on_delete=models.CASCADE, null=True, blank=True, related_name="galeriebilder",
+        limit_choices_to={"art": Termin.ART_VERANSTALTUNG},
+        verbose_name="Veranstaltung",
+        help_text="Optional: zu welcher Veranstaltung gehört das Bild? Leer lassen für die allgemeine Galerie.",
+    )
+    bild = models.ImageField("Bild", upload_to="galerie/")
+    beschreibung = models.CharField("Beschreibung", max_length=200, blank=True)
+    hochgeladen_von = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="hochgeladene_bilder"
+    )
+    hochgeladen_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Galeriebild"
+        verbose_name_plural = "Galeriebilder"
+        ordering = ["-hochgeladen_am"]
+
+    def __str__(self):
+        if self.beschreibung:
+            return self.beschreibung
+        return self.termin.titel if self.termin else "Allgemeines Bild"
