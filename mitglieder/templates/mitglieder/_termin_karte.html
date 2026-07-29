@@ -10,6 +10,13 @@
     {% endif %}
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
+    {% if eintrag.termin.wichtiges_training %}
+    <div class="banner-warn" style="margin:0.6rem 0;">
+        ⚠️ Wichtig: Anwesenheit beim Training am {{ eintrag.termin.wichtiges_training.beginn|date:"d.m.Y H:i" }} Uhr –
+        <a href="{% url 'dashboard' %}?offener_termin={{ eintrag.termin.wichtiges_training.id }}#termin-{{ eintrag.termin.wichtiges_training.id }}">zum Training springen</a>
+    </div>
+    {% endif %}
+
     {% if eintrag.termin.taenzerinnen_erforderlich %}
     {% for ks in eintrag.kinder_status %}
     <div style="margin-top:0.7rem; padding-top:0.6rem; border-top:1px solid #eee;">
