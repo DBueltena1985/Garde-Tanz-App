@@ -301,6 +301,11 @@ class TerminAdminBase(admin.ModelAdmin):
 
     change_form_template = "admin/mitglieder_termin_change_form.html"
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "erstellt_von":
+            kwargs["queryset"] = User.objects.filter(is_staff=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def save_model(self, request, obj, form, change):
         obj.art = self.ART_WERT
         if not obj.pk:
