@@ -110,12 +110,12 @@ class Termin(models.Model):
     ende = models.DateTimeField("Ende", null=True, blank=True)
     ort = models.CharField("Ort", max_length=200, blank=True)
     beschreibung = models.TextField("Beschreibung", blank=True)
-    wichtiges_training = models.ForeignKey(
-        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="wichtig_fuer_veranstaltungen",
+    wichtige_trainings = models.ManyToManyField(
+        "self", symmetrical=False, blank=True, related_name="wichtig_fuer_veranstaltungen",
         limit_choices_to={"art": ART_TRAINING},
-        verbose_name="Wichtiges Training (Verweis)",
-        help_text="Optional: z.B. bei einer Veranstaltung auf ein Training verweisen, "
-        "zu dem Anwesenheit wichtig ist (etwa eine Generalprobe).",
+        verbose_name="Wichtige Trainings (Verweis)",
+        help_text="Optional: z.B. bei einer Veranstaltung auf ein oder mehrere Trainings verweisen, "
+        "zu denen Anwesenheit wichtig ist (etwa Generalproben).",
     )
     erstellt_von = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="erstellte_termine"

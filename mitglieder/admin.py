@@ -261,6 +261,7 @@ class TerminAdminBase(admin.ModelAdmin):
     DUPLIKAT_FELDER = ["titel", "gruppe", "beginn", "ende", "ort", "beschreibung"]
 
     form = TerminForm
+    filter_horizontal = ("wichtige_trainings",)
     list_display = (
         "titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
         "anzahl_zusagen", "anzahl_absagen", "anwesenheit_link",

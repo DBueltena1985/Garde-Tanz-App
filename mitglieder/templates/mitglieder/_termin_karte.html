@@ -10,10 +10,12 @@
     {% endif %}
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
-    {% if eintrag.termin.wichtiges_training %}
+    {% if eintrag.termin.wichtige_trainings.all %}
     <div class="banner-warn" style="margin:0.6rem 0;">
-        ⚠️ Wichtig: Anwesenheit beim Training am {{ eintrag.termin.wichtiges_training.beginn|date:"d.m.Y H:i" }} Uhr –
-        <a href="{% url 'dashboard' %}?offener_termin={{ eintrag.termin.wichtiges_training.id }}#termin-{{ eintrag.termin.wichtiges_training.id }}">zum Training springen</a>
+        {% for training in eintrag.termin.wichtige_trainings.all %}
+        ⚠️ Wichtig: Anwesenheit beim Training am {{ training.beginn|date:"d.m.Y H:i" }} Uhr –
+        <a href="{% url 'dashboard' %}?offener_termin={{ training.id }}#termin-{{ training.id }}">zum Training springen</a>{% if not forloop.last %}<br>{% endif %}
+        {% endfor %}
     </div>
     {% endif %}
 
