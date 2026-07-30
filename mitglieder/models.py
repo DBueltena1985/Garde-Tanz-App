@@ -118,6 +118,10 @@ class Termin(models.Model):
     ende = models.DateTimeField("Ende", null=True, blank=True)
     ort = models.CharField("Ort", max_length=200, blank=True)
     beschreibung = models.TextField("Beschreibung", blank=True)
+    interne_notiz = models.TextField(
+        "Interne Notiz", blank=True,
+        help_text="Nicht öffentlich – nur für Orga-/Admin-Team sichtbar, z.B. im Mitgliederbereich.",
+    )
     wichtige_trainings = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="wichtig_fuer_veranstaltungen",
         limit_choices_to={"art": ART_TRAINING},

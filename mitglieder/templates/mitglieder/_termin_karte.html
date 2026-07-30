@@ -10,6 +10,13 @@
     {% endif %}
     {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
 
+    {% if request.user.is_staff and eintrag.termin.interne_notiz %}
+    <div class="banner-warn" style="margin:0.6rem 0;">
+        🔒 <strong>Interne Notiz (nur Orga-/Admin-Team):</strong><br>
+        <span style="white-space: pre-line;">{{ eintrag.termin.interne_notiz }}</span>
+    </div>
+    {% endif %}
+
     {% if eintrag.termin.wichtige_trainings.all %}
     <div class="banner-warn" style="margin:0.6rem 0;">
         {% for training in eintrag.termin.wichtige_trainings.all %}
