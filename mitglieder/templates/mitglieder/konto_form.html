@@ -22,9 +22,12 @@
         registriert, bekommt ein eigenes Login und sieht/verwaltet automatisch dieselben Kinder wie du –
         es wird kein neues Kind angelegt.
     </p>
-    <p style="word-break: break-all; background:#f3e8ee; padding:0.6rem 0.8rem; border-radius:6px;">
+    <button type="button" id="einladungslink-kopieren" data-link="{{ einladungslink }}"
+            style="display:block; width:100%; text-align:left; font:inherit; border:none; cursor:pointer;
+                   word-break: break-all; background:#f3e8ee; padding:0.6rem 0.8rem; border-radius:6px; box-sizing:border-box;">
         <code>{{ einladungslink }}</code>
-    </p>
+        <span id="einladungslink-status" style="display:block; margin-top:0.3rem; font-size:0.85rem; color:#1a7a3c;"></span>
+    </button>
 
     {% if verbundene_mitverwalter %}
     <p style="margin-top:1rem;"><strong>✅ Bereits verbunden:</strong></p>
@@ -43,4 +46,36 @@
     </p>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('einladungslink-kopieren');
+    if (!btn) { return; }
+    var status = document.getElementById('einladungslink-status');
+    btn.addEventListener('click', function () {
+        var link = btn.getAttribute('data-link');
+
+        function zeigeErfolg() { status.textContent = '✅ Kopiert!'; }
+        function zeigeFehler() { status.textContent = 'Kopieren fehlgeschlagen – bitte Text manuell markieren und kopieren.'; }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(zeigeErfolg, zeigeFehler);
+        } else {
+            var textarea = document.createElement('textarea');
+            textarea.value = link;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                zeigeErfolg();
+            } catch (e) {
+                zeigeFehler();
+            }
+            document.body.removeChild(textarea);
+        }
+    });
+});
+</script>
 {% endblock %}
