@@ -575,6 +575,20 @@ def feedback_senden(request):
     return render(request, "mitglieder/feedback_form.html", {"form": form})
 
 
+VORSTANDSCHAFT = [
+    {"amt": "Vorstand", "namen": ["Martin Helmreich"]},
+    {"amt": "stellv. Vorsitzende", "namen": ["Maxi Albrecht", "Walter Kohl"]},
+    {"amt": "Schatzmeister", "namen": ["Thomas Finger"]},
+    {"amt": "Schriftführerin", "namen": ["Christine Friedrich"]},
+    {"amt": "Jugendleiter", "namen": ["Christian Krenzer"]},
+]
+
+
+@login_required
+def vorstandschaft(request):
+    return render(request, "mitglieder/vorstandschaft.html", {"vorstandschaft": VORSTANDSCHAFT})
+
+
 @login_required
 def news_liste(request):
     news = NewsPost.objects.all()
