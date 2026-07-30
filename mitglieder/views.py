@@ -225,8 +225,11 @@ def dashboard(request):
         for punkt in Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern")
     ]
 
+    neueste_news = NewsPost.objects.all()[:3]
+
     return render(request, "mitglieder/dashboard.html", {
         "kinder": kinder,
+        "neueste_news": neueste_news,
         "veranstaltungen_gruppen": veranstaltungen_gruppen,
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,

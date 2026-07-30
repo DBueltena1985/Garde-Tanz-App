@@ -16,6 +16,32 @@
 </div>
 {% endif %}
 
+{% if neueste_news %}
+<a href="{% url 'news_liste' %}" class="news-banner" id="news-banner">
+    {% for beitrag in neueste_news %}
+    <div class="news-banner-slide{% if forloop.first %} news-banner-aktiv{% endif %}">
+        <strong>📢 {{ beitrag.titel }}</strong>{% if beitrag.text %}<span class="news-banner-text"> – {{ beitrag.text|truncatechars:80 }}</span>{% endif %}
+    </div>
+    {% endfor %}
+</a>
+{% if neueste_news|length > 1 %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var banner = document.getElementById('news-banner');
+    if (!banner) { return; }
+    var slides = banner.querySelectorAll('.news-banner-slide');
+    if (slides.length <= 1) { return; }
+    var index = 0;
+    setInterval(function () {
+        slides[index].classList.remove('news-banner-aktiv');
+        index = (index + 1) % slides.length;
+        slides[index].classList.add('news-banner-aktiv');
+    }, 4000);
+});
+</script>
+{% endif %}
+{% endif %}
+
 {% if meine_aufgaben %}
 <div class="card">
     <h2 style="margin-top:0;">📝 Meine Aufgaben</h2>
