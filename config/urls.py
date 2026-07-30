@@ -18,7 +18,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, path
+from django.urls import include, path, reverse_lazy
+
+from mitglieder.forms import SicherePasswordResetForm
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +30,35 @@ urlpatterns = [
         name='login',
     ),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path(
+        'passwort-vergessen/',
+        auth_views.PasswordResetView.as_view(
+            template_name='mitglieder/passwort_vergessen.html',
+            email_template_name='mitglieder/email/passwort_reset_email.txt',
+            subject_template_name='mitglieder/email/passwort_reset_subject.txt',
+            form_class=SicherePasswordResetForm,
+            success_url=reverse_lazy('password_reset_done'),
+        ),
+        name='password_reset',
+    ),
+    path(
+        'passwort-vergessen/gesendet/',
+        auth_views.PasswordResetDoneView.as_view(template_name='mitglieder/passwort_vergessen_gesendet.html'),
+        name='password_reset_done',
+    ),
+    path(
+        'passwort-zuruecksetzen/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='mitglieder/passwort_zuruecksetzen.html',
+            success_url=reverse_lazy('password_reset_complete'),
+        ),
+        name='password_reset_confirm',
+    ),
+    path(
+        'passwort-zuruecksetzen/fertig/',
+        auth_views.PasswordResetCompleteView.as_view(template_name='mitglieder/passwort_zuruecksetzen_fertig.html'),
+        name='password_reset_complete',
+    ),
     path('', include('mitglieder.urls')),
 ]
 

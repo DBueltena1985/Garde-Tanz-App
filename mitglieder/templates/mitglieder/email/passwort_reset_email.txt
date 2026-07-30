@@ -1,0 +1,9 @@
+Hallo{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+du hast für dein Konto in der Garde-Tanz-App ein neues Passwort angefordert.
+
+Klicke auf diesen Link, um ein neues Passwort zu vergeben:
+
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+Falls du das nicht warst, kannst du diese E-Mail einfach ignorieren – dein Passwort bleibt dann unverändert.

@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .feiertage import bayerische_feiertage
-from .forms import FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
+from .forms import BenutzernameVergessenForm, FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
 from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, Galeriebild, NewsPost, Taenzerin, Termin, Zusage
 from .utils import sichere_mail_senden
 
@@ -422,6 +422,38 @@ def registrieren(request):
         form = RegistrierenForm()
 
     return render(request, "mitglieder/registrieren.html", {"form": form})
+
+
+def benutzername_vergessen(request):
+    if request.method == "POST":
+        form = BenutzernameVergessenForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            benutzernamen = list(
+                User.objects.filter(email__iexact=email).values_list("username", flat=True)
+            )
+            if benutzernamen:
+                sichere_mail_senden(
+                    subject="Dein Benutzername für die Garde-Tanz-App",
+                    message=(
+                        "Hallo,\n\n"
+                        "zu dieser E-Mail-Adresse ist folgender Benutzername registriert:\n\n"
+                        + "\n".join(f"- {name}" for name in benutzernamen)
+                        + "\n\nFalls du dein Passwort auch vergessen hast, kannst du es über "
+                        "'Passwort vergessen' auf der Login-Seite zurücksetzen."
+                    ),
+                    from_email=None,
+                    recipient_list=[email],
+                )
+            messages.success(
+                request,
+                "Falls diese E-Mail-Adresse bei uns registriert ist, wurde der Benutzername soeben dorthin geschickt.",
+            )
+            return redirect("login")
+    else:
+        form = BenutzernameVergessenForm()
+
+    return render(request, "mitglieder/benutzername_vergessen.html", {"form": form})
 
 
 def familie_einladen(request, token):

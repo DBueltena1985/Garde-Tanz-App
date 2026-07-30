@@ -29,4 +29,5 @@ urlpatterns = [
     path("konto/passwort/", views.passwort_aendern, name="passwort_aendern"),
     path("feedback/", views.feedback_senden, name="feedback_senden"),
     path("vorstandschaft/", views.vorstandschaft, name="vorstandschaft"),
+    path("benutzername-vergessen/", views.benutzername_vergessen, name="benutzername_vergessen"),
 ]

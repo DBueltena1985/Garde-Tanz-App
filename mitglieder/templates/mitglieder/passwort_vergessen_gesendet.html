@@ -1,0 +1,9 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Passwort vergessen – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>E-Mail unterwegs</h2>
+    <p>Falls diese E-Mail-Adresse bei uns registriert ist, wurde soeben ein Link zum Zurücksetzen des Passworts dorthin geschickt.</p>
+    <p><a href="{% url 'login' %}">Zurück zum Login</a></p>
+</div>
+{% endblock %}

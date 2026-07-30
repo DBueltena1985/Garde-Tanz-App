@@ -1,0 +1,17 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Neues Passwort – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Neues Passwort vergeben</h2>
+    {% if validlink %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-zusagen">Passwort speichern</button>
+        </form>
+    {% else %}
+        <p>Dieser Link ist ungültig oder wurde bereits verwendet. Bitte fordere einen neuen Link an.</p>
+        <p><a href="{% url 'password_reset' %}" class="btn btn-zusagen">Neuen Link anfordern</a></p>
+    {% endif %}
+</div>
+{% endblock %}

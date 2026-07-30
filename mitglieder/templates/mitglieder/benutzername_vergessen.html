@@ -1,0 +1,14 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Benutzername vergessen – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Benutzername vergessen</h2>
+    <p>Gib deine bei uns hinterlegte E-Mail-Adresse ein. Wir schicken dir dann deinen Benutzernamen zu.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-zusagen">Benutzername zuschicken</button>
+    </form>
+    <p><a href="{% url 'login' %}">Zurück zum Login</a></p>
+</div>
+{% endblock %}

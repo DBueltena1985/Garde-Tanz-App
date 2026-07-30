@@ -99,18 +99,24 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
+# Gilt nur beim Setzen eines NEUEN Passworts (Registrierung, Passwort-Aenderung/-Reset) -
+# bereits registrierte Mitglieder muessen ihr bestehendes Passwort deswegen nicht aendern.
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        'NAME': 'mitglieder.password_validators.KomplexitaetValidator',
     },
 ]
 

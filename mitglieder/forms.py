@@ -1,9 +1,13 @@
+import logging
+
 from django import forms
 from django.conf import settings
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordResetForm, UserCreationForm
 from django.contrib.auth.models import User
 
 from .models import Feedback, Taenzerin
+
+logger = logging.getLogger("mitglieder")
 
 
 class RegistrierenForm(UserCreationForm):
@@ -35,6 +39,21 @@ class FamilieEinladenForm(UserCreationForm):
         fields = ("username", "first_name", "last_name", "email")
 
     field_order = ["username", "first_name", "last_name", "email", "password1", "password2"]
+
+
+class SicherePasswordResetForm(PasswordResetForm):
+    """Wie PasswordResetForm, aber ein E-Mail-Fehler (z.B. Brevo down) darf die Anfrage
+    nicht mit einem Server-Fehler abbrechen (gleiches Prinzip wie sichere_mail_senden)."""
+
+    def send_mail(self, *args, **kwargs):
+        try:
+            super().send_mail(*args, **kwargs)
+        except Exception:
+            logger.exception("Passwort-Reset-Mail fehlgeschlagen")
+
+
+class BenutzernameVergessenForm(forms.Form):
+    email = forms.EmailField(label="E-Mail-Adresse")
 
 
 class KontoForm(forms.ModelForm):

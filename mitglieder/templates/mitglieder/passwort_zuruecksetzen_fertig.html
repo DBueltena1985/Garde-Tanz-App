@@ -1,0 +1,9 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Passwort geändert – Garde Tanz{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Passwort gespeichert</h2>
+    <p>Dein neues Passwort wurde gespeichert. Du kannst dich jetzt damit einloggen.</p>
+    <p><a href="{% url 'login' %}" class="btn btn-zusagen">Zum Login</a></p>
+</div>
+{% endblock %}
