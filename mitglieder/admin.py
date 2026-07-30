@@ -35,9 +35,24 @@ class TaenzerinInline(admin.TabularInline):
     show_change_link = True
 
 
+def _verknuepfte_benutzer_ids(user):
+    """Andere Benutzer, die über ein gemeinsames Kind (Eltern/Mitverwaltung/eigenes Konto) verbunden sind."""
+    kinder = Taenzerin.objects.filter(
+        Q(eltern=user) | Q(mitverwaltet_von=user) | Q(nutzer=user)
+    ).prefetch_related("mitverwaltet_von")
+    ids = set()
+    for kind in kinder:
+        ids.add(kind.eltern_id)
+        ids.update(kind.mitverwaltet_von.values_list("id", flat=True))
+        if kind.nutzer_id:
+            ids.add(kind.nutzer_id)
+    ids.discard(user.id)
+    return ids
+
+
 class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline]
-    list_display = ("first_name", "last_name", "username", "orga_team", "admin_team")
+    list_display = ("first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer")
     change_form_template = "admin/mitglieder_user_change_form.html"
     change_list_template = "admin/mitglieder_user_change_list.html"
 
@@ -54,6 +69,22 @@ class CustomUserAdmin(UserAdmin):
     admin_team.short_description = "Admin-Team"
     admin_team.boolean = True
     admin_team.admin_order_field = "is_superuser"
+
+    def verknuepfte_benutzer(self, obj):
+        ids = _verknuepfte_benutzer_ids(obj)
+        if not ids:
+            return "–"
+        andere = User.objects.filter(id__in=ids)
+        return format_html_join(
+            ", ",
+            '<a href="{}">{}</a>',
+            (
+                (reverse("admin:auth_user_change", args=[u.id]), u.first_name or u.username)
+                for u in andere
+            ),
+        )
+
+    verknuepfte_benutzer.short_description = "Verknüpfte Benutzer"
 
     def get_urls(self):
         eigene_urls = [
