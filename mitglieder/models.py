@@ -308,6 +308,7 @@ class Aufgabe(models.Model):
 class NewsPost(models.Model):
     titel = models.CharField("Titel", max_length=200)
     text = models.TextField("Text")
+    bild = models.ImageField("Bild", upload_to="news/", blank=True, null=True)
     autor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="news_posts"
     )

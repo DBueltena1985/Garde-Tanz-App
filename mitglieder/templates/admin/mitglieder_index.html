@@ -4,10 +4,56 @@
 {% block content %}
 <div style="background:#eef6ff; border:1px solid #b8dcff; padding:1rem; border-radius:6px; margin-bottom:1.2rem; color:#0d2b4e;">
     <strong style="color:#0d2b4e;">Registrierungslink für Eltern</strong> (z.B. für die WhatsApp-Gruppe):<br>
-    <code style="background:#dcebfa; color:#0d2b4e;">{{ registrierungslink }}</code><br>
-    <strong style="color:#0d2b4e;">Einladungscode:</strong> <code style="background:#dcebfa; color:#0d2b4e;">{{ einladungscode }}</code>
+    <button type="button" class="admin-kopier-button" data-link="{{ registrierungslink }}"
+            style="font:inherit; border:none; cursor:pointer; background:#dcebfa; color:#0d2b4e; padding:0.1rem 0.4rem; border-radius:4px;">
+        <code style="background:none; color:inherit;">{{ registrierungslink }}</code>
+    </button><br>
+    <strong style="color:#0d2b4e;">Einladungscode:</strong>
+    <button type="button" class="admin-kopier-button" data-link="{{ einladungscode }}"
+            style="font:inherit; border:none; cursor:pointer; background:#dcebfa; color:#0d2b4e; padding:0.1rem 0.4rem; border-radius:4px;">
+        <code style="background:none; color:inherit;">{{ einladungscode }}</code>
+    </button>
+    <span id="admin-kopier-status" style="margin-left:0.5rem; font-size:0.85rem; color:#1a7a3c;"></span>
 </div>
 {{ block.super }}
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var status = document.getElementById('admin-kopier-status');
+
+    function zeigeErfolg() { status.textContent = '✅ Kopiert!'; }
+    function zeigeFehler() { status.textContent = 'Kopieren fehlgeschlagen – bitte Text manuell markieren und kopieren.'; }
+
+    function kopieren(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(zeigeErfolg, zeigeFehler);
+        } else {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                zeigeErfolg();
+            } catch (e) {
+                zeigeFehler();
+            }
+            document.body.removeChild(textarea);
+        }
+    }
+
+    document.querySelectorAll('.admin-kopier-button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            kopieren(btn.getAttribute('data-link'));
+        });
+    });
+});
+</script>
 {% endblock %}
 
 {% block sidebar %}

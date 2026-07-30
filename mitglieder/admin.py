@@ -824,6 +824,11 @@ class FerienzeitraumAdmin(admin.ModelAdmin):
 
 _get_app_list_ohne_anzahl = admin.site.get_app_list
 
+# Diese Modelle wachsen unbegrenzt mit der Zeit (jedes Training/jede Zu-/Absage
+# bleibt für immer in der DB) – die Anzahl davor waechst dadurch beliebig hoch
+# und wird im Admin-Menü nicht angezeigt.
+_MODELLE_OHNE_ANZAHL = (TrainingTermin, Zusage)
+
 
 def _get_app_list_mit_anzahl(request, app_label=None):
     """Zeigt vor jedem Modellnamen im Admin-Menü die Anzahl der Datensätze an."""
@@ -831,7 +836,7 @@ def _get_app_list_mit_anzahl(request, app_label=None):
     for app in app_list:
         for model in app["models"]:
             model_class = model.get("model")
-            if model_class is not None:
+            if model_class is not None and model_class not in _MODELLE_OHNE_ANZAHL:
                 anzahl = model_class._default_manager.count()
                 model["name"] = f"{anzahl} {model['name']}"
     return app_list
