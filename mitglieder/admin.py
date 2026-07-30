@@ -725,10 +725,10 @@ class AnmeldepunktAdmin(admin.ModelAdmin):
 
 @admin.register(Aufgabe)
 class AufgabeAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "faellig_am", "nur_team", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
+    list_display = ("titel", "termin", "faellig_am", "sichtbar_fuer", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
     list_display_links = ("titel",)
     list_editable = ("erledigt",)
-    list_filter = ("erledigt", "nur_team", "zugewiesen_an", "termin")
+    list_filter = ("erledigt", "sichtbar_fuer", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
     ordering = ("erledigt", "faellig_am", "termin__beginn", "-erstellt_am")
 

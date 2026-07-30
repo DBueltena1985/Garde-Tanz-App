@@ -35,8 +35,38 @@ def _einladendes_konto_aus_token(token):
 
 
 def _kinder_fuer_nutzer(user):
-    """Kinder, die ein Benutzer sehen/verwalten darf: eigene und mitverwaltete."""
-    return Taenzerin.objects.filter(Q(eltern=user) | Q(mitverwaltet_von=user)).distinct()
+    """Kinder, die ein Benutzer sehen/verwalten darf: eigene, mitverwaltete und der eigene Taenzerin-Eintrag."""
+    return Taenzerin.objects.filter(Q(eltern=user) | Q(mitverwaltet_von=user) | Q(nutzer=user)).distinct()
+
+
+def _eigene_taenzerin(user):
+    """Der Taenzerin-Eintrag, der zum Login-Konto des Benutzers selbst gehört (falls vorhanden)."""
+    return Taenzerin.objects.filter(nutzer=user).first()
+
+
+def _kinder_fuer_termine(user):
+    """Wie _kinder_fuer_nutzer, aber ein Konto, das selbst eine Tänzerin ist, sieht dort nur sich
+    selbst und nicht zusätzlich verwaltete Geschwister."""
+    eigene = _eigene_taenzerin(user)
+    if eigene:
+        return Taenzerin.objects.filter(pk=eigene.pk)
+    return _kinder_fuer_nutzer(user)
+
+
+def _erlaubte_aufgaben_zielgruppen(user):
+    """None = alles sichtbar (Team). Sonst Liste der sichtbar_fuer-Werte, die dieser Benutzer sehen darf."""
+    if user.is_staff:
+        return None
+    if _eigene_taenzerin(user):
+        return [Aufgabe.ZIELGRUPPE_TAENZERINNEN]
+    return [Aufgabe.ZIELGRUPPE_ELTERN, Aufgabe.ZIELGRUPPE_TAENZERINNEN]
+
+
+def _aufgaben_fuer_nutzer_sichtbar(queryset, user):
+    zielgruppen = _erlaubte_aufgaben_zielgruppen(user)
+    if zielgruppen is None:
+        return queryset
+    return queryset.filter(sichtbar_fuer__in=zielgruppen)
 
 
 def _anmeldepunkt_info(punkt, user):
@@ -141,7 +171,7 @@ def _kalender_monat(jahr, monat, gruppen):
 
 @login_required
 def dashboard(request):
-    kinder = _kinder_fuer_nutzer(request.user)
+    kinder = _kinder_fuer_termine(request.user)
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
     termine = _fuer_gruppen_relevant(
@@ -217,8 +247,7 @@ def dashboard(request):
     offene_allgemeine_aufgaben = Aufgabe.objects.filter(
         termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
     )
-    if not request.user.is_staff:
-        offene_allgemeine_aufgaben = offene_allgemeine_aufgaben.filter(nur_team=False)
+    offene_allgemeine_aufgaben = _aufgaben_fuer_nutzer_sichtbar(offene_allgemeine_aufgaben, request.user)
 
     allgemeine_helferpunkte = [
         _anmeldepunkt_info(punkt, request.user)
@@ -341,7 +370,8 @@ def aufgabe_erledigt(request, aufgabe_id):
 @login_required
 def aufgabe_uebernehmen(request, aufgabe_id):
     aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id, termin__isnull=True)
-    if aufgabe.nur_team and not request.user.is_staff:
+    zielgruppen = _erlaubte_aufgaben_zielgruppen(request.user)
+    if zielgruppen is not None and aufgabe.sichtbar_fuer not in zielgruppen:
         raise PermissionDenied
 
     if request.method == "POST":
@@ -428,7 +458,7 @@ def familie_einladen(request, token):
 @login_required
 def offene_trainings(request):
     """Zeigt alle Trainings (auch vergangene), zu denen mindestens eines der eigenen Kinder noch keine Rückmeldung hat."""
-    kinder = _kinder_fuer_nutzer(request.user)
+    kinder = _kinder_fuer_termine(request.user)
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
     trainings = _fuer_gruppen_relevant(

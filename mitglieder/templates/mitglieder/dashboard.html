@@ -86,7 +86,8 @@ document.addEventListener('DOMContentLoaded', function () {
     {% for aufgabe in offene_allgemeine_aufgaben %}
     <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid #f0e8ec;{% endif %}">
         <strong>{{ aufgabe.titel }}</strong>
-        {% if aufgabe.nur_team %}<span style="color:#8a6d00; font-size:0.8rem;">🔒 Nur Team</span>{% endif %}
+        {% if aufgabe.sichtbar_fuer == "team" %}<span style="color:#8a6d00; font-size:0.8rem;">🔒 Nur Team</span>{% endif %}
+        {% if aufgabe.sichtbar_fuer == "taenzerinnen" %}<span style="color:#8a6d00; font-size:0.8rem;">💃 Für Tänzerinnen</span>{% endif %}
         {% if aufgabe.faellig_am %}
         <div style="font-size:0.85rem; {% if aufgabe.ueberfaellig %}color:#b3261e; font-weight:600;{% else %}color:#8a6d00;{% endif %}">
             📅 Fällig am {{ aufgabe.faellig_am|date:"d.m.Y" }}{% if aufgabe.ueberfaellig %} – überfällig{% endif %}

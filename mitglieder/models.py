@@ -261,6 +261,15 @@ class Anmeldung(models.Model):
 class Aufgabe(models.Model):
     """To-Do-Eintrag für Admins/Betreuer, optional zu einer Veranstaltung, sonst allgemeine Planung."""
 
+    ZIELGRUPPE_TEAM = "team"
+    ZIELGRUPPE_ELTERN = "eltern"
+    ZIELGRUPPE_TAENZERINNEN = "taenzerinnen"
+    ZIELGRUPPE_CHOICES = [
+        (ZIELGRUPPE_TEAM, "Nur Orga-/Admin-Team"),
+        (ZIELGRUPPE_ELTERN, "Eltern"),
+        (ZIELGRUPPE_TAENZERINNEN, "Tänzerinnen"),
+    ]
+
     titel = models.CharField("Titel", max_length=200)
     beschreibung = models.TextField("Beschreibung", blank=True)
     termin = models.ForeignKey(
@@ -283,10 +292,10 @@ class Aufgabe(models.Model):
         help_text="Optional: wer kümmert sich darum? (Wird auch automatisch gesetzt, wenn sich jemand "
         "im Mitgliederbereich selbst einträgt.)",
     )
-    nur_team = models.BooleanField(
-        "Nur Orga-/Admin-Team", default=True,
-        help_text="Aktiviert: nur Orga-/Admin-Team sieht diese Aufgabe im Mitgliederbereich und kann "
-        "sie übernehmen. Deaktiviert: auch Eltern können sich dafür eintragen.",
+    sichtbar_fuer = models.CharField(
+        "Sichtbar für", max_length=20, choices=ZIELGRUPPE_CHOICES, default=ZIELGRUPPE_TEAM,
+        help_text="Wer sieht diese Aufgabe im Mitgliederbereich und kann sie übernehmen? "
+        "Eltern sehen zusätzlich alle für Tänzerinnen bestimmten Aufgaben, das Orga-/Admin-Team sieht immer alles.",
     )
     erstellt_von = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="aufgaben"
