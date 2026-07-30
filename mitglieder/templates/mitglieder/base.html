@@ -160,6 +160,11 @@
                         <a href="{% url 'konto_bearbeiten' %}">Benutzereinstellung</a>
                         <a href="{% url 'kinder_liste' %}">Meine Kinder</a>
                         <a href="{% url 'feedback_senden' %}">Feedback</a>
+                        <hr style="border:none; border-top:1px solid #f0e8ec; margin:0.4rem 0;">
+                        <a href="https://www.djk-oberasbach.de/DJK_Schutzkonzept_2026_final.pdf" target="_blank" rel="noopener">Kinder- und Jugendschutzkonzept</a>
+                        <a href="https://www.djk-oberasbach.de/DJK_Mitgliedsantrag.pdf" target="_blank" rel="noopener">Aufnahmeantrag</a>
+                        <a href="https://www.djk-oberasbach.de/images/djk_oas_satzung.pdf" target="_blank" rel="noopener">Vereinssatzung</a>
+                        <hr style="border:none; border-top:1px solid #f0e8ec; margin:0.4rem 0;">
                         <form method="post" action="{% url 'logout' %}" class="logout-form">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-logout">Logout<span class="logout-name"> ({{ user.first_name|default:user.username }})</span></button>
