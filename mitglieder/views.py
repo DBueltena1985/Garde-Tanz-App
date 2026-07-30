@@ -545,6 +545,21 @@ def kind_bearbeiten(request, kind_id=None):
 
 
 @login_required
+def kind_einverstaendnis_bildaufnahmen(request, kind_id, wert):
+    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
+
+    if wert not in ("ja", "nein"):
+        messages.error(request, "Ungültiger Wert.")
+        return redirect("kinder_liste")
+
+    if request.method == "POST":
+        kind.einverstaendnis_bildaufnahmen_setzen(wert == "ja")
+        messages.success(request, f"Einverständnis für Bild-/Videoaufnahmen von {kind.vorname} gespeichert.")
+
+    return redirect("kinder_liste")
+
+
+@login_required
 def feedback_senden(request):
     if request.method == "POST":
         form = FeedbackForm(request.POST)

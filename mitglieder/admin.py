@@ -133,8 +133,9 @@ class TaenzerinAdmin(admin.ModelAdmin):
     list_display = (
         "vorname", "nachname", "eltern_name", "nutzer", "gruppe_anzeige",
         "notfallkontakt_anruf", "schuhgroesse", "kleidergroesse", "stammdaten_status",
+        "einverstaendnis_bildaufnahmen",
     )
-    list_filter = (TaenzerinStatusFilter,)
+    list_filter = (TaenzerinStatusFilter, "einverstaendnis_bildaufnahmen")
     search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
 
     def eltern_name(self, obj):
@@ -148,7 +149,7 @@ class TaenzerinAdmin(admin.ModelAdmin):
         "eltern", "mitverwaltet_von", "nutzer", "vorname", "nachname", "geburtsjahr",
         "notfallkontakt_name", "notfallkontakt_telefon", "notfallkontakt_beziehung",
         "schuhgroesse", "kleidergroesse", "allergien", "medikamente", "sonstige_hinweise",
-        "stammdaten_bestaetigt_am",
+        "stammdaten_bestaetigt_am", "einverstaendnis_bildaufnahmen", "einverstaendnis_bildaufnahmen_am",
     )
 
     def stammdaten_status(self, obj):

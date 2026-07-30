@@ -57,6 +57,16 @@ class Taenzerin(models.Model):
         "Stammdaten zuletzt bestätigt am", null=True, blank=True
     )
 
+    einverstaendnis_bildaufnahmen = models.BooleanField(
+        "Einverständnis Bild-/Videoaufnahmen (Social Media, Homepage, Presse)",
+        null=True, blank=True, default=None,
+        help_text="Muss separat bestätigt werden, ist nicht Teil der allgemeinen Stammdaten-Bestätigung. "
+        "Leer = noch nicht entschieden.",
+    )
+    einverstaendnis_bildaufnahmen_am = models.DateTimeField(
+        "Einverständnis zuletzt bestätigt am", null=True, blank=True
+    )
+
     class Meta:
         verbose_name = "Tänzerin"
         verbose_name_plural = "Tänzerinnen"
@@ -75,6 +85,11 @@ class Taenzerin(models.Model):
     def stammdaten_bestaetigen(self):
         self.stammdaten_bestaetigt_am = timezone.now()
         self.save(update_fields=["stammdaten_bestaetigt_am"])
+
+    def einverstaendnis_bildaufnahmen_setzen(self, wert):
+        self.einverstaendnis_bildaufnahmen = wert
+        self.einverstaendnis_bildaufnahmen_am = timezone.now()
+        self.save(update_fields=["einverstaendnis_bildaufnahmen", "einverstaendnis_bildaufnahmen_am"])
 
     @property
     def gruppe(self):
