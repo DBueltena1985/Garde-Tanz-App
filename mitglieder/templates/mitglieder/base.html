@@ -49,6 +49,22 @@
         }
         .konto-dropdown-menu .logout-form { position: static; margin-top: 0.2rem; }
         .konto-dropdown-menu .btn-logout { width: 100%; text-align: center; box-sizing: border-box; }
+        .footer {
+            margin-top: 2rem; padding: 1rem; text-align: center; font-size: 0.85rem; color: #888;
+        }
+        .footer a { color: #7a2159; text-decoration: none; font-weight: 600; }
+        .footer-kontakte { position: relative; display: inline-block; text-align: left; }
+        .footer-kontakte > summary {
+            cursor: pointer; list-style: none; color: #7a2159; font-weight: 600; display: inline;
+        }
+        .footer-kontakte > summary::-webkit-details-marker { display: none; }
+        .footer-kontakte-menu {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            margin-bottom: 0.5rem; background: white; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.18); padding: 0.6rem 1rem;
+            min-width: 220px; z-index: 20; font-size: 0.85rem;
+        }
+        .footer-kontakte-menu a { display: block; padding: 0.2rem 0; }
         @media (max-width: 600px) {
             nav { position: relative; gap: 0.4rem 0.6rem; padding: 0.6rem 0.8rem; }
             nav a.brand { width: 100%; margin-right: 0; margin-bottom: 0.1rem; padding-right: 5.5rem; box-sizing: border-box; }
@@ -171,5 +187,18 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+
+    <footer class="footer">
+        <a href="https://www.djk-oberasbach.de/" target="_blank" rel="noopener">DJK Oberasbach</a>
+        ·
+        <a href="https://www.djk-oberasbach.de/impressum.php" target="_blank" rel="noopener">Impressum</a>
+        ·
+        <details class="footer-kontakte">
+            <summary>Kontakte der Abteilungen</summary>
+            <div class="footer-kontakte-menu">
+                <p style="color:#999; margin:0;">Liste folgt in Kürze.</p>
+            </div>
+        </details>
+    </footer>
 </body>
 </html>
