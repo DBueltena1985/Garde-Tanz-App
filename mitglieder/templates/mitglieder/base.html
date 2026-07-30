@@ -62,9 +62,10 @@
             position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
             margin-bottom: 0.5rem; background: white; border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.18); padding: 0.6rem 1rem;
-            min-width: 220px; z-index: 20; font-size: 0.85rem;
+            min-width: 260px; max-width: 90vw; max-height: 60vh; overflow-y: auto;
+            z-index: 20; font-size: 0.85rem;
         }
-        .footer-kontakte-menu a { display: block; padding: 0.2rem 0; }
+        .footer-kontakte-menu a { display: inline-block; padding: 0.1rem 0; }
         @media (max-width: 600px) {
             nav { position: relative; gap: 0.4rem 0.6rem; padding: 0.6rem 0.8rem; }
             nav a.brand { width: 100%; margin-right: 0; margin-bottom: 0.1rem; padding-right: 5.5rem; box-sizing: border-box; }
@@ -207,7 +208,19 @@
         <details class="footer-kontakte">
             <summary>Kontakte der Abteilungen</summary>
             <div class="footer-kontakte-menu">
-                <p style="color:#999; margin:0;">Liste folgt in Kürze.</p>
+                {% for abt in kontakte_abteilungen %}
+                <div{% if not forloop.first %} style="margin-top:0.6rem; padding-top:0.6rem; border-top:1px solid #f0e8ec;"{% endif %}>
+                    <strong>{{ abt.abteilung }}</strong>
+                    {% for g in abt.gruppen %}
+                    <div style="margin-top:0.2rem;">
+                        {% if g.gruppe %}<em>{{ g.gruppe }}</em>: {% endif %}
+                        {% if g.trainer %}{{ g.trainer }}{% endif %}
+                        {% if g.telefon %}<br><a href="tel:{{ g.telefon }}">📞 {{ g.telefon }}</a>{% endif %}
+                        {% if g.email %}<br><a href="mailto:{{ g.email }}">✉️ {{ g.email }}</a>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
             </div>
         </details>
     </footer>
