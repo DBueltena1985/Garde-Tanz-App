@@ -17,29 +17,41 @@
 {% endif %}
 
 {% if neueste_news %}
-<a href="{% url 'news_liste' %}" class="news-banner" id="news-banner">
-    {% for beitrag in neueste_news %}
-    <div class="news-banner-slide{% if forloop.first %} news-banner-aktiv{% endif %}">
-        {% if beitrag.bild %}<img src="{{ beitrag.bild.url }}" alt="" class="news-banner-bild">{% endif %}
-        <div class="news-banner-inhalt">
-            <strong>📢 {{ beitrag.titel }}</strong>{% if beitrag.text %}<span class="news-banner-text"> – {{ beitrag.text|truncatechars:80 }}</span>{% endif %}
+<div class="news-banner-wrap">
+    <a href="{% url 'news_liste' %}" class="news-banner" id="news-banner">
+        {% for beitrag in neueste_news %}
+        <div class="news-banner-slide{% if forloop.first %} news-banner-aktiv{% endif %}">
+            {% if beitrag.bild %}<img src="{{ beitrag.bild.url }}" alt="" class="news-banner-bild">{% endif %}
+            <div class="news-banner-inhalt">
+                <strong>📢 {{ beitrag.titel }}</strong>{% if beitrag.text %}<span class="news-banner-text"> – {{ beitrag.text|truncatechars:80 }}</span>{% endif %}
+            </div>
         </div>
+        {% endfor %}
+    </a>
+    {% if neueste_news|length > 1 %}
+    <div class="news-banner-dots" id="news-banner-dots">
+        {% for beitrag in neueste_news %}
+        <span class="news-banner-dot{% if forloop.first %} news-banner-dot-aktiv{% endif %}"></span>
+        {% endfor %}
     </div>
-    {% endfor %}
-</a>
+    {% endif %}
+</div>
 {% if neueste_news|length > 1 %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var banner = document.getElementById('news-banner');
     if (!banner) { return; }
     var slides = banner.querySelectorAll('.news-banner-slide');
+    var dots = document.querySelectorAll('#news-banner-dots .news-banner-dot');
     if (slides.length <= 1) { return; }
     var index = 0;
     setInterval(function () {
         slides[index].classList.remove('news-banner-aktiv');
+        dots[index].classList.remove('news-banner-dot-aktiv');
         index = (index + 1) % slides.length;
         slides[index].classList.add('news-banner-aktiv');
-    }, 4000);
+        dots[index].classList.add('news-banner-dot-aktiv');
+    }, 5000);
 });
 </script>
 {% endif %}
