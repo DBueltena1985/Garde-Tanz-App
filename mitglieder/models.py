@@ -20,6 +20,13 @@ class Taenzerin(models.Model):
         verbose_name="Mitverwaltet von",
         help_text="Weitere Benutzer (z.B. Partner:in), die dieses Kind ebenfalls sehen und verwalten dürfen.",
     )
+    nutzer = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="taenzerin_konto",
+        verbose_name="Gehört zu Benutzerkonto",
+        help_text="Falls dieser Eintrag zu einem eigenen Login-Konto gehört (z.B. eine Tänzerin mit "
+        "eigenem Zugang statt rein von einem Elternteil verwaltet zu werden).",
+    )
 
     vorname = models.CharField("Vorname", max_length=100)
     nachname = models.CharField("Nachname", max_length=100)

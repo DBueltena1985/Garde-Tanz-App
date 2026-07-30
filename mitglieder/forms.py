@@ -64,6 +64,7 @@ class TaenzerinForm(forms.ModelForm):
             "vorname",
             "nachname",
             "geburtsjahr",
+            "nutzer",
             "notfallkontakt_name",
             "notfallkontakt_telefon",
             "notfallkontakt_beziehung",
@@ -78,3 +79,17 @@ class TaenzerinForm(forms.ModelForm):
             "medikamente": forms.Textarea(attrs={"rows": 3}),
             "sonstige_hinweise": forms.Textarea(attrs={"rows": 3}),
         }
+        labels = {
+            "nutzer": "Gehört zu Benutzerkonto",
+        }
+        help_texts = {
+            "nutzer": "Falls dieser Eintrag zu einem eigenen Login (z.B. dir selbst oder einem "
+            "verbundenen Familienmitglied) gehört, statt rein von dir verwaltet zu werden.",
+        }
+
+    def __init__(self, *args, moegliche_nutzer=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if moegliche_nutzer is not None:
+            self.fields["nutzer"].queryset = moegliche_nutzer
+            self.fields["nutzer"].required = False
+            self.fields["nutzer"].empty_label = "– niemandem zugeordnet –"

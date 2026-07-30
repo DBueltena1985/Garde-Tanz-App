@@ -493,8 +493,13 @@ def kind_bearbeiten(request, kind_id=None):
     if kind_id is not None:
         kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
 
+    mitverwalter, einladende = _verbundene_mitglieder(request.user)
+    moegliche_nutzer = User.objects.filter(
+        Q(id=request.user.id) | Q(id__in=[u.id for u in mitverwalter | einladende])
+    ).filter(Q(taenzerin_konto__isnull=True) | Q(taenzerin_konto=kind))
+
     if request.method == "POST":
-        form = TaenzerinForm(request.POST, instance=kind)
+        form = TaenzerinForm(request.POST, instance=kind, moegliche_nutzer=moegliche_nutzer)
         if form.is_valid():
             kind = form.save(commit=False)
             if not kind.pk:
@@ -504,7 +509,7 @@ def kind_bearbeiten(request, kind_id=None):
             messages.success(request, f"Daten für {kind.vorname} wurden gespeichert und bestätigt.")
             return redirect("kinder_liste")
     else:
-        form = TaenzerinForm(instance=kind)
+        form = TaenzerinForm(instance=kind, moegliche_nutzer=moegliche_nutzer)
 
     return render(request, "mitglieder/kind_form.html", {"form": form, "kind": kind})
 
