@@ -784,9 +784,11 @@ class ZusageAdmin(admin.ModelAdmin):
     search_fields = ("taenzerin__vorname", "taenzerin__nachname")
     date_hierarchy = "termin__beginn"
     ordering = ("termin__beginn", "taenzerin__vorname")
+    change_list_template = "admin/mitglieder/zusage_change_list.html"
 
     def termin_datum(self, obj):
-        return obj.termin.beginn
+        lokal = timezone.localtime(obj.termin.beginn)
+        return format_html('<span data-tag="{}">{}</span>', lokal.date().isoformat(), lokal.strftime("%d.%m.%Y %H:%M"))
 
     termin_datum.short_description = "Datum"
     termin_datum.admin_order_field = "termin__beginn"
