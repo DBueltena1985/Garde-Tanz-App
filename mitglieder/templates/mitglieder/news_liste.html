@@ -11,7 +11,9 @@
     {% if beitrag.bild %}
     <p><img src="{{ beitrag.bild.url }}" alt="" style="max-width:100%; border-radius:8px; margin-top:0.5rem;"></p>
     {% endif %}
+    {% if beitrag.text %}
     <p style="white-space: pre-line;">{{ beitrag.text }}</p>
+    {% endif %}
     <small>{{ beitrag.erstellt_am|date:"d.m.Y H:i" }} Uhr{% if beitrag.autor %} – {{ beitrag.autor.first_name|default:beitrag.autor.username }}{% endif %}</small>
 </div>
 {% endfor %}

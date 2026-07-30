@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -307,7 +308,7 @@ class Aufgabe(models.Model):
 
 class NewsPost(models.Model):
     titel = models.CharField("Titel", max_length=200)
-    text = models.TextField("Text")
+    text = models.TextField("Text", blank=True, help_text="Optional, wenn stattdessen nur ein Bild gezeigt werden soll.")
     bild = models.ImageField("Bild", upload_to="news/", blank=True, null=True)
     autor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="news_posts"
@@ -321,6 +322,10 @@ class NewsPost(models.Model):
 
     def __str__(self):
         return self.titel
+
+    def clean(self):
+        if not self.text and not self.bild:
+            raise ValidationError("Bitte entweder einen Text oder ein Bild angeben.")
 
 
 class Feedback(models.Model):
