@@ -71,8 +71,10 @@
             border: 1px solid #f0d9e6; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 1.2rem;
             text-decoration: none; color: #7a2159; overflow: hidden;
         }
-        .news-banner-slide { display: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .news-banner-slide.news-banner-aktiv { display: block; }
+        .news-banner-slide { display: none; align-items: center; gap: 0.6rem; }
+        .news-banner-slide.news-banner-aktiv { display: flex; }
+        .news-banner-bild { height: 44px; width: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+        .news-banner-inhalt { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .news-banner-text { color: #555; font-weight: 400; }
         input, textarea, select { width: 100%; padding: 0.4rem; margin-top: 0.2rem; margin-bottom: 0.8rem; box-sizing: border-box; }
         label { font-weight: 600; }
