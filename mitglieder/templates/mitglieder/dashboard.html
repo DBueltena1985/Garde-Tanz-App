@@ -18,7 +18,10 @@
 
 {% if neueste_news %}
 <div class="news-banner-wrap">
-    <a href="{% url 'news_liste' %}" class="news-banner" id="news-banner">
+    <div class="news-banner" id="news-banner" data-news-url="{% url 'news_liste' %}">
+        {% if neueste_news|length > 1 %}
+        <button type="button" class="news-banner-nav news-banner-prev" aria-label="Vorherige News">‹</button>
+        {% endif %}
         {% for beitrag in neueste_news %}
         <div class="news-banner-slide{% if forloop.first %} news-banner-aktiv{% endif %}">
             <strong class="news-banner-titel">📢 {{ beitrag.titel }}</strong>
@@ -26,34 +29,97 @@
             {% if beitrag.text %}<span class="news-banner-text">{{ beitrag.text|truncatechars:80 }}</span>{% endif %}
         </div>
         {% endfor %}
-    </a>
+        {% if neueste_news|length > 1 %}
+        <button type="button" class="news-banner-nav news-banner-next" aria-label="Nächste News">›</button>
+        {% endif %}
+    </div>
     {% if neueste_news|length > 1 %}
     <div class="news-banner-dots" id="news-banner-dots">
         {% for beitrag in neueste_news %}
-        <span class="news-banner-dot{% if forloop.first %} news-banner-dot-aktiv{% endif %}"></span>
+        <button type="button" class="news-banner-dot{% if forloop.first %} news-banner-dot-aktiv{% endif %}" data-index="{{ forloop.counter0 }}" aria-label="News {{ forloop.counter }} anzeigen"></button>
         {% endfor %}
     </div>
     {% endif %}
 </div>
-{% if neueste_news|length > 1 %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var banner = document.getElementById('news-banner');
     if (!banner) { return; }
+    var newsUrl = banner.dataset.newsUrl;
     var slides = banner.querySelectorAll('.news-banner-slide');
     var dots = document.querySelectorAll('#news-banner-dots .news-banner-dot');
-    if (slides.length <= 1) { return; }
+
+    if (slides.length <= 1) {
+        banner.addEventListener('click', function () { window.location = newsUrl; });
+        return;
+    }
+
     var index = 0;
-    setInterval(function () {
+    var intervall;
+
+    function zeigeSlide(neuerIndex) {
         slides[index].classList.remove('news-banner-aktiv');
         dots[index].classList.remove('news-banner-dot-aktiv');
-        index = (index + 1) % slides.length;
+        index = (neuerIndex + slides.length) % slides.length;
         slides[index].classList.add('news-banner-aktiv');
         dots[index].classList.add('news-banner-dot-aktiv');
-    }, 5000);
+    }
+
+    function autoWechselNeuStarten() {
+        clearInterval(intervall);
+        intervall = setInterval(function () { zeigeSlide(index + 1); }, 5000);
+    }
+    autoWechselNeuStarten();
+
+    var prevBtn = banner.querySelector('.news-banner-prev');
+    var nextBtn = banner.querySelector('.news-banner-next');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            zeigeSlide(index - 1);
+            autoWechselNeuStarten();
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            zeigeSlide(index + 1);
+            autoWechselNeuStarten();
+        });
+    }
+    dots.forEach(function (dot, i) {
+        dot.addEventListener('click', function (e) {
+            e.stopPropagation();
+            zeigeSlide(i);
+            autoWechselNeuStarten();
+        });
+    });
+
+    // Wischen zum Weiterschieben (Touch).
+    var wischStartX = null;
+    var geradeGewischt = false;
+    banner.addEventListener('touchstart', function (e) {
+        wischStartX = e.changedTouches[0].clientX;
+    }, {passive: true});
+    banner.addEventListener('touchend', function (e) {
+        if (wischStartX === null) { return; }
+        var differenz = e.changedTouches[0].clientX - wischStartX;
+        if (Math.abs(differenz) > 40) {
+            geradeGewischt = true;
+            zeigeSlide(differenz < 0 ? index + 1 : index - 1);
+            autoWechselNeuStarten();
+            setTimeout(function () { geradeGewischt = false; }, 300);
+        }
+        wischStartX = null;
+    });
+
+    // Klick auf die Flaeche (aber nicht auf Pfeile/Punkte) fuehrt zu den News.
+    banner.addEventListener('click', function (e) {
+        if (geradeGewischt || e.target.closest('.news-banner-nav')) { return; }
+        window.location = newsUrl;
+    });
 });
 </script>
-{% endif %}
 {% endif %}
 
 {% if meine_aufgaben %}

@@ -90,11 +90,19 @@
         .banner-warn { background: #fff3cd; border: 1px solid #ffe08a; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; }
         .news-banner-wrap { margin-bottom: 1.2rem; }
         .news-banner {
-            display: block; background: linear-gradient(to right, #fdf1f6, #f3e8ee);
+            display: block; position: relative; background: linear-gradient(to right, #fdf1f6, #f3e8ee);
             border: 1px solid #f0d9e6; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.4rem;
-            text-decoration: none; color: #7a2159; overflow: hidden;
-            height: 420px; box-sizing: border-box;
+            text-decoration: none; color: #7a2159; overflow: hidden; cursor: pointer;
+            height: 420px; box-sizing: border-box; touch-action: pan-y;
         }
+        .news-banner-nav {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,0.85); color: #7a2159; font-size: 1.3rem; line-height: 1;
+            cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .news-banner-prev { left: 0.4rem; }
+        .news-banner-next { right: 0.4rem; }
         .news-banner-slide {
             display: none; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; gap: 0.4rem; height: 100%; overflow: hidden;
@@ -106,8 +114,11 @@
             border-radius: 6px; object-fit: contain; margin: 0 auto;
         }
         .news-banner-text { color: #555; font-weight: 400; font-size: 0.85rem; }
-        .news-banner-dots { display: flex; justify-content: center; gap: 0.4rem; }
-        .news-banner-dot { width: 7px; height: 7px; border-radius: 50%; background: #e3c3d5; }
+        .news-banner-dots { display: flex; justify-content: center; gap: 0.5rem; }
+        .news-banner-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: #e3c3d5;
+            border: none; padding: 0; cursor: pointer;
+        }
         .news-banner-dot-aktiv { background: #7a2159; }
         input, textarea, select { width: 100%; padding: 0.4rem; margin-top: 0.2rem; margin-bottom: 0.8rem; box-sizing: border-box; }
         label { font-weight: 600; }
