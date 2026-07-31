@@ -93,11 +93,15 @@
             display: block; background: linear-gradient(to right, #fdf1f6, #f3e8ee);
             border: 1px solid #f0d9e6; border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.4rem;
             text-decoration: none; color: #7a2159; overflow: hidden;
+            height: 230px; box-sizing: border-box;
         }
-        .news-banner-slide { display: none; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem; }
+        .news-banner-slide {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; gap: 0.4rem; height: 100%; overflow: hidden;
+        }
         .news-banner-slide.news-banner-aktiv { display: flex; }
         .news-banner-titel { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .news-banner-bild { display: block; max-width: 100%; width: 160px; height: auto; border-radius: 6px; object-fit: contain; }
+        .news-banner-bild { display: block; width: 160px; height: 150px; border-radius: 6px; object-fit: cover; }
         .news-banner-text { color: #555; font-weight: 400; font-size: 0.85rem; }
         .news-banner-dots { display: flex; justify-content: center; gap: 0.4rem; }
         .news-banner-dot { width: 7px; height: 7px; border-radius: 50%; background: #e3c3d5; }
