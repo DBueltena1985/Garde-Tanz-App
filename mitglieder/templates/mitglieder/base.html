@@ -231,5 +231,18 @@
     </footer>
 
     <div class="app-version">v1.0.1</div>
+
+    <script>
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!(form instanceof HTMLFormElement)) { return; }
+        document.documentElement.style.cursor = 'wait';
+        form.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+            btn.disabled = true;
+            btn.style.cursor = 'wait';
+            btn.style.opacity = '0.6';
+        });
+    }, true);
+    </script>
 </body>
 </html>
