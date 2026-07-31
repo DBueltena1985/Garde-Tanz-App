@@ -15,8 +15,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .feiertage import bayerische_feiertage
-from .forms import BenutzernameVergessenForm, FamilieEinladenForm, FeedbackForm, KontoForm, RegistrierenForm, TaenzerinForm
-from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, Galeriebild, NewsPost, Taenzerin, Termin, Zusage
+from .forms import (
+    BenutzernameVergessenForm, FamilieEinladenForm, FeedbackForm, KontoForm, ProfilForm, RegistrierenForm,
+    TaenzerinForm,
+)
+from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, Galeriebild, NewsPost, Profil, Taenzerin, Termin, Zusage
 from .utils import sichere_mail_senden
 
 FAMILIEN_EINLADUNG_SALT = "familien-einladung"
@@ -646,14 +649,19 @@ def galerie(request):
 
 @login_required
 def konto_bearbeiten(request):
+    profil, _ = Profil.objects.get_or_create(user=request.user)
+
     if request.method == "POST":
         form = KontoForm(request.POST, instance=request.user)
-        if form.is_valid():
+        profil_form = ProfilForm(request.POST, instance=profil)
+        if form.is_valid() and profil_form.is_valid():
             form.save()
+            profil_form.save()
             messages.success(request, "Deine Kontodaten wurden gespeichert.")
             return redirect("konto_bearbeiten")
     else:
         form = KontoForm(instance=request.user)
+        profil_form = ProfilForm(instance=profil)
 
     einladungslink = request.build_absolute_uri(
         reverse("familie_einladen", args=[_familien_einladungs_token(request.user)])
@@ -662,6 +670,7 @@ def konto_bearbeiten(request):
 
     return render(request, "mitglieder/konto_form.html", {
         "form": form,
+        "profil_form": profil_form,
         "einladungslink": einladungslink,
         "verbundene_mitverwalter": verbundene_mitverwalter,
         "verbundene_einladende": verbundene_einladende,

@@ -6,6 +6,11 @@
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        <h3>Unterstützung durch die Familie</h3>
+        <p style="font-size:0.85rem; color:#666; margin-top:-0.4rem;">
+            Wobei könnt ihr das Team unterstützen?
+        </p>
+        {{ profil_form.as_p }}
         <button type="submit" class="btn btn-zusagen">Speichern</button>
     </form>
 </div>

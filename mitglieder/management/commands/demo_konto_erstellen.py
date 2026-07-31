@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
@@ -31,7 +33,7 @@ class Command(BaseCommand):
         for vorname, nachname, geburtsjahr in demo_kinder:
             kind, kind_neu_angelegt = Taenzerin.objects.get_or_create(
                 eltern=eltern, vorname=vorname, nachname=nachname,
-                defaults={"geburtsjahr": geburtsjahr},
+                defaults={"geburtsdatum": date(geburtsjahr, 1, 1)},
             )
             if kind_neu_angelegt:
                 self.stdout.write(self.style.SUCCESS(f"Demo-Kind '{vorname} {nachname}' angelegt."))

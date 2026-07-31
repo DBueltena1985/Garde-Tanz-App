@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Taenzerin, Termin,
+    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Profil, Taenzerin, Termin,
     TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
@@ -35,6 +35,12 @@ class TaenzerinInline(admin.TabularInline):
     show_change_link = True
 
 
+class ProfilInline(admin.StackedInline):
+    model = Profil
+    extra = 0
+    can_delete = False
+
+
 def _verknuepfte_benutzer_ids(user):
     """Andere Benutzer, die über ein gemeinsames Kind (Eltern/Mitverwaltung/eigenes Konto) verbunden sind."""
     kinder = Taenzerin.objects.filter(
@@ -51,7 +57,7 @@ def _verknuepfte_benutzer_ids(user):
 
 
 class CustomUserAdmin(UserAdmin):
-    inlines = [TaenzerinInline]
+    inlines = [TaenzerinInline, ProfilInline]
     list_display = ("first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer")
     change_form_template = "admin/mitglieder_user_change_form.html"
     change_list_template = "admin/mitglieder_user_change_list.html"
@@ -146,8 +152,10 @@ class TaenzerinAdmin(admin.ModelAdmin):
     eltern_name.admin_order_field = "eltern__first_name"
     filter_horizontal = ("mitverwaltet_von",)
     fields = (
-        "eltern", "mitverwaltet_von", "nutzer", "vorname", "nachname", "geburtsjahr",
+        "eltern", "mitverwaltet_von", "nutzer", "vorname", "nachname", "geburtsdatum",
+        "adresse", "plz_ort", "mobil",
         "notfallkontakt_name", "notfallkontakt_telefon", "notfallkontakt_beziehung",
+        "alleine_nach_hause", "abholberechtigte",
         "schuhgroesse", "kleidergroesse", "allergien", "medikamente", "sonstige_hinweise",
         "stammdaten_bestaetigt_am", "einverstaendnis_bildaufnahmen", "einverstaendnis_bildaufnahmen_am",
     )
@@ -166,6 +174,16 @@ class TaenzerinAdmin(admin.ModelAdmin):
         )
 
     notfallkontakt_anruf.short_description = "Notfallkontakt"
+
+
+@admin.register(Profil)
+class ProfilAdmin(admin.ModelAdmin):
+    list_display = (
+        "user", "hilfe_fahrdienste", "hilfe_veranstaltungen", "hilfe_kuchen_essensspenden",
+        "hilfe_dekoration_basteln", "hilfe_naehen_aenderungen", "hilfe_fotos_social_media",
+        "hilfe_organisation", "hilfe_sponsoring_kontakte", "einverstanden_datennutzung",
+    )
+    search_fields = ("user__username", "user__first_name", "user__last_name")
 
 
 class SerienTerminForm(forms.Form):

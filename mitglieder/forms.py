@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm, UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Feedback, Taenzerin
+from .models import Feedback, Profil, Taenzerin
 
 logger = logging.getLogger("mitglieder")
 
@@ -82,11 +82,16 @@ class TaenzerinForm(forms.ModelForm):
         fields = [
             "vorname",
             "nachname",
-            "geburtsjahr",
+            "geburtsdatum",
+            "adresse",
+            "plz_ort",
+            "mobil",
             "nutzer",
             "notfallkontakt_name",
             "notfallkontakt_telefon",
             "notfallkontakt_beziehung",
+            "alleine_nach_hause",
+            "abholberechtigte",
             "schuhgroesse",
             "kleidergroesse",
             "allergien",
@@ -94,12 +99,15 @@ class TaenzerinForm(forms.ModelForm):
             "sonstige_hinweise",
         ]
         widgets = {
+            "geburtsdatum": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "abholberechtigte": forms.Textarea(attrs={"rows": 2}),
             "allergien": forms.Textarea(attrs={"rows": 3}),
             "medikamente": forms.Textarea(attrs={"rows": 3}),
             "sonstige_hinweise": forms.Textarea(attrs={"rows": 3}),
         }
         labels = {
             "nutzer": "Gehört zu Benutzerkonto",
+            "plz_ort": "PLZ / Ort",
         }
         help_texts = {
             "nutzer": "Falls dieser Eintrag zu einem eigenen Login (z.B. dir selbst oder einem "
@@ -108,7 +116,25 @@ class TaenzerinForm(forms.ModelForm):
 
     def __init__(self, *args, moegliche_nutzer=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["geburtsdatum"].input_formats = ["%Y-%m-%d"]
         if moegliche_nutzer is not None:
             self.fields["nutzer"].queryset = moegliche_nutzer
             self.fields["nutzer"].required = False
             self.fields["nutzer"].empty_label = "– niemandem zugeordnet –"
+
+
+class ProfilForm(forms.ModelForm):
+    class Meta:
+        model = Profil
+        fields = [
+            "hilfe_fahrdienste",
+            "hilfe_veranstaltungen",
+            "hilfe_kuchen_essensspenden",
+            "hilfe_dekoration_basteln",
+            "hilfe_naehen_aenderungen",
+            "hilfe_fotos_social_media",
+            "hilfe_organisation",
+            "hilfe_sponsoring_kontakte",
+            "hilfe_sonstiges",
+            "einverstanden_datennutzung",
+        ]

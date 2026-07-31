@@ -30,9 +30,15 @@ class Taenzerin(models.Model):
 
     vorname = models.CharField("Vorname", max_length=100)
     nachname = models.CharField("Nachname", max_length=100)
-    geburtsjahr = models.PositiveIntegerField(
-        "Geburtsjahr", null=True, blank=True,
+    geburtsdatum = models.DateField(
+        "Geburtsdatum", null=True, blank=True,
         help_text="Bestimmt die Trainingsgruppe (Jugend/Junioren).",
+    )
+    adresse = models.CharField("Adresse", max_length=200, blank=True)
+    plz_ort = models.CharField("PLZ / Ort", max_length=100, blank=True)
+    mobil = models.CharField(
+        "Mobil", max_length=50, blank=True,
+        help_text="Eigene Mobilnummer der Tänzerin/des Tänzers, falls vorhanden.",
     )
 
     # Notfallkontakt
@@ -41,6 +47,16 @@ class Taenzerin(models.Model):
     notfallkontakt_beziehung = models.CharField(
         "Beziehung zum Notfallkontakt", max_length=100, blank=True,
         help_text="z.B. Mutter, Vater, Partner:in",
+    )
+
+    alleine_nach_hause = models.BooleanField(
+        "Darf nach dem Training selbstständig nach Hause", null=True, blank=True, default=None,
+        help_text="Leer = noch nicht angegeben.",
+    )
+    abholberechtigte = models.TextField(
+        "Abholberechtigte", blank=True,
+        help_text="Namen der Personen, die die Tänzerin/den Tänzer abholen dürfen "
+        "(falls nicht selbstständig nach Hause darf).",
     )
 
     # Weitere Stammdaten
@@ -93,9 +109,9 @@ class Taenzerin(models.Model):
 
     @property
     def gruppe(self):
-        if not self.geburtsjahr:
+        if not self.geburtsdatum:
             return None
-        return self.GRUPPE_JUGEND if self.geburtsjahr >= self.JUGEND_JAHRGANG_AB else self.GRUPPE_JUNIOREN
+        return self.GRUPPE_JUGEND if self.geburtsdatum.year >= self.JUGEND_JAHRGANG_AB else self.GRUPPE_JUNIOREN
 
     @property
     def gruppe_anzeige(self):
@@ -103,6 +119,35 @@ class Taenzerin(models.Model):
             self.GRUPPE_JUGEND: "Jugend",
             self.GRUPPE_JUNIOREN: "Junioren",
         }.get(self.gruppe, "unbekannt")
+
+
+class Profil(models.Model):
+    """Zusaetzliche Angaben zum Benutzerkonto (z.B. Eltern), unabhaengig von einer einzelnen Taenzerin."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profil"
+    )
+
+    hilfe_fahrdienste = models.BooleanField("Fahrdienste", default=False)
+    hilfe_veranstaltungen = models.BooleanField("Veranstaltungen", default=False)
+    hilfe_kuchen_essensspenden = models.BooleanField("Kuchen / Essensspenden", default=False)
+    hilfe_dekoration_basteln = models.BooleanField("Dekoration / Basteln", default=False)
+    hilfe_naehen_aenderungen = models.BooleanField("Nähen / Änderungen an Kostümen", default=False)
+    hilfe_fotos_social_media = models.BooleanField("Fotos / Social Media", default=False)
+    hilfe_organisation = models.BooleanField("Organisation", default=False)
+    hilfe_sponsoring_kontakte = models.BooleanField("Sponsoring / Kontakte", default=False)
+    hilfe_sonstiges = models.CharField("Sonstiges", max_length=200, blank=True)
+
+    einverstanden_datennutzung = models.BooleanField(
+        "Einverstanden, dass meine Daten für vereinsinterne Zwecke genutzt werden", default=False,
+    )
+
+    class Meta:
+        verbose_name = "Profil"
+        verbose_name_plural = "Profile"
+
+    def __str__(self):
+        return f"Profil von {self.user}"
 
 
 class Termin(models.Model):
