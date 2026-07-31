@@ -1,7 +1,8 @@
 {% extends "admin/change_list.html" %}
 
-{% block result_list %}
-<form method="get" style="margin-bottom:0.8rem;">
+{% block search %}
+{{ block.super }}
+<form method="get" style="margin: 0.6rem 0;">
     {% for key, value in request.GET.items %}
         {% if key != 'kann_unterstuetzen_bei' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
     {% endfor %}
@@ -18,6 +19,9 @@
         <option value="hilfe_sponsoring_kontakte" {% if request.GET.kann_unterstuetzen_bei == "hilfe_sponsoring_kontakte" %}selected{% endif %}>Sponsoring / Kontakte</option>
     </select>
 </form>
+{% endblock %}
+
+{% block result_list %}
 {{ block.super }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -25,6 +29,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!table) { return; }
     var tbody = table.querySelector('tbody');
     if (!tbody) { return; }
+
+    var filterAktiv = {% if request.GET.kann_unterstuetzen_bei %}true{% else %}false{% endif %};
 
     var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
     var gruppen = {admin: [], orga: [], mitglied: []};
@@ -65,12 +71,12 @@ document.addEventListener('DOMContentLoaded', function () {
         zelle.colSpan = anzahlSpalten;
         zelle.style.fontWeight = '700';
         zelle.style.padding = '6px 10px';
-        zelle.textContent = '▸ ' + gruppe.label + ' (' + zeilen.length + ')';
+        zelle.textContent = (filterAktiv ? '▾ ' : '▸ ') + gruppe.label + ' (' + zeilen.length + ')';
         kopfzeile.appendChild(zelle);
         tbody.appendChild(kopfzeile);
 
         zeilen.forEach(function (zeile) {
-            zeile.style.display = 'none';
+            zeile.style.display = filterAktiv ? '' : 'none';
             tbody.appendChild(zeile);
         });
 
