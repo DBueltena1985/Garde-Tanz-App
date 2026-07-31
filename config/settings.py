@@ -166,6 +166,17 @@ STORAGES = {
     },
 }
 
+# PythonAnywhere-Gratis-Plan: ausgehende Verbindungen funktionieren nur ueber den
+# vom System gesetzten https_proxy/http_proxy - direkte Verbindungen (auch zu
+# Domains auf der Allowlist) werden sonst mit "Connection refused" abgelehnt.
+# Das Cloudinary-SDK nutzt urllib3 direkt und liest diese Proxy-Umgebungsvariablen
+# anders als z.B. 'requests' NICHT automatisch, darum hier explizit setzen.
+if CLOUDINARY_STORAGE['CLOUD_NAME']:
+    _cloudinary_proxy = os.environ.get('https_proxy') or os.environ.get('HTTPS_PROXY')
+    if _cloudinary_proxy:
+        import cloudinary
+        cloudinary.config(api_proxy=_cloudinary_proxy)
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login/Logout
