@@ -377,12 +377,24 @@ def aufgabe_uebernehmen(request, aufgabe_id):
     if zielgruppen is not None and aufgabe.sichtbar_fuer not in zielgruppen:
         raise PermissionDenied
 
+    # Bei Aufgaben fuer Taenzerinnen gibt es keinen separaten "Uebernehmen"-Schritt -
+    # ein Klick auf "Erledigt" uebernimmt und erledigt die Aufgabe in einem Schritt.
+    direkt_erledigt = aufgabe.sichtbar_fuer == Aufgabe.ZIELGRUPPE_TAENZERINNEN
+
     if request.method == "POST":
+        werte = {"zugewiesen_an": request.user}
+        if direkt_erledigt:
+            werte["erledigt"] = True
+            werte["erledigt_am"] = timezone.now()
+
         aktualisiert = Aufgabe.objects.filter(
             pk=aufgabe_id, zugewiesen_an__isnull=True, erledigt=False,
-        ).update(zugewiesen_an=request.user)
+        ).update(**werte)
         if aktualisiert:
-            messages.success(request, f"Du hast '{aufgabe.titel}' übernommen.")
+            if direkt_erledigt:
+                messages.success(request, f"'{aufgabe.titel}' als erledigt markiert.")
+            else:
+                messages.success(request, f"Du hast '{aufgabe.titel}' übernommen.")
         else:
             messages.error(request, "Diese Aufgabe ist bereits vergeben oder existiert nicht mehr.")
 
