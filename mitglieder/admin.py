@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Profil,
@@ -23,12 +24,19 @@ class LoeschLinkMixin:
     """Fügt eine Mülleimer-Spalte zum Löschen einzelner Zeilen hinzu (statt nur über die
     Sammel-Aktion oben im Dropdown - "Ausgewählte Objekte löschen" ist deaktiviert)."""
 
+    LOESCHEN_SVG = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
+        'fill="#b3261e" style="vertical-align:middle;">'
+        '<path d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm-2 3h10v13H7V6zm2 2v9h2V8H9zm4 0v9h2V8h-2z"/>'
+        "</svg>"
+    )
+
     def loeschen_link(self, obj):
         url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete", args=[obj.pk])
         return format_html(
             '<a href="{}" title="Löschen" onclick="return confirm(\'Wirklich löschen?\');" '
-            'style="text-decoration:none; font-size:1.05rem;">🗑️</a>',
-            url,
+            'style="text-decoration:none;">{}</a>',
+            url, mark_safe(self.LOESCHEN_SVG),
         )
 
     loeschen_link.short_description = ""
