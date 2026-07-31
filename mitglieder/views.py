@@ -595,6 +595,20 @@ def kind_einverstaendnis_bildaufnahmen(request, kind_id, wert):
 
 
 @login_required
+def profil_datennutzung(request, wert):
+    if wert not in ("ja", "nein"):
+        messages.error(request, "Ungültiger Wert.")
+        return redirect("konto_bearbeiten")
+
+    if request.method == "POST":
+        profil, _ = Profil.objects.get_or_create(user=request.user)
+        profil.datennutzung_setzen(wert == "ja")
+        messages.success(request, "Einverständnis zur Datennutzung gespeichert.")
+
+    return redirect("konto_bearbeiten")
+
+
+@login_required
 def feedback_senden(request):
     if request.method == "POST":
         form = FeedbackForm(request.POST)
@@ -671,6 +685,7 @@ def konto_bearbeiten(request):
     return render(request, "mitglieder/konto_form.html", {
         "form": form,
         "profil_form": profil_form,
+        "profil": profil,
         "einladungslink": einladungslink,
         "verbundene_mitverwalter": verbundene_mitverwalter,
         "verbundene_einladende": verbundene_einladende,

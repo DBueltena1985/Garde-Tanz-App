@@ -183,6 +183,11 @@ class ProfilAdmin(admin.ModelAdmin):
         "hilfe_dekoration_basteln", "hilfe_naehen_aenderungen", "hilfe_fotos_social_media",
         "hilfe_organisation", "hilfe_sponsoring_kontakte", "einverstanden_datennutzung",
     )
+    list_filter = (
+        "hilfe_fahrdienste", "hilfe_veranstaltungen", "hilfe_kuchen_essensspenden",
+        "hilfe_dekoration_basteln", "hilfe_naehen_aenderungen", "hilfe_fotos_social_media",
+        "hilfe_organisation", "hilfe_sponsoring_kontakte", "einverstanden_datennutzung",
+    )
     search_fields = ("user__username", "user__first_name", "user__last_name")
 
 

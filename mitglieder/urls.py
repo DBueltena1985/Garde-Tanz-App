@@ -27,6 +27,7 @@ urlpatterns = [
     path("galerie/", views.galerie, name="galerie"),
     path("konto/", views.konto_bearbeiten, name="konto_bearbeiten"),
     path("konto/passwort/", views.passwort_aendern, name="passwort_aendern"),
+    path("konto/datennutzung/<str:wert>/", views.profil_datennutzung, name="profil_datennutzung"),
     path("feedback/", views.feedback_senden, name="feedback_senden"),
     path("vorstandschaft/", views.vorstandschaft, name="vorstandschaft"),
     path("benutzername-vergessen/", views.benutzername_vergessen, name="benutzername_vergessen"),

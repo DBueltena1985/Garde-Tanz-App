@@ -136,5 +136,4 @@ class ProfilForm(forms.ModelForm):
             "hilfe_organisation",
             "hilfe_sponsoring_kontakte",
             "hilfe_sonstiges",
-            "einverstanden_datennutzung",
         ]

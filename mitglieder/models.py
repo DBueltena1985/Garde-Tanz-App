@@ -139,7 +139,12 @@ class Profil(models.Model):
     hilfe_sonstiges = models.CharField("Sonstiges", max_length=200, blank=True)
 
     einverstanden_datennutzung = models.BooleanField(
-        "Einverstanden, dass meine Daten für vereinsinterne Zwecke genutzt werden", default=False,
+        "Einverstanden, dass meine Daten für vereinsinterne Zwecke genutzt werden",
+        null=True, blank=True, default=None,
+        help_text="Muss separat bestätigt werden. Leer = noch nicht entschieden.",
+    )
+    einverstanden_datennutzung_am = models.DateTimeField(
+        "Einverständnis zuletzt bestätigt am", null=True, blank=True
     )
 
     class Meta:
@@ -148,6 +153,11 @@ class Profil(models.Model):
 
     def __str__(self):
         return f"Profil von {self.user}"
+
+    def datennutzung_setzen(self, wert):
+        self.einverstanden_datennutzung = wert
+        self.einverstanden_datennutzung_am = timezone.now()
+        self.save(update_fields=["einverstanden_datennutzung", "einverstanden_datennutzung_am"])
 
 
 class Termin(models.Model):
