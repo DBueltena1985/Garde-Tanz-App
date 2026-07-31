@@ -5,6 +5,16 @@
 <style>
     #changelist-filter.gt-filter-collapsed > *:not(#changelist-filter-header) { display: none; }
     #changelist-filter-header { cursor: pointer; }
+    .datei-dropzone {
+        border: 2px dashed transparent;
+        border-radius: 6px;
+        padding: 4px;
+        transition: border-color 0.15s, background-color 0.15s;
+    }
+    .datei-dropzone-aktiv {
+        border-color: #7a2159;
+        background-color: rgba(122, 33, 89, 0.08);
+    }
 </style>
 <script>
     // Der "FILTER"-Kasten in Listenansichten startet zugeklappt, Klick auf die
@@ -16,6 +26,38 @@
         filterBox.classList.add('gt-filter-collapsed');
         heading.addEventListener('click', function () {
             filterBox.classList.toggle('gt-filter-collapsed');
+        });
+    });
+
+    // Datei-/Bild-Upload-Felder per Drag-and-Drop bedienbar machen.
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('input[type="file"]').forEach(function (input) {
+            var container = input.closest('.form-row') || input.parentElement;
+            if (!container || container.dataset.dateiDropzoneInit) { return; }
+            container.dataset.dateiDropzoneInit = 'true';
+            container.classList.add('datei-dropzone');
+
+            ['dragenter', 'dragover'].forEach(function (ereignis) {
+                container.addEventListener(ereignis, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    container.classList.add('datei-dropzone-aktiv');
+                });
+            });
+            ['dragleave', 'drop'].forEach(function (ereignis) {
+                container.addEventListener(ereignis, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    container.classList.remove('datei-dropzone-aktiv');
+                });
+            });
+            container.addEventListener('drop', function (e) {
+                if (input.disabled || input.readOnly) { return; }
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    input.dispatchEvent(new Event('change', {bubbles: true}));
+                }
+            });
         });
     });
 </script>
