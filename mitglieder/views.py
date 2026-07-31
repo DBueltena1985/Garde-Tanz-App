@@ -80,8 +80,9 @@ def _aufgaben_fuer_nutzer_sichtbar(queryset, user):
 def _offene_aufgaben_liste(queryset, user):
     """Baut aus den sichtbaren offenen Aufgaben eine Liste fuer die Anzeige. Bei Aufgaben fuer
     Taenzerinnen wird pro Kind einzeln erfasst, ob es fuer dieses Kind schon erledigt ist -
-    hat der Nutzer fuer ALLE seine Kinder schon erledigt, wird die Aufgabe fuer ihn ausgeblendet."""
-    kinder = list(_kinder_fuer_nutzer(user))
+    hat der Nutzer fuer ALLE seine Kinder schon erledigt, wird die Aufgabe fuer ihn ausgeblendet.
+    Ein Taenzerin-Konto (eigener Login) sieht dabei nur sich selbst, nicht mitverwaltete Geschwister."""
+    kinder = list(_kinder_fuer_termine(user))
     liste = []
     for aufgabe in queryset:
         if aufgabe.sichtbar_fuer == Aufgabe.ZIELGRUPPE_TAENZERINNEN:
@@ -419,7 +420,7 @@ def aufgabe_uebernehmen(request, aufgabe_id):
 @login_required
 def aufgabe_erledigt_fuer_kind(request, aufgabe_id, kind_id):
     aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id, sichtbar_fuer=Aufgabe.ZIELGRUPPE_TAENZERINNEN)
-    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
+    kind = get_object_or_404(_kinder_fuer_termine(request.user), pk=kind_id)
 
     if request.method == "POST":
         _, neu_erstellt = AufgabeErledigung.objects.get_or_create(aufgabe=aufgabe, taenzerin=kind)
