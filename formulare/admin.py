@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from mitglieder.admin import LoeschLinkMixin
+
 from .models import Formular
 
 
 @admin.register(Formular)
-class FormularAdmin(admin.ModelAdmin):
-    list_display = ("titel", "reihenfolge", "hochgeladen_am")
+class FormularAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("titel", "reihenfolge", "hochgeladen_am", "loeschen_link")
     list_editable = ("reihenfolge",)
     ordering = ("reihenfolge", "titel")

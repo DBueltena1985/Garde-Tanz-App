@@ -19,6 +19,21 @@ from .models import (
 )
 
 
+class LoeschLinkMixin:
+    """Fügt eine Mülleimer-Spalte zum Löschen einzelner Zeilen hinzu (statt nur über die
+    Sammel-Aktion oben im Dropdown - "Ausgewählte Objekte löschen" ist deaktiviert)."""
+
+    def loeschen_link(self, obj):
+        url = reverse(f"admin:{obj._meta.app_label}_{obj._meta.model_name}_delete", args=[obj.pk])
+        return format_html(
+            '<a href="{}" title="Löschen" onclick="return confirm(\'Wirklich löschen?\');" '
+            'style="text-decoration:none; font-size:1.05rem;">🗑️</a>',
+            url,
+        )
+
+    loeschen_link.short_description = ""
+
+
 def _relevante_kinder(gruppe):
     """Liefert alle Tänzerinnen, deren Gruppe zum Termin passt (oder alle bei 'beide')."""
     alle = Taenzerin.objects.select_related("eltern")
@@ -79,9 +94,11 @@ class UnterstuetzungFilter(admin.SimpleListFilter):
         return queryset.filter(**{f"profil__{wert}": True})
 
 
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
     inlines = [TaenzerinInline, ProfilInline]
-    list_display = ("first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer")
+    list_display = (
+        "first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer", "loeschen_link",
+    )
     list_filter = UserAdmin.list_filter + (UnterstuetzungFilter,)
     change_form_template = "admin/mitglieder_user_change_form.html"
     change_list_template = "admin/mitglieder_user_change_list.html"
@@ -159,11 +176,11 @@ class TaenzerinStatusFilter(admin.SimpleListFilter):
 
 
 @admin.register(Taenzerin)
-class TaenzerinAdmin(admin.ModelAdmin):
+class TaenzerinAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
         "vorname", "nachname", "eltern_name", "nutzer", "gruppe_anzeige",
         "notfallkontakt_anruf", "schuhgroesse", "kleidergroesse", "stammdaten_status",
-        "einverstaendnis_bildaufnahmen",
+        "einverstaendnis_bildaufnahmen", "loeschen_link",
     )
     list_filter = (TaenzerinStatusFilter, "einverstaendnis_bildaufnahmen")
     search_fields = ("vorname", "nachname", "eltern__username", "eltern__first_name", "eltern__last_name")
@@ -332,7 +349,7 @@ class TerminForm(forms.ModelForm):
         fields = "__all__"
 
 
-class TerminAdminBase(admin.ModelAdmin):
+class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     """Gemeinsame Basis für die getrennten Training-/Veranstaltungs-Admins (gleiche DB-Tabelle)."""
 
     ART_WERT = None  # in Unterklassen setzen
@@ -342,7 +359,7 @@ class TerminAdminBase(admin.ModelAdmin):
     filter_horizontal = ("wichtige_trainings",)
     list_display = (
         "titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
-        "anzahl_zusagen", "anzahl_absagen", "anwesenheit_link",
+        "anzahl_zusagen", "anzahl_absagen", "anwesenheit_link", "loeschen_link",
     )
     list_filter = ("gruppe",)
     search_fields = ("titel",)
@@ -768,8 +785,10 @@ class AnmeldepunktOffenFilter(admin.SimpleListFilter):
 
 
 @admin.register(Anmeldepunkt)
-class AnmeldepunktAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "mit_kommentar", "max_anzahl", "anzahl_angemeldet", "noch_offen")
+class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = (
+        "titel", "termin", "mit_kommentar", "max_anzahl", "anzahl_angemeldet", "noch_offen", "loeschen_link",
+    )
     list_filter = ("termin", "mit_kommentar", AnmeldepunktOffenFilter)
     inlines = [AnmeldungInline]
 
@@ -795,8 +814,11 @@ class AufgabeErledigungInline(admin.TabularInline):
 
 
 @admin.register(Aufgabe)
-class AufgabeAdmin(admin.ModelAdmin):
-    list_display = ("titel", "termin", "faellig_am", "sichtbar_fuer", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
+class AufgabeAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = (
+        "titel", "termin", "faellig_am", "sichtbar_fuer", "zugewiesen_an", "erledigt", "erstellt_von",
+        "erstellt_am", "loeschen_link",
+    )
     list_display_links = ("titel",)
     list_editable = ("erledigt",)
     list_filter = ("erledigt", "sichtbar_fuer", "zugewiesen_an", "termin")
@@ -816,8 +838,8 @@ class AufgabeAdmin(admin.ModelAdmin):
 
 
 @admin.register(Zusage)
-class ZusageAdmin(admin.ModelAdmin):
-    list_display = ("termin_datum", "termin", "taenzerin", "status", "anwesend", "aktualisiert_am")
+class ZusageAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("termin_datum", "termin", "taenzerin", "status", "anwesend", "aktualisiert_am", "loeschen_link")
     list_editable = ("anwesend",)
     list_filter = ("status", "anwesend", "termin")
     search_fields = ("taenzerin__vorname", "taenzerin__nachname")
@@ -834,8 +856,8 @@ class ZusageAdmin(admin.ModelAdmin):
 
 
 @admin.register(NewsPost)
-class NewsPostAdmin(admin.ModelAdmin):
-    list_display = ("titel", "autor", "erstellt_am")
+class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("titel", "autor", "erstellt_am", "loeschen_link")
     readonly_fields = ("autor", "erstellt_am")
 
     def save_model(self, request, obj, form, change):
@@ -845,8 +867,8 @@ class NewsPostAdmin(admin.ModelAdmin):
 
 
 @admin.register(Galeriebild)
-class GaleriebildAdmin(admin.ModelAdmin):
-    list_display = ("thumbnail", "termin", "beschreibung", "hochgeladen_von", "hochgeladen_am")
+class GaleriebildAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("thumbnail", "termin", "beschreibung", "hochgeladen_von", "hochgeladen_am", "loeschen_link")
     list_display_links = ("thumbnail", "beschreibung")
     list_filter = ("termin",)
     readonly_fields = ("vorschau", "hochgeladen_von", "hochgeladen_am")
@@ -873,8 +895,8 @@ class GaleriebildAdmin(admin.ModelAdmin):
 
 
 @admin.register(Feedback)
-class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ("betreff_anzeige", "absender", "gelesen", "erstellt_am")
+class FeedbackAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("betreff_anzeige", "absender", "gelesen", "erstellt_am", "loeschen_link")
     list_display_links = ("betreff_anzeige",)
     list_editable = ("gelesen",)
     list_filter = ("gelesen",)
@@ -891,8 +913,8 @@ class FeedbackAdmin(admin.ModelAdmin):
 
 
 @admin.register(Ferienzeitraum)
-class FerienzeitraumAdmin(admin.ModelAdmin):
-    list_display = ("name", "start_datum", "end_datum")
+class FerienzeitraumAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("name", "start_datum", "end_datum", "loeschen_link")
     ordering = ("start_datum",)
 
 
@@ -917,6 +939,10 @@ def _get_app_list_mit_anzahl(request, app_label=None):
 
 
 admin.site.get_app_list = _get_app_list_mit_anzahl
+
+# Statt der Sammel-Aktion "Ausgewählte Objekte löschen" oben im Dropdown gibt es
+# jetzt pro Zeile ein Muelleimer-Symbol (siehe LoeschLinkMixin).
+admin.site.disable_action("delete_selected")
 
 
 _each_context_ohne_einladung = admin.site.each_context
