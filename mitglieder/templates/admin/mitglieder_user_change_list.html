@@ -1,6 +1,23 @@
 {% extends "admin/change_list.html" %}
 
 {% block result_list %}
+<form method="get" style="margin-bottom:0.8rem;">
+    {% for key, value in request.GET.items %}
+        {% if key != 'kann_unterstuetzen_bei' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+    {% endfor %}
+    <label for="kann-unterstuetzen-top" style="font-weight:600; margin-right:0.4rem;">Kann unterstützen bei:</label>
+    <select name="kann_unterstuetzen_bei" id="kann-unterstuetzen-top" onchange="this.form.submit()">
+        <option value="">Alle</option>
+        <option value="hilfe_fahrdienste" {% if request.GET.kann_unterstuetzen_bei == "hilfe_fahrdienste" %}selected{% endif %}>Fahrdiensten</option>
+        <option value="hilfe_veranstaltungen" {% if request.GET.kann_unterstuetzen_bei == "hilfe_veranstaltungen" %}selected{% endif %}>Veranstaltungen</option>
+        <option value="hilfe_kuchen_essensspenden" {% if request.GET.kann_unterstuetzen_bei == "hilfe_kuchen_essensspenden" %}selected{% endif %}>Kuchen / Essensspenden</option>
+        <option value="hilfe_dekoration_basteln" {% if request.GET.kann_unterstuetzen_bei == "hilfe_dekoration_basteln" %}selected{% endif %}>Dekoration / Basteln</option>
+        <option value="hilfe_naehen_aenderungen" {% if request.GET.kann_unterstuetzen_bei == "hilfe_naehen_aenderungen" %}selected{% endif %}>Nähen / Änderungen an Kostümen</option>
+        <option value="hilfe_fotos_social_media" {% if request.GET.kann_unterstuetzen_bei == "hilfe_fotos_social_media" %}selected{% endif %}>Fotos / Social Media</option>
+        <option value="hilfe_organisation" {% if request.GET.kann_unterstuetzen_bei == "hilfe_organisation" %}selected{% endif %}>Organisation</option>
+        <option value="hilfe_sponsoring_kontakte" {% if request.GET.kann_unterstuetzen_bei == "hilfe_sponsoring_kontakte" %}selected{% endif %}>Sponsoring / Kontakte</option>
+    </select>
+</form>
 {{ block.super }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
