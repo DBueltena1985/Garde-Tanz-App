@@ -56,9 +56,33 @@ def _verknuepfte_benutzer_ids(user):
     return ids
 
 
+class UnterstuetzungFilter(admin.SimpleListFilter):
+    title = "Kann unterstützen bei"
+    parameter_name = "kann_unterstuetzen_bei"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("hilfe_fahrdienste", "Fahrdiensten"),
+            ("hilfe_veranstaltungen", "Veranstaltungen"),
+            ("hilfe_kuchen_essensspenden", "Kuchen / Essensspenden"),
+            ("hilfe_dekoration_basteln", "Dekoration / Basteln"),
+            ("hilfe_naehen_aenderungen", "Nähen / Änderungen an Kostümen"),
+            ("hilfe_fotos_social_media", "Fotos / Social Media"),
+            ("hilfe_organisation", "Organisation"),
+            ("hilfe_sponsoring_kontakte", "Sponsoring / Kontakte"),
+        )
+
+    def queryset(self, request, queryset):
+        wert = self.value()
+        if not wert:
+            return queryset
+        return queryset.filter(**{f"profil__{wert}": True})
+
+
 class CustomUserAdmin(UserAdmin):
     inlines = [TaenzerinInline, ProfilInline]
     list_display = ("first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer")
+    list_filter = UserAdmin.list_filter + (UnterstuetzungFilter,)
     change_form_template = "admin/mitglieder_user_change_form.html"
     change_list_template = "admin/mitglieder_user_change_list.html"
 
@@ -174,21 +198,6 @@ class TaenzerinAdmin(admin.ModelAdmin):
         )
 
     notfallkontakt_anruf.short_description = "Notfallkontakt"
-
-
-@admin.register(Profil)
-class ProfilAdmin(admin.ModelAdmin):
-    list_display = (
-        "user", "hilfe_fahrdienste", "hilfe_veranstaltungen", "hilfe_kuchen_essensspenden",
-        "hilfe_dekoration_basteln", "hilfe_naehen_aenderungen", "hilfe_fotos_social_media",
-        "hilfe_organisation", "hilfe_sponsoring_kontakte", "einverstanden_datennutzung",
-    )
-    list_filter = (
-        "hilfe_fahrdienste", "hilfe_veranstaltungen", "hilfe_kuchen_essensspenden",
-        "hilfe_dekoration_basteln", "hilfe_naehen_aenderungen", "hilfe_fotos_social_media",
-        "hilfe_organisation", "hilfe_sponsoring_kontakte", "einverstanden_datennutzung",
-    )
-    search_fields = ("user__username", "user__first_name", "user__last_name")
 
 
 class SerienTerminForm(forms.Form):
