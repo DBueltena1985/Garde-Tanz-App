@@ -389,13 +389,28 @@ def aufgabe_uebernehmen(request, aufgabe_id):
     return redirect("dashboard")
 
 
-def _admins_ueber_registrierung_benachrichtigen(user):
+def _admin_emails():
+    """E-Mails des gesamten Orga-/Admin-Teams (is_staff, umfasst auch is_superuser)."""
     admin_emails = set(User.objects.filter(is_staff=True).exclude(email="").values_list("email", flat=True))
     if settings.ADMIN_BENACHRICHTIGUNGS_EMAIL:
         admin_emails.add(settings.ADMIN_BENACHRICHTIGUNGS_EMAIL)
+    return admin_emails
+
+
+def _admins_benachrichtigen(subject, message):
+    admin_emails = _admin_emails()
     if not admin_emails:
         return
     sichere_mail_senden(
+        subject=subject,
+        message=message,
+        from_email=None,
+        recipient_list=list(admin_emails),
+    )
+
+
+def _admins_ueber_registrierung_benachrichtigen(user):
+    _admins_benachrichtigen(
         subject=f"Neue Registrierung: {user.first_name or user.username}",
         message=(
             f"Es hat sich ein neues Mitglied registriert:\n\n"
@@ -404,8 +419,6 @@ def _admins_ueber_registrierung_benachrichtigen(user):
             f"E-Mail: {user.email or '(keine angegeben)'}\n\n"
             "Im Admin-Bereich unter Benutzer einsehbar."
         ),
-        from_email=None,
-        recipient_list=list(admin_emails),
     )
 
 
@@ -588,8 +601,20 @@ def kind_einverstaendnis_bildaufnahmen(request, kind_id, wert):
         return redirect("kinder_liste")
 
     if request.method == "POST":
+        war_erteilt = kind.einverstaendnis_bildaufnahmen is True
         kind.einverstaendnis_bildaufnahmen_setzen(wert == "ja")
         messages.success(request, f"Einverständnis für Bild-/Videoaufnahmen von {kind.vorname} gespeichert.")
+        if war_erteilt and wert == "nein":
+            _admins_benachrichtigen(
+                subject=f"Einverständnis Bild-/Videoaufnahmen entzogen: {kind.vorname} {kind.nachname}",
+                message=(
+                    "Das Einverständnis für Bild-/Videoaufnahmen (Social Media, Homepage/App, Presse) "
+                    "wurde soeben widerrufen für:\n\n"
+                    f"{kind.vorname} {kind.nachname}\n"
+                    f"Verwaltet von: {request.user.first_name or request.user.username}\n\n"
+                    "Bitte ab sofort keine Bilder/Videos dieser Person mehr veröffentlichen."
+                ),
+            )
 
     return redirect("kinder_liste")
 
@@ -602,8 +627,17 @@ def profil_datennutzung(request, wert):
 
     if request.method == "POST":
         profil, _ = Profil.objects.get_or_create(user=request.user)
+        war_erteilt = profil.einverstanden_datennutzung is True
         profil.datennutzung_setzen(wert == "ja")
         messages.success(request, "Einverständnis zur Datennutzung gespeichert.")
+        if war_erteilt and wert == "nein":
+            _admins_benachrichtigen(
+                subject=f"Einverständnis Datennutzung entzogen: {request.user.first_name or request.user.username}",
+                message=(
+                    "Das Einverständnis zur Datennutzung für vereinsinterne Zwecke wurde soeben widerrufen von:\n\n"
+                    f"{request.user.first_name} {request.user.last_name} ({request.user.username})"
+                ),
+            )
 
     return redirect("konto_bearbeiten")
 
