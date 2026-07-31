@@ -14,8 +14,8 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Profil, Taenzerin, Termin,
-    TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Profil,
+    Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -788,6 +788,12 @@ class AnmeldepunktAdmin(admin.ModelAdmin):
     noch_offen.short_description = "Noch offen"
 
 
+class AufgabeErledigungInline(admin.TabularInline):
+    model = AufgabeErledigung
+    extra = 0
+    readonly_fields = ("erledigt_am",)
+
+
 @admin.register(Aufgabe)
 class AufgabeAdmin(admin.ModelAdmin):
     list_display = ("titel", "termin", "faellig_am", "sichtbar_fuer", "zugewiesen_an", "erledigt", "erstellt_von", "erstellt_am")
@@ -796,6 +802,7 @@ class AufgabeAdmin(admin.ModelAdmin):
     list_filter = ("erledigt", "sichtbar_fuer", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
     ordering = ("erledigt", "faellig_am", "termin__beginn", "-erstellt_am")
+    inlines = [AufgabeErledigungInline]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "zugewiesen_an":

@@ -396,6 +396,23 @@ class Aufgabe(models.Model):
         super().save(*args, **kwargs)
 
 
+class AufgabeErledigung(models.Model):
+    """Pro-Taenzerin-Erledigt-Status fuer eine Aufgabe mit Zielgruppe 'Taenzerinnen'
+    (z.B. waescht jede Taenzerin ihr eigenes Leibchen - eine Aufgabe, aber pro Kind einzeln erledigt)."""
+
+    aufgabe = models.ForeignKey(Aufgabe, on_delete=models.CASCADE, related_name="erledigungen")
+    taenzerin = models.ForeignKey(Taenzerin, on_delete=models.CASCADE, related_name="aufgaben_erledigungen")
+    erledigt_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Aufgaben-Erledigung"
+        verbose_name_plural = "Aufgaben-Erledigungen"
+        unique_together = ("aufgabe", "taenzerin")
+
+    def __str__(self):
+        return f"{self.aufgabe.titel} – {self.taenzerin} erledigt"
+
+
 class NewsPost(models.Model):
     titel = models.CharField("Titel", max_length=200)
     text = models.TextField("Text", blank=True, help_text="Optional, wenn stattdessen nur ein Bild gezeigt werden soll.")

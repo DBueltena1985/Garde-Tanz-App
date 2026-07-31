@@ -19,7 +19,10 @@ from .forms import (
     BenutzernameVergessenForm, FamilieEinladenForm, FeedbackForm, KontoForm, ProfilForm, RegistrierenForm,
     TaenzerinForm,
 )
-from .models import Anmeldepunkt, Anmeldung, Aufgabe, Ferienzeitraum, Galeriebild, NewsPost, Profil, Taenzerin, Termin, Zusage
+from .models import (
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, NewsPost, Profil, Taenzerin,
+    Termin, Zusage,
+)
 from .utils import sichere_mail_senden
 
 FAMILIEN_EINLADUNG_SALT = "familien-einladung"
@@ -62,7 +65,9 @@ def _erlaubte_aufgaben_zielgruppen(user):
         return None
     if _eigene_taenzerin(user):
         return [Aufgabe.ZIELGRUPPE_TAENZERINNEN]
-    return [Aufgabe.ZIELGRUPPE_ELTERN, Aufgabe.ZIELGRUPPE_TAENZERINNEN]
+    if _kinder_fuer_nutzer(user).exists():
+        return [Aufgabe.ZIELGRUPPE_ELTERN, Aufgabe.ZIELGRUPPE_TAENZERINNEN]
+    return [Aufgabe.ZIELGRUPPE_ELTERN]
 
 
 def _aufgaben_fuer_nutzer_sichtbar(queryset, user):
@@ -70,6 +75,27 @@ def _aufgaben_fuer_nutzer_sichtbar(queryset, user):
     if zielgruppen is None:
         return queryset
     return queryset.filter(sichtbar_fuer__in=zielgruppen)
+
+
+def _offene_aufgaben_liste(queryset, user):
+    """Baut aus den sichtbaren offenen Aufgaben eine Liste fuer die Anzeige. Bei Aufgaben fuer
+    Taenzerinnen wird pro Kind einzeln erfasst, ob es fuer dieses Kind schon erledigt ist -
+    hat der Nutzer fuer ALLE seine Kinder schon erledigt, wird die Aufgabe fuer ihn ausgeblendet."""
+    kinder = list(_kinder_fuer_nutzer(user))
+    liste = []
+    for aufgabe in queryset:
+        if aufgabe.sichtbar_fuer == Aufgabe.ZIELGRUPPE_TAENZERINNEN:
+            erledigt_ids = set(
+                AufgabeErledigung.objects.filter(aufgabe=aufgabe, taenzerin__in=kinder)
+                .values_list("taenzerin_id", flat=True)
+            )
+            offene_kinder = [kind for kind in kinder if kind.id not in erledigt_ids]
+            if not offene_kinder:
+                continue
+            liste.append({"aufgabe": aufgabe, "offene_kinder": offene_kinder})
+        else:
+            liste.append({"aufgabe": aufgabe, "offene_kinder": None})
+    return liste
 
 
 def _anmeldepunkt_info(punkt, user):
@@ -251,6 +277,7 @@ def dashboard(request):
         termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
     )
     offene_allgemeine_aufgaben = _aufgaben_fuer_nutzer_sichtbar(offene_allgemeine_aufgaben, request.user)
+    offene_allgemeine_aufgaben = _offene_aufgaben_liste(offene_allgemeine_aufgaben, request.user)
 
     allgemeine_helferpunkte = [
         _anmeldepunkt_info(punkt, request.user)
@@ -377,26 +404,29 @@ def aufgabe_uebernehmen(request, aufgabe_id):
     if zielgruppen is not None and aufgabe.sichtbar_fuer not in zielgruppen:
         raise PermissionDenied
 
-    # Bei Aufgaben fuer Taenzerinnen gibt es keinen separaten "Uebernehmen"-Schritt -
-    # ein Klick auf "Erledigt" uebernimmt und erledigt die Aufgabe in einem Schritt.
-    direkt_erledigt = aufgabe.sichtbar_fuer == Aufgabe.ZIELGRUPPE_TAENZERINNEN
-
     if request.method == "POST":
-        werte = {"zugewiesen_an": request.user}
-        if direkt_erledigt:
-            werte["erledigt"] = True
-            werte["erledigt_am"] = timezone.now()
-
         aktualisiert = Aufgabe.objects.filter(
             pk=aufgabe_id, zugewiesen_an__isnull=True, erledigt=False,
-        ).update(**werte)
+        ).update(zugewiesen_an=request.user)
         if aktualisiert:
-            if direkt_erledigt:
-                messages.success(request, f"'{aufgabe.titel}' als erledigt markiert.")
-            else:
-                messages.success(request, f"Du hast '{aufgabe.titel}' übernommen.")
+            messages.success(request, f"Du hast '{aufgabe.titel}' übernommen.")
         else:
             messages.error(request, "Diese Aufgabe ist bereits vergeben oder existiert nicht mehr.")
+
+    return redirect("dashboard")
+
+
+@login_required
+def aufgabe_erledigt_fuer_kind(request, aufgabe_id, kind_id):
+    aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id, sichtbar_fuer=Aufgabe.ZIELGRUPPE_TAENZERINNEN)
+    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
+
+    if request.method == "POST":
+        _, neu_erstellt = AufgabeErledigung.objects.get_or_create(aufgabe=aufgabe, taenzerin=kind)
+        if neu_erstellt:
+            messages.success(request, f"'{aufgabe.titel}' für {kind.vorname} als erledigt markiert.")
+        else:
+            messages.info(request, f"'{aufgabe.titel}' war für {kind.vorname} bereits als erledigt markiert.")
 
     return redirect("dashboard")
 

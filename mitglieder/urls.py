@@ -13,6 +13,11 @@ urlpatterns = [
     path("anmeldungen/<int:anmeldung_id>/austragen/", views.anmeldepunkt_austragen, name="anmeldepunkt_austragen"),
     path("aufgaben/<int:aufgabe_id>/erledigt/", views.aufgabe_erledigt, name="aufgabe_erledigt"),
     path("aufgaben/<int:aufgabe_id>/uebernehmen/", views.aufgabe_uebernehmen, name="aufgabe_uebernehmen"),
+    path(
+        "aufgaben/<int:aufgabe_id>/erledigt/<int:kind_id>/",
+        views.aufgabe_erledigt_fuer_kind,
+        name="aufgabe_erledigt_fuer_kind",
+    ),
     path("trainings/offen/", views.offene_trainings, name="offene_trainings"),
     path("impersonation/beenden/", views.impersonation_beenden, name="impersonation_beenden"),
     path("kinder/", views.kinder_liste, name="kinder_liste"),
