@@ -19,6 +19,7 @@ urlpatterns = [
         name="aufgabe_erledigt_fuer_kind",
     ),
     path("trainings/offen/", views.offene_trainings, name="offene_trainings"),
+    path("veranstaltungen/", views.veranstaltungen, name="veranstaltungen"),
     path("impersonation/beenden/", views.impersonation_beenden, name="impersonation_beenden"),
     path("kinder/", views.kinder_liste, name="kinder_liste"),
     path("kinder/neu/", views.kind_bearbeiten, name="kind_neu"),

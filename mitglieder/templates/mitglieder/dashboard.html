@@ -245,20 +245,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </details>
 {% endfor %}
 
-{% if vergangene_veranstaltungen_gruppen %}
-<details class="monats-gruppe">
-    <summary class="monats-ueberschrift">✅ Abgeschlossene Veranstaltungen</summary>
-    {% for gruppe in vergangene_veranstaltungen_gruppen %}
-    <details class="monats-gruppe">
-        <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
-        {% for eintrag in gruppe.eintraege %}
-            {% include "mitglieder/_termin_karte.html" %}
-        {% endfor %}
-    </details>
-    {% endfor %}
-</details>
-{% endif %}
-
 <h2>💃 Anstehendes Training</h2>
 
 {% if kinder and training_gruppen %}

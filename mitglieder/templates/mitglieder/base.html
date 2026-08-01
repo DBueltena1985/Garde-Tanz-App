@@ -202,6 +202,7 @@
             <div class="nav-links">
                 <a href="{% url 'dashboard' %}">Termine</a>
                 <a href="{% url 'offene_trainings' %}">Offene Trainings</a>
+                <a href="{% url 'veranstaltungen' %}">Veranstaltungen</a>
                 <a href="{% url 'news_liste' %}">News</a>
                 <a href="{% url 'galerie' %}">Galerie</a>
                 {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}

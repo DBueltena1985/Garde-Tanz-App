@@ -263,15 +263,6 @@ def dashboard(request):
         [e for e in termin_liste if e["termin"].art == Termin.ART_TRAINING], offener_termin_id
     )
 
-    vergangene_veranstaltungen = _fuer_gruppen_relevant(
-        Termin.objects.filter(
-            art=Termin.ART_VERANSTALTUNG, beginn__lt=timezone.now(),
-        ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
-        kinder_gruppen,
-    ).order_by("-beginn")
-    vergangene_veranstaltungen_liste = _termin_eintraege(vergangene_veranstaltungen, kinder, request.user)
-    vergangene_veranstaltungen_gruppen = _nach_monat_gruppieren(vergangene_veranstaltungen_liste)
-
     faellige_kinder = [kind for kind in kinder if kind.bestaetigung_faellig]
 
     heute = timezone.localdate()
@@ -306,7 +297,6 @@ def dashboard(request):
         "kinder": kinder,
         "neueste_news": neueste_news,
         "veranstaltungen_gruppen": veranstaltungen_gruppen,
-        "vergangene_veranstaltungen_gruppen": vergangene_veranstaltungen_gruppen,
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,
         "meine_aufgaben": meine_aufgaben,
@@ -319,6 +309,37 @@ def dashboard(request):
         "kalender_heute": heute,
         "vorheriger_monat": vorheriger_monat,
         "naechster_monat": naechster_monat,
+    })
+
+
+@login_required
+def veranstaltungen(request):
+    """Eigene Übersicht aller Veranstaltungen, getrennt nach offen (noch nicht stattgefunden)
+    und abgeschlossen (bereits vorbei)."""
+    kinder = _kinder_fuer_termine(request.user)
+    kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
+
+    offene_veranstaltungen = _fuer_gruppen_relevant(
+        Termin.objects.filter(
+            art=Termin.ART_VERANSTALTUNG, beginn__gte=timezone.now(),
+        ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        kinder_gruppen,
+    ).order_by("beginn")
+    offene_gruppen = _nach_monat_gruppieren(_termin_eintraege(offene_veranstaltungen, kinder, request.user))
+
+    abgeschlossene_veranstaltungen = _fuer_gruppen_relevant(
+        Termin.objects.filter(
+            art=Termin.ART_VERANSTALTUNG, beginn__lt=timezone.now(),
+        ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        kinder_gruppen,
+    ).order_by("-beginn")
+    abgeschlossene_gruppen = _nach_monat_gruppieren(
+        _termin_eintraege(abgeschlossene_veranstaltungen, kinder, request.user)
+    )
+
+    return render(request, "mitglieder/veranstaltungen.html", {
+        "offene_gruppen": offene_gruppen,
+        "abgeschlossene_gruppen": abgeschlossene_gruppen,
     })
 
 

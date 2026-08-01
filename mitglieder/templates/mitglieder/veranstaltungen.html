@@ -1,0 +1,35 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Veranstaltungen – Garde Tanz{% endblock %}
+{% block content %}
+
+<h2>🎉 Offene Veranstaltungen</h2>
+
+{% if not offene_gruppen %}
+<p>Aktuell sind keine Veranstaltungen geplant.</p>
+{% endif %}
+
+{% for gruppe in offene_gruppen %}
+<details class="monats-gruppe" open>
+    <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
+    {% for eintrag in gruppe.eintraege %}
+        {% include "mitglieder/_termin_karte.html" %}
+    {% endfor %}
+</details>
+{% endfor %}
+
+<h2>✅ Abgeschlossene Veranstaltungen</h2>
+
+{% if not abgeschlossene_gruppen %}
+<p>Noch keine Veranstaltungen abgeschlossen.</p>
+{% endif %}
+
+{% for gruppe in abgeschlossene_gruppen %}
+<details class="monats-gruppe">
+    <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
+    {% for eintrag in gruppe.eintraege %}
+        {% include "mitglieder/_termin_karte.html" %}
+    {% endfor %}
+</details>
+{% endfor %}
+
+{% endblock %}
