@@ -24,6 +24,8 @@ class LoeschLinkMixin:
     """Fügt eine Mülleimer-Spalte zum Löschen einzelner Zeilen hinzu (statt nur über die
     Sammel-Aktion oben im Dropdown - "Ausgewählte Objekte löschen" ist deaktiviert)."""
 
+    save_on_top = True
+
     LOESCHEN_SVG = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" '
         'fill="#b3261e" style="vertical-align:middle;">'
