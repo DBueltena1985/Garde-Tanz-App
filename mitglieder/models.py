@@ -472,14 +472,34 @@ class Ferienzeitraum(models.Model):
         return f"{self.name} ({self.start_datum:%d.%m.%Y} – {self.end_datum:%d.%m.%Y})"
 
 
+class Galerieordner(models.Model):
+    """Ein Ordner in der allgemeinen Bildergalerie, unabhängig von einer Veranstaltung."""
+
+    name = models.CharField("Name", max_length=200)
+    erstellt_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Galerie-Ordner"
+        verbose_name_plural = "Galerie-Ordner"
+        ordering = ["-erstellt_am"]
+
+    def __str__(self):
+        return self.name
+
+
 class Galeriebild(models.Model):
-    """Ein Foto in der Bildergalerie, optional einer Veranstaltung zugeordnet."""
+    """Ein Foto in der Bildergalerie, optional einer Veranstaltung oder einem Ordner zugeordnet."""
 
     termin = models.ForeignKey(
         Termin, on_delete=models.CASCADE, null=True, blank=True, related_name="galeriebilder",
         limit_choices_to={"art": Termin.ART_VERANSTALTUNG},
         verbose_name="Veranstaltung",
         help_text="Optional: zu welcher Veranstaltung gehört das Bild? Leer lassen für die allgemeine Galerie.",
+    )
+    ordner = models.ForeignKey(
+        Galerieordner, on_delete=models.CASCADE, null=True, blank=True, related_name="bilder",
+        verbose_name="Ordner",
+        help_text="Optional: alternativ zu einer Veranstaltung - Ordner in der allgemeinen Galerie.",
     )
     bild = models.ImageField("Bild", upload_to="galerie/")
     beschreibung = models.CharField("Beschreibung", max_length=200, blank=True)
@@ -496,4 +516,8 @@ class Galeriebild(models.Model):
     def __str__(self):
         if self.beschreibung:
             return self.beschreibung
-        return self.termin.titel if self.termin else "Allgemeines Bild"
+        if self.termin:
+            return self.termin.titel
+        if self.ordner:
+            return self.ordner.name
+        return "Allgemeines Bild"

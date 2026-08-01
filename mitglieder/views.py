@@ -730,18 +730,22 @@ def news_liste(request):
 
 @login_required
 def galerie(request):
-    bilder = Galeriebild.objects.select_related("termin")
+    bilder = Galeriebild.objects.select_related("termin", "ordner")
 
-    allgemeine_bilder = [b for b in bilder if b.termin_id is None]
+    allgemeine_bilder = [b for b in bilder if b.termin_id is None and b.ordner_id is None]
 
     nach_veranstaltung = {}
+    nach_ordner = {}
     for b in bilder:
         if b.termin_id:
             nach_veranstaltung.setdefault(b.termin, []).append(b)
+        elif b.ordner_id:
+            nach_ordner.setdefault(b.ordner, []).append(b)
 
     return render(request, "mitglieder/galerie.html", {
         "allgemeine_bilder": allgemeine_bilder,
         "veranstaltungs_bilder": nach_veranstaltung,
+        "ordner_bilder": nach_ordner,
     })
 
 

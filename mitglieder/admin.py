@@ -15,8 +15,8 @@ from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, NewsPost, Profil,
-    Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, Galerieordner,
+    NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -322,6 +322,19 @@ class AufgabeInline(admin.TabularInline):
 class GaleriebildInline(admin.TabularInline):
     model = Galeriebild
     extra = 1
+    fields = ("bild", "vorschau", "beschreibung")
+    readonly_fields = ("vorschau",)
+
+    def vorschau(self, obj):
+        if obj and obj.pk and obj.bild:
+            return format_html('<img src="{}" style="height:60px; border-radius:4px;">', obj.bild.url)
+        return "–"
+
+
+class GaleriebildOrdnerInline(admin.TabularInline):
+    model = Galeriebild
+    fk_name = "ordner"
+    extra = 5
     fields = ("bild", "vorschau", "beschreibung")
     readonly_fields = ("vorschau",)
 
@@ -874,13 +887,24 @@ class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+@admin.register(Galerieordner)
+class GalerieordnerAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("name", "anzahl_bilder", "erstellt_am", "loeschen_link")
+    inlines = [GaleriebildOrdnerInline]
+
+    def anzahl_bilder(self, obj):
+        return obj.bilder.count()
+
+    anzahl_bilder.short_description = "Bilder"
+
+
 @admin.register(Galeriebild)
 class GaleriebildAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("thumbnail", "termin", "beschreibung", "hochgeladen_von", "hochgeladen_am", "loeschen_link")
+    list_display = ("thumbnail", "termin", "ordner", "beschreibung", "hochgeladen_von", "hochgeladen_am", "loeschen_link")
     list_display_links = ("thumbnail", "beschreibung")
-    list_filter = ("termin",)
+    list_filter = ("termin", "ordner")
     readonly_fields = ("vorschau", "hochgeladen_von", "hochgeladen_am")
-    fields = ("termin", "bild", "vorschau", "beschreibung", "hochgeladen_von", "hochgeladen_am")
+    fields = ("termin", "ordner", "bild", "vorschau", "beschreibung", "hochgeladen_von", "hochgeladen_am")
 
     def thumbnail(self, obj):
         if obj.bild:
