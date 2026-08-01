@@ -956,6 +956,7 @@ class GaleriebildAdmin(LoeschLinkMixin, admin.ModelAdmin):
     readonly_fields = ("vorschau", "hochgeladen_von", "hochgeladen_am")
     fields = ("termin", "ordner", "bild", "vorschau", "beschreibung", "titelbild", "hochgeladen_von", "hochgeladen_am")
     actions = ["ordner_zuweisen"]
+    change_list_template = "admin/mitglieder/galeriebild_change_list.html"
 
     def ordner_zuweisen(self, request, queryset):
         if "apply" in request.POST:
