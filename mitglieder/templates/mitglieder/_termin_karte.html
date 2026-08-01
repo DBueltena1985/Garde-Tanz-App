@@ -12,6 +12,9 @@
     {% else %}
     <div style="margin-top:0.4rem; font-size:0.85rem; color:#8a6d00;">ℹ️ Kein Auftritt der Tänzerinnen bei dieser Veranstaltung</div>
     {% endif %}
+    {% if eintrag.termin.beschreibung_bild %}
+    <img src="{{ eintrag.termin.beschreibung_bild.url }}" alt="" style="max-width:100%; border-radius:6px; margin-top:0.5rem;">
+    {% endif %}
     {% if eintrag.termin.beschreibung %}
     <p>{{ eintrag.termin.beschreibung }}</p>
     {% elif eintrag.termin.art == "veranstaltung" %}

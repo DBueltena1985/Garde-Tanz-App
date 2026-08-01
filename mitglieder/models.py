@@ -193,6 +193,10 @@ class Termin(models.Model):
     )
     ort = models.CharField("Ort", max_length=200, blank=True)
     beschreibung = models.TextField("Beschreibung", blank=True)
+    beschreibung_bild = models.ImageField(
+        "Bild zur Beschreibung", upload_to="termine/", blank=True, null=True,
+        help_text="Optional: wird zusammen mit der Beschreibung angezeigt, z.B. ein Flyer.",
+    )
     interne_notiz = models.TextField(
         "Interne Notiz", blank=True,
         help_text="Nicht öffentlich – nur für Orga-/Admin-Team sichtbar, z.B. im Mitgliederbereich.",
