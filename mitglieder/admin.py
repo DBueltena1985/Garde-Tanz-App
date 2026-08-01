@@ -948,9 +948,9 @@ def _get_app_list_mit_anzahl(request, app_label=None):
 
 admin.site.get_app_list = _get_app_list_mit_anzahl
 
-# Statt der Sammel-Aktion "Ausgewählte Objekte löschen" oben im Dropdown gibt es
-# jetzt pro Zeile ein Muelleimer-Symbol (siehe LoeschLinkMixin).
-admin.site.disable_action("delete_selected")
+# "Ausgewählte Objekte löschen" bleibt zusätzlich zum Muelleimer-Symbol pro Zeile
+# (LoeschLinkMixin) erhalten, damit man z.B. bei langen Terminserien mehrere
+# Eintraege auf einmal auswaehlen und loeschen kann.
 
 
 _each_context_ohne_einladung = admin.site.each_context
