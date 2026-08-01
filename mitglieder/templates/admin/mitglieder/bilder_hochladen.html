@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% load admin_urls %}
+
+{% block content %}
+<h1>Bilder hochladen: {{ original }}</h1>
+<p>Mehrere Bilder gleichzeitig auswählen (Strg/Cmd gedrückt halten) - werden alle diesem Eintrag hinzugefügt.</p>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p><input type="file" name="bilder" multiple accept="image/*" required></p>
+    <input type="submit" value="Hochladen" class="default">
+</form>
+<p style="margin-top:1rem;"><a href="{% url opts|admin_urlname:'change' original.pk %}">Zurück</a></p>
+{% endblock %}

@@ -322,7 +322,7 @@ class AufgabeInline(admin.TabularInline):
 class GaleriebildInline(admin.TabularInline):
     model = Galeriebild
     extra = 1
-    fields = ("bild", "vorschau", "beschreibung")
+    fields = ("bild", "vorschau", "beschreibung", "titelbild")
     readonly_fields = ("vorschau",)
 
     def vorschau(self, obj):
@@ -335,7 +335,7 @@ class GaleriebildOrdnerInline(admin.TabularInline):
     model = Galeriebild
     fk_name = "ordner"
     extra = 5
-    fields = ("bild", "vorschau", "beschreibung")
+    fields = ("bild", "vorschau", "beschreibung", "titelbild")
     readonly_fields = ("vorschau",)
 
     def vorschau(self, obj):
@@ -344,6 +344,43 @@ class GaleriebildOrdnerInline(admin.TabularInline):
         return "–"
 
     vorschau.short_description = "Vorschau"
+
+
+class BildBulkUploadMixin:
+    """Fügt einen Button 'Bilder hochladen' hinzu, mit dem man auf einmal mehrere Bilder in
+    einem Rutsch hochladen kann (statt einzeln über Inline-Formularzeilen) - auch nachträglich."""
+
+    bild_fk_feld = None  # in Unterklassen setzen: Name des FK-Felds auf Galeriebild ("ordner" oder "termin")
+    change_form_template = "admin/mitglieder/bild_bulk_upload_change_form.html"
+
+    def _url_name(self, suffix):
+        return f"{self.model._meta.app_label}_{self.model._meta.model_name}_{suffix}"
+
+    def get_urls(self):
+        eigene_urls = [
+            path(
+                "<int:object_id>/bilder-hochladen/",
+                self.admin_site.admin_view(self.bilder_hochladen),
+                name=self._url_name("bilder_hochladen"),
+            ),
+        ]
+        return eigene_urls + super().get_urls()
+
+    def bilder_hochladen(self, request, object_id):
+        obj = get_object_or_404(self.model, pk=object_id)
+
+        if request.method == "POST":
+            dateien = request.FILES.getlist("bilder")
+            for datei in dateien:
+                Galeriebild.objects.create(
+                    **{self.bild_fk_feld: obj}, bild=datei, hochgeladen_von=request.user,
+                )
+            messages.success(request, f"{len(dateien)} Bild(er) hochgeladen.")
+            return redirect(f"admin:{self._url_name('change')}", object_id)
+
+        return render(request, "admin/mitglieder/bilder_hochladen.html", {
+            "opts": self.model._meta, "original": obj, "title": f"Bilder hochladen: {obj}",
+        })
 
 
 class TerminForm(forms.ModelForm):
@@ -739,8 +776,9 @@ class TrainingAdmin(TerminAdminBase):
 
 
 @admin.register(VeranstaltungTermin)
-class VeranstaltungAdmin(TerminAdminBase):
+class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
+    bild_fk_feld = "termin"
     inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline]
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
 
@@ -888,7 +926,8 @@ class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
 
 
 @admin.register(Galerieordner)
-class GalerieordnerAdmin(LoeschLinkMixin, admin.ModelAdmin):
+class GalerieordnerAdmin(BildBulkUploadMixin, LoeschLinkMixin, admin.ModelAdmin):
+    bild_fk_feld = "ordner"
     list_display = ("name", "anzahl_bilder", "erstellt_am", "loeschen_link")
     inlines = [GaleriebildOrdnerInline]
 
@@ -900,11 +939,15 @@ class GalerieordnerAdmin(LoeschLinkMixin, admin.ModelAdmin):
 
 @admin.register(Galeriebild)
 class GaleriebildAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("thumbnail", "termin", "ordner", "beschreibung", "hochgeladen_von", "hochgeladen_am", "loeschen_link")
+    list_display = (
+        "thumbnail", "termin", "ordner", "beschreibung", "titelbild", "hochgeladen_von", "hochgeladen_am",
+        "loeschen_link",
+    )
     list_display_links = ("thumbnail", "beschreibung")
-    list_filter = ("termin", "ordner")
+    list_editable = ("titelbild",)
+    list_filter = ("termin", "ordner", "titelbild")
     readonly_fields = ("vorschau", "hochgeladen_von", "hochgeladen_am")
-    fields = ("termin", "ordner", "bild", "vorschau", "beschreibung", "hochgeladen_von", "hochgeladen_am")
+    fields = ("termin", "ordner", "bild", "vorschau", "beschreibung", "titelbild", "hochgeladen_von", "hochgeladen_am")
 
     def thumbnail(self, obj):
         if obj.bild:

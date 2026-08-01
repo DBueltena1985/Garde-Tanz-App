@@ -14,7 +14,7 @@
         {% for bild in bilder %}
         <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="veranstaltung-{{ termin.id }}" data-titel="{{ bild.beschreibung }}">
             <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
-                 style="width:110px; height:110px; object-fit:cover; border-radius:6px;">
+                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
         </a>
         {% endfor %}
     </div>
@@ -28,7 +28,7 @@
         {% for bild in bilder %}
         <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="ordner-{{ ordner.id }}" data-titel="{{ bild.beschreibung }}">
             <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
-                 style="width:110px; height:110px; object-fit:cover; border-radius:6px;">
+                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
         </a>
         {% endfor %}
     </div>
@@ -42,7 +42,7 @@
         {% for bild in allgemeine_bilder %}
         <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="allgemein" data-titel="{{ bild.beschreibung }}">
             <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
-                 style="width:110px; height:110px; object-fit:cover; border-radius:6px;">
+                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
         </a>
         {% endfor %}
     </div>

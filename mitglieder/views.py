@@ -728,6 +728,11 @@ def news_liste(request):
     return render(request, "mitglieder/news_liste.html", {"news": news})
 
 
+def _titelbild_zuerst(bilder):
+    """Sortiert eine Liste von Galeriebildern so, dass ein markiertes Titelbild (falls vorhanden) zuerst kommt."""
+    return sorted(bilder, key=lambda b: not b.titelbild)
+
+
 @login_required
 def galerie(request):
     bilder = Galeriebild.objects.select_related("termin", "ordner")
@@ -741,6 +746,12 @@ def galerie(request):
             nach_veranstaltung.setdefault(b.termin, []).append(b)
         elif b.ordner_id:
             nach_ordner.setdefault(b.ordner, []).append(b)
+
+    allgemeine_bilder = _titelbild_zuerst(allgemeine_bilder)
+    for termin in nach_veranstaltung:
+        nach_veranstaltung[termin] = _titelbild_zuerst(nach_veranstaltung[termin])
+    for ordner in nach_ordner:
+        nach_ordner[ordner] = _titelbild_zuerst(nach_ordner[ordner])
 
     return render(request, "mitglieder/galerie.html", {
         "allgemeine_bilder": allgemeine_bilder,

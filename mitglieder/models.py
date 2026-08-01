@@ -503,6 +503,10 @@ class Galeriebild(models.Model):
     )
     bild = models.ImageField("Bild", upload_to="galerie/")
     beschreibung = models.CharField("Beschreibung", max_length=200, blank=True)
+    titelbild = models.BooleanField(
+        "Titelbild", default=False,
+        help_text="Wird in der Galerie-Übersicht zuerst und größer angezeigt (nur eines pro Ordner/Veranstaltung).",
+    )
     hochgeladen_von = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="hochgeladene_bilder"
     )
@@ -521,3 +525,10 @@ class Galeriebild(models.Model):
         if self.ordner:
             return self.ordner.name
         return "Allgemeines Bild"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.titelbild:
+            Galeriebild.objects.filter(ordner=self.ordner, termin=self.termin).exclude(pk=self.pk).update(
+                titelbild=False
+            )
