@@ -60,5 +60,20 @@
             });
         });
     });
+
+    // Beim Speichern/Loeschen (auch Sammel-Aktionen, Bestaetigungsseiten) Warte-Cursor
+    // anzeigen, damit sichtbar ist, dass etwas passiert. Buttons werden bewusst NICHT
+    // deaktiviert, da Django-Admin-Speicherbuttons (_save/_continue/_addanother) ueber
+    // ihren name/value unterscheiden, welche Aktion gemeint ist - ein disabled Button
+    // wird beim Absenden nicht mitgeschickt und wuerde das kaputt machen.
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!(form instanceof HTMLFormElement)) { return; }
+        document.documentElement.style.cursor = 'wait';
+        form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (btn) {
+            btn.style.cursor = 'wait';
+            btn.style.opacity = '0.6';
+        });
+    }, true);
 </script>
 {% endblock %}
