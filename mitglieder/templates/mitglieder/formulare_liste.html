@@ -1,0 +1,15 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Formulare – Garde Tanz{% endblock %}
+{% block content %}
+<h2>Formulare</h2>
+<div class="card">
+    <div style="padding:0.6rem 0;">
+        <a href="https://www.djk-oberasbach.de/DJK_Mitgliedsantrag.pdf" target="_blank" rel="noopener">Aufnahmeantrag</a>
+    </div>
+    {% for formular in formulare %}
+    <div style="padding:0.6rem 0; border-top:1px solid #f0e8ec;">
+        <a href="{{ formular.datei.url }}" target="_blank" rel="noopener">{{ formular.titel }}</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

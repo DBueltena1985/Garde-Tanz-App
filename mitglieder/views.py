@@ -716,6 +716,13 @@ def vorstandschaft(request):
 
 
 @login_required
+def formulare_liste(request):
+    from formulare.models import Formular
+
+    return render(request, "mitglieder/formulare_liste.html", {"formulare": Formular.objects.all()})
+
+
+@login_required
 def news_liste(request):
     news = NewsPost.objects.all()
     return render(request, "mitglieder/news_liste.html", {"news": news})
