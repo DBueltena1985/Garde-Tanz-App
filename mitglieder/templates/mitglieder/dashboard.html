@@ -206,9 +206,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="{% if tag.datum == kalender_heute %}kalender-heute{% endif %}{% if tag.feiertag %} kalender-feiertag{% elif tag.ferien %} kalender-ferien{% endif %}"
                             {% if tag.feiertag %}title="{{ tag.feiertag }}"{% elif tag.ferien %}title="{{ tag.ferien }}"{% endif %}>
                             <div class="kalender-tagnummer">{{ tag.datum.day }}</div>
-                            {% for termin in tag.termine %}
-                            <a href="#termin-{{ termin.id }}" class="kalender-termin kalender-termin-{{ termin.art }}">{{ termin.beginn|date:"H:i" }} {{ termin.titel }}</a>
-                            {% endfor %}
+                            {% if tag.termine %}
+                            <div class="kalender-termin-punkte">
+                                {% for termin in tag.termine %}
+                                <a href="#termin-{{ termin.id }}" class="kalender-termin-punkt kalender-termin-punkt-{{ termin.art }}" title="{{ termin.beginn|date:'H:i' }} {{ termin.titel }}"></a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </td>
                         {% else %}
                         <td class="kalender-leer"></td>
@@ -218,11 +222,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 {% endfor %}
             </tbody>
         </table>
-        {% if kalender_legende %}
         <ul class="kalender-legende">
+            <li><span class="kalender-termin-punkt kalender-termin-punkt-training" style="display:inline-block; margin-right:0.3rem;"></span>Training</li>
+            <li><span class="kalender-termin-punkt kalender-termin-punkt-veranstaltung" style="display:inline-block; margin-right:0.3rem;"></span>Veranstaltung</li>
             {% for eintrag in kalender_legende %}<li>{{ eintrag }}</li>{% endfor %}
         </ul>
-        {% endif %}
     </div>
 </div>
 

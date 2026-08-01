@@ -135,11 +135,11 @@
         .kalender-kopf { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
         .kalender-nav { font-size: 1.2rem; padding: 0.1rem 0.6rem; background: #f3e8ee; border-radius: 6px; }
         .kalender-scroll { overflow-x: auto; }
-        table.kalender { width: 100%; min-width: 480px; border-collapse: collapse; table-layout: fixed; }
-        table.kalender th { font-size: 0.8rem; color: #7a2159; padding: 0.3rem; text-align: center; }
-        table.kalender td { border: 1px solid #f0e8ec; vertical-align: top; height: 4.2rem; padding: 0.2rem; width: 14.28%; }
+        table.kalender { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        table.kalender th { font-size: 0.68rem; color: #7a2159; padding: 0.2rem 0.1rem; text-align: center; }
+        table.kalender td { border: 1px solid #f0e8ec; vertical-align: top; height: 2.6rem; padding: 0.15rem 0.05rem; width: 14.28%; }
         .kalender-leer { background: #fafafa; }
-        .kalender-tagnummer { font-size: 0.75rem; color: #999; margin-bottom: 0.2rem; }
+        .kalender-tagnummer { font-size: 0.7rem; color: #999; text-align: center; }
         .kalender-heute { background: #fdf1f6; border: 2px solid #7a2159; }
         .kalender-heute .kalender-tagnummer { color: #7a2159; font-weight: 700; }
         .kalender-feiertag { background: #fbdada; }
@@ -149,9 +149,10 @@
         .kalender-heute.kalender-feiertag, .kalender-heute.kalender-ferien { border: 2px solid #7a2159; }
         .kalender-legende { list-style: none; padding: 0; margin: 0.7rem 0 0; font-size: 0.8rem; color: #666; }
         .kalender-legende li { padding: 0.1rem 0; }
-        .kalender-termin { display: block; font-size: 0.68rem; padding: 0.1rem 0.25rem; margin-bottom: 0.15rem; border-radius: 4px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .kalender-termin-training { background: #d7f0dd; color: #1a5c30; }
-        .kalender-termin-veranstaltung { background: #dbe6fb; color: #1a3d7a; }
+        .kalender-termin-punkte { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; margin-top: 2px; }
+        .kalender-termin-punkt { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+        .kalender-termin-punkt-training { background: #1a7a3c; }
+        .kalender-termin-punkt-veranstaltung { background: #1a3d7a; }
         .monats-gruppe { margin-top: 1rem; }
         .monats-ueberschrift {
             color: #7a2159; border-bottom: 2px solid #f0e0ea; padding-bottom: 0.5rem; margin-top: 1.5rem;
