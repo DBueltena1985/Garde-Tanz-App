@@ -942,6 +942,7 @@ class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
 class GalerieordnerAdmin(BildBulkUploadMixin, LoeschLinkMixin, admin.ModelAdmin):
     bild_fk_feld = "ordner"
     list_display = ("name", "veranstaltung", "anzahl_bilder", "erstellt_am", "loeschen_link")
+    list_editable = ("veranstaltung",)
     list_filter = ("veranstaltung",)
     inlines = [GaleriebildOrdnerInline]
 
