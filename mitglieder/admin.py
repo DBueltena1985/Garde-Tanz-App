@@ -1035,15 +1035,28 @@ _get_app_list_ohne_anzahl = admin.site.get_app_list
 _MODELLE_OHNE_ANZAHL = (TrainingTermin, Zusage)
 
 
+def _anzahl_galeriebild_gruppen():
+    """Zählt bei Galeriebildern nicht die einzelnen Fotos, sondern die Ordner/Veranstaltungen,
+    denen mindestens ein Foto zugeordnet ist (plus die allgemeine Galerie, falls vorhanden)."""
+    distinct_ordner = Galeriebild.objects.filter(ordner__isnull=False).values("ordner").distinct().count()
+    distinct_termin = Galeriebild.objects.filter(termin__isnull=False).values("termin").distinct().count()
+    hat_allgemein = Galeriebild.objects.filter(ordner__isnull=True, termin__isnull=True).exists()
+    return distinct_ordner + distinct_termin + (1 if hat_allgemein else 0)
+
+
 def _get_app_list_mit_anzahl(request, app_label=None):
     """Zeigt vor jedem Modellnamen im Admin-Menü die Anzahl der Datensätze an."""
     app_list = _get_app_list_ohne_anzahl(request, app_label=app_label)
     for app in app_list:
         for model in app["models"]:
             model_class = model.get("model")
-            if model_class is not None and model_class not in _MODELLE_OHNE_ANZAHL:
+            if model_class is None or model_class in _MODELLE_OHNE_ANZAHL:
+                continue
+            if model_class is Galeriebild:
+                anzahl = _anzahl_galeriebild_gruppen()
+            else:
                 anzahl = model_class._default_manager.count()
-                model["name"] = f"{anzahl} {model['name']}"
+            model["name"] = f"{anzahl} {model['name']}"
     return app_list
 
 
