@@ -482,9 +482,16 @@ class Ferienzeitraum(models.Model):
 
 
 class Galerieordner(models.Model):
-    """Ein Ordner in der allgemeinen Bildergalerie, unabhängig von einer Veranstaltung."""
+    """Ein Ordner in der allgemeinen Bildergalerie, optional komplett einer Veranstaltung zugeordnet."""
 
     name = models.CharField("Name", max_length=200)
+    veranstaltung = models.ForeignKey(
+        Termin, on_delete=models.SET_NULL, null=True, blank=True, related_name="galerie_ordner",
+        limit_choices_to={"art": Termin.ART_VERANSTALTUNG},
+        verbose_name="Veranstaltung",
+        help_text="Optional: den kompletten Ordner (inkl. aller Bilder) einer Veranstaltung zuordnen - "
+        "die Bilder erscheinen dann in der Galerie unter dieser Veranstaltung statt als eigener Ordner.",
+    )
     erstellt_am = models.DateTimeField(auto_now_add=True)
 
     class Meta:

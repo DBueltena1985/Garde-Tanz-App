@@ -779,7 +779,7 @@ def _gruppen_kachel(bilder_liste):
 
 @login_required
 def galerie(request):
-    bilder = Galeriebild.objects.select_related("termin", "ordner")
+    bilder = Galeriebild.objects.select_related("termin", "ordner", "ordner__veranstaltung")
 
     allgemeine_bilder = [b for b in bilder if b.termin_id is None and b.ordner_id is None]
 
@@ -789,7 +789,10 @@ def galerie(request):
         if b.termin_id:
             nach_veranstaltung.setdefault(b.termin, []).append(b)
         elif b.ordner_id:
-            nach_ordner.setdefault(b.ordner, []).append(b)
+            if b.ordner.veranstaltung_id:
+                nach_veranstaltung.setdefault(b.ordner.veranstaltung, []).append(b)
+            else:
+                nach_ordner.setdefault(b.ordner, []).append(b)
 
     veranstaltungs_kacheln = []
     for termin, liste in nach_veranstaltung.items():
@@ -814,13 +817,17 @@ def galerie(request):
 @login_required
 def galerie_veranstaltung(request, pk):
     termin = get_object_or_404(Termin, pk=pk)
-    bilder = _titelbild_zuerst(list(Galeriebild.objects.filter(termin=termin)))
+    bilder = _titelbild_zuerst(
+        list(Galeriebild.objects.filter(Q(termin=termin) | Q(ordner__veranstaltung=termin)))
+    )
     return render(request, "mitglieder/galerie_gruppe.html", {"titel": termin.titel, "bilder": bilder})
 
 
 @login_required
 def galerie_ordner(request, pk):
     ordner = get_object_or_404(Galerieordner, pk=pk)
+    if ordner.veranstaltung_id:
+        return redirect("galerie_veranstaltung", pk=ordner.veranstaltung_id)
     bilder = _titelbild_zuerst(list(Galeriebild.objects.filter(ordner=ordner)))
     return render(request, "mitglieder/galerie_gruppe.html", {"titel": f"📁 {ordner.name}", "bilder": bilder})
 

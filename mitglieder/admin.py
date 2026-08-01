@@ -941,7 +941,8 @@ class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
 @admin.register(Galerieordner)
 class GalerieordnerAdmin(BildBulkUploadMixin, LoeschLinkMixin, admin.ModelAdmin):
     bild_fk_feld = "ordner"
-    list_display = ("name", "anzahl_bilder", "erstellt_am", "loeschen_link")
+    list_display = ("name", "veranstaltung", "anzahl_bilder", "erstellt_am", "loeschen_link")
+    list_filter = ("veranstaltung",)
     inlines = [GaleriebildOrdnerInline]
 
     def anzahl_bilder(self, obj):
