@@ -79,6 +79,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === 'ArrowLeft') { zeigeBild(aktuellerIndex - 1); }
         if (e.key === 'ArrowRight') { zeigeBild(aktuellerIndex + 1); }
     });
+
+    if (aktuelleGruppe.length) {
+        oeffnen(aktuelleGruppe[0]);
+    }
 });
 </script>
 {% endblock %}
