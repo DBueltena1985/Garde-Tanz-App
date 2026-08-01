@@ -199,16 +199,8 @@ def _kalender_monat(jahr, monat, gruppen):
     return wochen, legende
 
 
-@login_required
-def dashboard(request):
-    kinder = _kinder_fuer_termine(request.user)
-    kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
-
-    termine = _fuer_gruppen_relevant(
-        Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
-        kinder_gruppen,
-    ).order_by("beginn")
-
+def _termin_eintraege(termine, kinder, user):
+    """Baut für eine Liste von Terminen die Anzeige-Einträge (Zusagen der Kinder, Helferpunkte, Zusagen-Anzahl)."""
     zusagen = {
         (z.termin_id, z.taenzerin_id): z
         for z in Zusage.objects.filter(taenzerin__in=kinder, termin__in=termine)
@@ -236,7 +228,7 @@ def dashboard(request):
         anmeldepunkte_info = []
         if termin.art == Termin.ART_VERANSTALTUNG:
             for punkt in termin.anmeldepunkte.all():
-                anmeldepunkte_info.append(_anmeldepunkt_info(punkt, request.user))
+                anmeldepunkte_info.append(_anmeldepunkt_info(punkt, user))
 
         termin_liste.append({
             "termin": termin,
@@ -244,6 +236,20 @@ def dashboard(request):
             "anmeldepunkte": anmeldepunkte_info,
             "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
         })
+    return termin_liste
+
+
+@login_required
+def dashboard(request):
+    kinder = _kinder_fuer_termine(request.user)
+    kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
+
+    termine = _fuer_gruppen_relevant(
+        Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        kinder_gruppen,
+    ).order_by("beginn")
+
+    termin_liste = _termin_eintraege(termine, kinder, request.user)
 
     try:
         offener_termin_id = int(request.GET.get("offener_termin", 0)) or None
@@ -256,6 +262,15 @@ def dashboard(request):
     training_gruppen = _nach_monat_gruppieren(
         [e for e in termin_liste if e["termin"].art == Termin.ART_TRAINING], offener_termin_id
     )
+
+    vergangene_veranstaltungen = _fuer_gruppen_relevant(
+        Termin.objects.filter(
+            art=Termin.ART_VERANSTALTUNG, beginn__lt=timezone.now(),
+        ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        kinder_gruppen,
+    ).order_by("-beginn")
+    vergangene_veranstaltungen_liste = _termin_eintraege(vergangene_veranstaltungen, kinder, request.user)
+    vergangene_veranstaltungen_gruppen = _nach_monat_gruppieren(vergangene_veranstaltungen_liste)
 
     faellige_kinder = [kind for kind in kinder if kind.bestaetigung_faellig]
 
@@ -291,6 +306,7 @@ def dashboard(request):
         "kinder": kinder,
         "neueste_news": neueste_news,
         "veranstaltungen_gruppen": veranstaltungen_gruppen,
+        "vergangene_veranstaltungen_gruppen": vergangene_veranstaltungen_gruppen,
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,
         "meine_aufgaben": meine_aufgaben,
