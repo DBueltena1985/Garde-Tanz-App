@@ -1,0 +1,84 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}{{ titel }} – Galerie – Garde Tanz{% endblock %}
+{% block content %}
+<p><a href="{% url 'galerie' %}">← Zurück zur Galerie</a></p>
+<h2>{{ titel }}</h2>
+
+{% if not bilder %}
+<p>Noch keine Bilder vorhanden.</p>
+{% endif %}
+
+<div class="card">
+    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+        {% for bild in bilder %}
+        <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="gruppe" data-titel="{{ bild.beschreibung }}">
+            <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
+                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="galerie-lightbox" id="galerie-lightbox">
+    <button type="button" class="galerie-lightbox-schliessen" aria-label="Schließen">✕</button>
+    <button type="button" class="galerie-lightbox-nav galerie-lightbox-prev" aria-label="Vorheriges Bild">‹</button>
+    <img src="" alt="">
+    <button type="button" class="galerie-lightbox-nav galerie-lightbox-next" aria-label="Nächstes Bild">›</button>
+    <div class="galerie-lightbox-beschriftung"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var lightbox = document.getElementById('galerie-lightbox');
+    if (!lightbox) { return; }
+    var bildElement = lightbox.querySelector('img');
+    var beschriftung = lightbox.querySelector('.galerie-lightbox-beschriftung');
+    var schliessenBtn = lightbox.querySelector('.galerie-lightbox-schliessen');
+    var prevBtn = lightbox.querySelector('.galerie-lightbox-prev');
+    var nextBtn = lightbox.querySelector('.galerie-lightbox-next');
+
+    var aktuelleGruppe = Array.prototype.slice.call(document.querySelectorAll('.galerie-thumb'));
+    var aktuellerIndex = 0;
+
+    function zeigeBild(index) {
+        if (!aktuelleGruppe.length) { return; }
+        aktuellerIndex = (index + aktuelleGruppe.length) % aktuelleGruppe.length;
+        var thumb = aktuelleGruppe[aktuellerIndex];
+        bildElement.src = thumb.getAttribute('href');
+        beschriftung.textContent = thumb.dataset.titel || '';
+    }
+
+    function oeffnen(thumb) {
+        zeigeBild(aktuelleGruppe.indexOf(thumb));
+        lightbox.classList.add('aktiv');
+    }
+
+    function schliessen() {
+        lightbox.classList.remove('aktiv');
+        bildElement.src = '';
+    }
+
+    aktuelleGruppe.forEach(function (thumb) {
+        thumb.addEventListener('click', function (e) {
+            e.preventDefault();
+            oeffnen(thumb);
+        });
+    });
+
+    schliessenBtn.addEventListener('click', schliessen);
+    prevBtn.addEventListener('click', function () { zeigeBild(aktuellerIndex - 1); });
+    nextBtn.addEventListener('click', function () { zeigeBild(aktuellerIndex + 1); });
+
+    lightbox.addEventListener('click', function (e) {
+        if (e.target === lightbox) { schliessen(); }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (!lightbox.classList.contains('aktiv')) { return; }
+        if (e.key === 'Escape') { schliessen(); }
+        if (e.key === 'ArrowLeft') { zeigeBild(aktuellerIndex - 1); }
+        if (e.key === 'ArrowRight') { zeigeBild(aktuellerIndex + 1); }
+    });
+});
+</script>
+{% endblock %}

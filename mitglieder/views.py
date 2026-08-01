@@ -20,8 +20,8 @@ from .forms import (
     TaenzerinForm,
 )
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, NewsPost, Profil, Taenzerin,
-    Termin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, Galerieordner, NewsPost, Profil,
+    Taenzerin, Termin, Zusage,
 )
 from .utils import sichere_mail_senden
 
@@ -733,6 +733,13 @@ def _titelbild_zuerst(bilder):
     return sorted(bilder, key=lambda b: not b.titelbild)
 
 
+def _gruppen_kachel(bilder_liste):
+    """Gibt (Titelbild-oder-erstes-Bild, Anzahl) für eine Gruppe von Galeriebildern zurück."""
+    bilder_liste = _titelbild_zuerst(bilder_liste)
+    titelbild = bilder_liste[0] if bilder_liste else None
+    return titelbild, len(bilder_liste)
+
+
 @login_required
 def galerie(request):
     bilder = Galeriebild.objects.select_related("termin", "ordner")
@@ -747,17 +754,44 @@ def galerie(request):
         elif b.ordner_id:
             nach_ordner.setdefault(b.ordner, []).append(b)
 
-    allgemeine_bilder = _titelbild_zuerst(allgemeine_bilder)
-    for termin in nach_veranstaltung:
-        nach_veranstaltung[termin] = _titelbild_zuerst(nach_veranstaltung[termin])
-    for ordner in nach_ordner:
-        nach_ordner[ordner] = _titelbild_zuerst(nach_ordner[ordner])
+    veranstaltungs_kacheln = []
+    for termin, liste in nach_veranstaltung.items():
+        titelbild, anzahl = _gruppen_kachel(liste)
+        veranstaltungs_kacheln.append({"termin": termin, "titelbild": titelbild, "anzahl": anzahl})
+
+    ordner_kacheln = []
+    for ordner, liste in nach_ordner.items():
+        titelbild, anzahl = _gruppen_kachel(liste)
+        ordner_kacheln.append({"ordner": ordner, "titelbild": titelbild, "anzahl": anzahl})
+
+    allgemein_titelbild, allgemein_anzahl = _gruppen_kachel(allgemeine_bilder)
 
     return render(request, "mitglieder/galerie.html", {
-        "allgemeine_bilder": allgemeine_bilder,
-        "veranstaltungs_bilder": nach_veranstaltung,
-        "ordner_bilder": nach_ordner,
+        "veranstaltungs_kacheln": veranstaltungs_kacheln,
+        "ordner_kacheln": ordner_kacheln,
+        "allgemein_titelbild": allgemein_titelbild,
+        "allgemein_anzahl": allgemein_anzahl,
     })
+
+
+@login_required
+def galerie_veranstaltung(request, pk):
+    termin = get_object_or_404(Termin, pk=pk)
+    bilder = _titelbild_zuerst(list(Galeriebild.objects.filter(termin=termin)))
+    return render(request, "mitglieder/galerie_gruppe.html", {"titel": termin.titel, "bilder": bilder})
+
+
+@login_required
+def galerie_ordner(request, pk):
+    ordner = get_object_or_404(Galerieordner, pk=pk)
+    bilder = _titelbild_zuerst(list(Galeriebild.objects.filter(ordner=ordner)))
+    return render(request, "mitglieder/galerie_gruppe.html", {"titel": f"📁 {ordner.name}", "bilder": bilder})
+
+
+@login_required
+def galerie_allgemein(request):
+    bilder = _titelbild_zuerst(list(Galeriebild.objects.filter(termin__isnull=True, ordner__isnull=True)))
+    return render(request, "mitglieder/galerie_gruppe.html", {"titel": "Allgemein", "bilder": bilder})
 
 
 @login_required

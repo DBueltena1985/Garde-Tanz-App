@@ -3,116 +3,39 @@
 {% block content %}
 <h2>📸 Bildergalerie</h2>
 
-{% if not allgemeine_bilder and not veranstaltungs_bilder and not ordner_bilder %}
+{% if not veranstaltungs_kacheln and not ordner_kacheln and not allgemein_anzahl %}
 <p>Noch keine Bilder vorhanden.</p>
 {% endif %}
 
-{% for termin, bilder in veranstaltungs_bilder.items %}
-<div class="card">
-    <h3 style="margin-top:0;">{{ termin.titel }}</h3>
-    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-        {% for bild in bilder %}
-        <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="veranstaltung-{{ termin.id }}" data-titel="{{ bild.beschreibung }}">
-            <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
-                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
-        </a>
-        {% endfor %}
-    </div>
+<div style="display:flex; flex-wrap:wrap; gap:1rem;">
+    {% for kachel in veranstaltungs_kacheln %}
+    <a href="{% url 'galerie_veranstaltung' kachel.termin.id %}" class="card" style="width:200px; text-decoration:none; color:inherit; display:block;">
+        {% if kachel.titelbild %}
+        <img src="{{ kachel.titelbild.bild.url }}" alt="{{ kachel.termin.titel }}" style="width:100%; height:180px; object-fit:cover; border-radius:6px;">
+        {% endif %}
+        <h3 style="margin:0.5rem 0 0.25rem;">{{ kachel.termin.titel }}</h3>
+        <p style="margin:0; color:#666;">{{ kachel.anzahl }} Bild{{ kachel.anzahl|pluralize:"er" }}</p>
+    </a>
+    {% endfor %}
+
+    {% for kachel in ordner_kacheln %}
+    <a href="{% url 'galerie_ordner' kachel.ordner.id %}" class="card" style="width:200px; text-decoration:none; color:inherit; display:block;">
+        {% if kachel.titelbild %}
+        <img src="{{ kachel.titelbild.bild.url }}" alt="{{ kachel.ordner.name }}" style="width:100%; height:180px; object-fit:cover; border-radius:6px;">
+        {% endif %}
+        <h3 style="margin:0.5rem 0 0.25rem;">📁 {{ kachel.ordner.name }}</h3>
+        <p style="margin:0; color:#666;">{{ kachel.anzahl }} Bild{{ kachel.anzahl|pluralize:"er" }}</p>
+    </a>
+    {% endfor %}
+
+    {% if allgemein_anzahl %}
+    <a href="{% url 'galerie_allgemein' %}" class="card" style="width:200px; text-decoration:none; color:inherit; display:block;">
+        {% if allgemein_titelbild %}
+        <img src="{{ allgemein_titelbild.bild.url }}" alt="Allgemein" style="width:100%; height:180px; object-fit:cover; border-radius:6px;">
+        {% endif %}
+        <h3 style="margin:0.5rem 0 0.25rem;">Allgemein</h3>
+        <p style="margin:0; color:#666;">{{ allgemein_anzahl }} Bild{{ allgemein_anzahl|pluralize:"er" }}</p>
+    </a>
+    {% endif %}
 </div>
-{% endfor %}
-
-{% for ordner, bilder in ordner_bilder.items %}
-<div class="card">
-    <h3 style="margin-top:0;">📁 {{ ordner.name }}</h3>
-    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-        {% for bild in bilder %}
-        <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="ordner-{{ ordner.id }}" data-titel="{{ bild.beschreibung }}">
-            <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
-                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
-        </a>
-        {% endfor %}
-    </div>
-</div>
-{% endfor %}
-
-{% if allgemeine_bilder %}
-<div class="card">
-    <h3 style="margin-top:0;">Allgemein</h3>
-    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-        {% for bild in allgemeine_bilder %}
-        <a href="{{ bild.bild.url }}" class="galerie-thumb" data-group="allgemein" data-titel="{{ bild.beschreibung }}">
-            <img src="{{ bild.bild.url }}" alt="{{ bild.beschreibung }}"
-                 style="{% if bild.titelbild %}width:180px; height:180px;{% else %}width:110px; height:110px;{% endif %} object-fit:cover; border-radius:6px;">
-        </a>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-<div class="galerie-lightbox" id="galerie-lightbox">
-    <button type="button" class="galerie-lightbox-schliessen" aria-label="Schließen">✕</button>
-    <button type="button" class="galerie-lightbox-nav galerie-lightbox-prev" aria-label="Vorheriges Bild">‹</button>
-    <img src="" alt="">
-    <button type="button" class="galerie-lightbox-nav galerie-lightbox-next" aria-label="Nächstes Bild">›</button>
-    <div class="galerie-lightbox-beschriftung"></div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var lightbox = document.getElementById('galerie-lightbox');
-    if (!lightbox) { return; }
-    var bildElement = lightbox.querySelector('img');
-    var beschriftung = lightbox.querySelector('.galerie-lightbox-beschriftung');
-    var schliessenBtn = lightbox.querySelector('.galerie-lightbox-schliessen');
-    var prevBtn = lightbox.querySelector('.galerie-lightbox-prev');
-    var nextBtn = lightbox.querySelector('.galerie-lightbox-next');
-
-    var aktuelleGruppe = [];
-    var aktuellerIndex = 0;
-
-    function zeigeBild(index) {
-        if (!aktuelleGruppe.length) { return; }
-        aktuellerIndex = (index + aktuelleGruppe.length) % aktuelleGruppe.length;
-        var thumb = aktuelleGruppe[aktuellerIndex];
-        bildElement.src = thumb.getAttribute('href');
-        beschriftung.textContent = thumb.dataset.titel || '';
-    }
-
-    function oeffnen(thumb) {
-        var gruppe = thumb.dataset.group;
-        aktuelleGruppe = Array.prototype.slice.call(
-            document.querySelectorAll('.galerie-thumb[data-group="' + gruppe + '"]')
-        );
-        zeigeBild(aktuelleGruppe.indexOf(thumb));
-        lightbox.classList.add('aktiv');
-    }
-
-    function schliessen() {
-        lightbox.classList.remove('aktiv');
-        bildElement.src = '';
-    }
-
-    document.querySelectorAll('.galerie-thumb').forEach(function (thumb) {
-        thumb.addEventListener('click', function (e) {
-            e.preventDefault();
-            oeffnen(thumb);
-        });
-    });
-
-    schliessenBtn.addEventListener('click', schliessen);
-    prevBtn.addEventListener('click', function () { zeigeBild(aktuellerIndex - 1); });
-    nextBtn.addEventListener('click', function () { zeigeBild(aktuellerIndex + 1); });
-
-    lightbox.addEventListener('click', function (e) {
-        if (e.target === lightbox) { schliessen(); }
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (!lightbox.classList.contains('aktiv')) { return; }
-        if (e.key === 'Escape') { schliessen(); }
-        if (e.key === 'ArrowLeft') { zeigeBild(aktuellerIndex - 1); }
-        if (e.key === 'ArrowRight') { zeigeBild(aktuellerIndex + 1); }
-    });
-});
-</script>
 {% endblock %}
