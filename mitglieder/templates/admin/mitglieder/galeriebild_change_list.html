@@ -60,8 +60,6 @@ document.addEventListener('DOMContentLoaded', function () {
         gruppenNachName[name].zeilen.push(row);
     });
 
-    if (gruppen.length <= 1) { return; }
-
     gruppen.forEach(function (gruppe) {
         var headerRow = document.createElement('tr');
         headerRow.className = 'galerie-gruppe-header';
