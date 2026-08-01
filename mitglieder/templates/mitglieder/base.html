@@ -205,7 +205,7 @@
                 <a href="{% url 'veranstaltungen' %}">Veranstaltungen</a>
                 <a href="{% url 'news_liste' %}">News</a>
                 <a href="{% url 'galerie' %}">Galerie</a>
-                {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
+                {% if user.is_staff and not user.profil.admin_menu_verstecken %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
                 <details class="konto-dropdown">
                     <summary>Mein Konto</summary>
                     <div class="konto-dropdown-menu">

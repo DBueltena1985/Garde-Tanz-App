@@ -147,6 +147,12 @@ class Profil(models.Model):
         "Einverständnis zuletzt bestätigt am", null=True, blank=True
     )
 
+    admin_menu_verstecken = models.BooleanField(
+        "Admin-Hinweis im Mitgliederbereich verstecken", default=False,
+        help_text="Falls aktiv: Trotz Admin-/Staff-Rechten wird im Mitgliederbereich kein Admin-Link "
+        "angezeigt - man sieht dem Konto in der normalen Ansicht also nicht an, dass es Admin-Rechte hat.",
+    )
+
     class Meta:
         verbose_name = "Profil"
         verbose_name_plural = "Profile"
