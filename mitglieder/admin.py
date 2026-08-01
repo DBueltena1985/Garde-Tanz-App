@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.auth import login
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
@@ -937,6 +938,12 @@ class GalerieordnerAdmin(BildBulkUploadMixin, LoeschLinkMixin, admin.ModelAdmin)
     anzahl_bilder.short_description = "Bilder"
 
 
+class OrdnerZuweisenForm(forms.Form):
+    ordner = forms.ModelChoiceField(
+        queryset=Galerieordner.objects.all(), label="Ordner", required=True,
+    )
+
+
 @admin.register(Galeriebild)
 class GaleriebildAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
@@ -948,6 +955,32 @@ class GaleriebildAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_filter = ("termin", "ordner", "titelbild")
     readonly_fields = ("vorschau", "hochgeladen_von", "hochgeladen_am")
     fields = ("termin", "ordner", "bild", "vorschau", "beschreibung", "titelbild", "hochgeladen_von", "hochgeladen_am")
+    actions = ["ordner_zuweisen"]
+
+    def ordner_zuweisen(self, request, queryset):
+        if "apply" in request.POST:
+            form = OrdnerZuweisenForm(request.POST)
+            if form.is_valid():
+                ordner = form.cleaned_data["ordner"]
+                anzahl = queryset.update(ordner=ordner, termin=None)
+                self.message_user(
+                    request, f"{anzahl} Bild(er) wurden dem Ordner „{ordner.name}“ zugeordnet.",
+                    level=messages.SUCCESS,
+                )
+                return None
+        else:
+            form = OrdnerZuweisenForm()
+
+        return render(request, "admin/mitglieder/ordner_zuweisen.html", {
+            "bilder": queryset,
+            "form": form,
+            "titel": "Ordner zuweisen",
+            "action_name": "ordner_zuweisen",
+            "opts": self.model._meta,
+            "action_checkbox_name": ACTION_CHECKBOX_NAME,
+        })
+
+    ordner_zuweisen.short_description = "Ausgewählte Bilder einem Ordner zuweisen"
 
     def thumbnail(self, obj):
         if obj.bild:
