@@ -1044,6 +1044,13 @@ def _anzahl_galeriebild_gruppen():
     return distinct_ordner + distinct_termin + (1 if hat_allgemein else 0)
 
 
+def _veranstaltungen_offen_abgeschlossen_text(model_name):
+    jetzt = timezone.now()
+    offen = VeranstaltungTermin.objects.filter(beginn__gte=jetzt).count()
+    abgeschlossen = VeranstaltungTermin.objects.filter(beginn__lt=jetzt).count()
+    return f"{offen} offene / {abgeschlossen} abgeschlossene {model_name}"
+
+
 def _get_app_list_mit_anzahl(request, app_label=None):
     """Zeigt vor jedem Modellnamen im Admin-Menü die Anzahl der Datensätze an."""
     app_list = _get_app_list_ohne_anzahl(request, app_label=app_label)
@@ -1054,9 +1061,12 @@ def _get_app_list_mit_anzahl(request, app_label=None):
                 continue
             if model_class is Galeriebild:
                 anzahl = _anzahl_galeriebild_gruppen()
+                model["name"] = f"{anzahl} {model['name']}"
+            elif model_class is VeranstaltungTermin:
+                model["name"] = _veranstaltungen_offen_abgeschlossen_text(model["name"])
             else:
                 anzahl = model_class._default_manager.count()
-            model["name"] = f"{anzahl} {model['name']}"
+                model["name"] = f"{anzahl} {model['name']}"
     return app_list
 
 
