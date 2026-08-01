@@ -7,6 +7,5 @@ from .models import Formular
 
 @admin.register(Formular)
 class FormularAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("titel", "reihenfolge", "hochgeladen_am", "loeschen_link")
-    list_editable = ("reihenfolge",)
-    ordering = ("reihenfolge", "titel")
+    list_display = ("titel", "hochgeladen_am", "loeschen_link")
+    ordering = ("titel",)
