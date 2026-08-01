@@ -331,6 +331,29 @@ class GaleriebildInline(admin.TabularInline):
         return "–"
 
 
+class GalerieordnerVeranstaltungInline(admin.TabularInline):
+    """Zeigt Galerie-Ordner, die dieser Veranstaltung zugeordnet sind - nur zum Anschauen/Anklicken,
+    bearbeitet werden die Ordner weiterhin über ihre eigene Admin-Seite."""
+
+    model = Galerieordner
+    fk_name = "veranstaltung"
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields = ("name", "anzahl_bilder_anzeige", "erstellt_am")
+    readonly_fields = ("name", "anzahl_bilder_anzeige", "erstellt_am")
+    verbose_name = "Zugeordneter Galerie-Ordner"
+    verbose_name_plural = "Zugeordnete Galerie-Ordner"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def anzahl_bilder_anzeige(self, obj):
+        return obj.bilder.count()
+
+    anzahl_bilder_anzeige.short_description = "Bilder"
+
+
 class GaleriebildOrdnerInline(admin.TabularInline):
     model = Galeriebild
     fk_name = "ordner"
@@ -779,7 +802,7 @@ class TrainingAdmin(TerminAdminBase):
 class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
     bild_fk_feld = "termin"
-    inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline]
+    inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline, GalerieordnerVeranstaltungInline]
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
 
