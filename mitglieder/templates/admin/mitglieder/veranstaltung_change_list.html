@@ -1,0 +1,63 @@
+{% extends "admin/mitglieder/termin_change_list.html" %}
+
+{% block content %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('result_list');
+    if (!table || !table.tBodies.length) { return; }
+
+    var tbody = table.tBodies[0];
+    var zeilen = Array.prototype.slice.call(tbody.rows);
+    if (!zeilen.length) { return; }
+    var spaltenAnzahl = zeilen[0].cells.length;
+    var jetzt = new Date();
+
+    var offene = [];
+    var abgeschlossene = [];
+    zeilen.forEach(function (row) {
+        var marker = row.querySelector('[data-beginn-ms]');
+        var istAbgeschlossen = false;
+        if (marker) {
+            var beginn = new Date(Number(marker.getAttribute('data-beginn-ms')));
+            istAbgeschlossen = beginn < jetzt;
+        }
+        (istAbgeschlossen ? abgeschlossene : offene).push(row);
+    });
+
+    if (!abgeschlossene.length) { return; }
+
+    offene.forEach(function (row) { tbody.appendChild(row); });
+
+    var headerRow = document.createElement('tr');
+    var td = document.createElement('td');
+    td.colSpan = spaltenAnzahl;
+    td.style.cursor = 'pointer';
+    td.style.fontWeight = 'bold';
+    td.style.background = 'var(--darkened-bg)';
+
+    function beschriftung(aufgeklappt) {
+        return (aufgeklappt ? '▼' : '▶') + ' Abgeschlossene Veranstaltungen (' + abgeschlossene.length + ')';
+    }
+
+    td.textContent = beschriftung(false);
+    headerRow.appendChild(td);
+    tbody.appendChild(headerRow);
+
+    abgeschlossene.forEach(function (row) {
+        row.style.display = 'none';
+        tbody.appendChild(row);
+    });
+
+    headerRow.addEventListener('click', function () {
+        var aufgeklappt = td.dataset.aufgeklappt === '1';
+        aufgeklappt = !aufgeklappt;
+        td.dataset.aufgeklappt = aufgeklappt ? '1' : '0';
+        td.textContent = beschriftung(aufgeklappt);
+        abgeschlossene.forEach(function (row) {
+            row.style.display = aufgeklappt ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

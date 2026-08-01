@@ -782,6 +782,18 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     bild_fk_feld = "termin"
     inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline]
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
+    change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
+
+    def loeschen_link(self, obj):
+        """Versteckte Markierung mit dem Beginn-Zeitpunkt (als Unix-Millisekunden, um
+        Datums-String-Parsing-Unterschiede zwischen Browsern zu vermeiden), damit die Liste
+        per JS in offene/abgeschlossene Veranstaltungen aufgeteilt werden kann
+        (siehe change_list_template)."""
+        link = super().loeschen_link(obj)
+        beginn_ms = round(obj.beginn.timestamp() * 1000)
+        return format_html('<span data-beginn-ms="{}" style="display:none;"></span>{}', beginn_ms, link)
+
+    loeschen_link.short_description = ""
 
     def offene_aufgaben(self, obj):
         anzahl = obj.aufgaben.filter(erledigt=False).count()
