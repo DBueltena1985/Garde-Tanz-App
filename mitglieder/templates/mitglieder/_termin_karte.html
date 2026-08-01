@@ -1,14 +1,22 @@
 <div class="card {% if eintrag.termin.art == 'veranstaltung' %}card-veranstaltung{% endif %}" id="termin-{{ eintrag.termin.id }}">
     <strong>{{ eintrag.termin.titel }}</strong>
     {% if eintrag.termin.gruppe != "beide" %}({{ eintrag.termin.get_gruppe_display }}){% endif %}<br>
+    {% if eintrag.termin.uhrzeit_unbekannt %}
+    {{ eintrag.termin.beginn|date:"d.m.Y" }} – Uhrzeit folgt noch
+    {% else %}
     {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
+    {% endif %}
     {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
     {% if eintrag.termin.taenzerinnen_erforderlich %}
     <div class="zusagen-badge">👥 {{ eintrag.anzahl_zusagen }} Zusage{{ eintrag.anzahl_zusagen|pluralize:",n" }}</div>
     {% else %}
     <div style="margin-top:0.4rem; font-size:0.85rem; color:#8a6d00;">ℹ️ Kein Auftritt der Tänzerinnen bei dieser Veranstaltung</div>
     {% endif %}
-    {% if eintrag.termin.beschreibung %}<p>{{ eintrag.termin.beschreibung }}</p>{% endif %}
+    {% if eintrag.termin.beschreibung %}
+    <p>{{ eintrag.termin.beschreibung }}</p>
+    {% elif eintrag.termin.art == "veranstaltung" %}
+    <p><em>Nähere Infos sowie Helfer-/Bringlisten folgen noch.</em></p>
+    {% endif %}
 
     {% if request.user.is_staff and eintrag.termin.interne_notiz %}
     <div class="banner-warn" style="margin:0.6rem 0;">

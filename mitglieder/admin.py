@@ -734,7 +734,7 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
 class TrainingAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_TRAINING
     change_list_template = "admin/mitglieder/training_change_list.html"
-    exclude = TerminAdminBase.exclude + ("interne_notiz",)
+    exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
 
     def get_urls(self):
         eigene_urls = [

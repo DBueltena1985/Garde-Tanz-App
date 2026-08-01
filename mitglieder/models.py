@@ -186,6 +186,11 @@ class Termin(models.Model):
     )
     beginn = models.DateTimeField("Beginn")
     ende = models.DateTimeField("Ende", null=True, blank=True)
+    uhrzeit_unbekannt = models.BooleanField(
+        "Uhrzeit steht noch nicht fest", default=False,
+        help_text="Datum ist bekannt, aber die genaue Uhrzeit noch nicht - wird den Mitgliedern als "
+        "\"Uhrzeit folgt noch\" angezeigt (die Uhrzeit von Beginn/Ende wird dann ignoriert).",
+    )
     ort = models.CharField("Ort", max_length=200, blank=True)
     beschreibung = models.TextField("Beschreibung", blank=True)
     interne_notiz = models.TextField(
