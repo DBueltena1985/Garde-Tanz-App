@@ -222,6 +222,11 @@ class Termin(models.Model):
         lokal = timezone.localtime(self.beginn)
         return f"{self.get_art_display()}: {self.titel} ({lokal:%d.%m.%Y %H:%M})"
 
+    @property
+    def hat_galeriebilder(self):
+        """Ob es zu dieser Veranstaltung Fotos gibt - direkt zugeordnet oder über einen verlinkten Galerie-Ordner."""
+        return self.galeriebilder.exists() or self.galerie_ordner.filter(bilder__isnull=False).exists()
+
 
 class TrainingManager(models.Manager):
     def get_queryset(self):

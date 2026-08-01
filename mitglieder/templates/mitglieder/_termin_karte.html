@@ -21,6 +21,10 @@
     <p><em>Nähere Infos sowie Helfer-/Bringlisten folgen noch.</em></p>
     {% endif %}
 
+    {% if eintrag.termin.art == "veranstaltung" and eintrag.termin.hat_galeriebilder %}
+    <p style="margin-top:0.5rem;"><a href="{% url 'galerie_veranstaltung' eintrag.termin.id %}">📷 Zur Bildergalerie</a></p>
+    {% endif %}
+
     {% if request.user.is_staff and eintrag.termin.interne_notiz %}
     <div class="banner-warn" style="margin:0.6rem 0;">
         🔒 <strong>Interne Notiz (nur Orga-/Admin-Team):</strong><br>
