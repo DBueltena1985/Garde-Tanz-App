@@ -91,7 +91,7 @@
     {% endif %}
 
     {% if eintrag.anmeldepunkte %}
-    <div style="margin-top:0.9rem; padding-top:0.7rem; border-top:2px dashed #eee;">
+    <div style="margin-top:0.9rem; padding-top:0.7rem; border-top:2px dashed var(--line);">
         <strong>Helfer-/Mitbringliste</strong>
         {% for ap in eintrag.anmeldepunkte %}
             {% include "mitglieder/_anmeldepunkt.html" %}

@@ -4,7 +4,7 @@
 <h2>Vorstandschaft</h2>
 <div class="card">
     {% for eintrag in vorstandschaft %}
-    <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid #f0e8ec;{% endif %}">
+    <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid var(--line);{% endif %}">
         <strong>{{ eintrag.amt }}</strong><br>
         {% for name in eintrag.namen %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}
     </div>
