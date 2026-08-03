@@ -33,15 +33,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var filterAktiv = {% if request.GET.kann_unterstuetzen_bei %}true{% else %}false{% endif %};
 
     var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
-    var gruppen = {admin: [], orga: [], mitglied: []};
+    var gruppen = {trainer: [], orga: [], mitglied: []};
 
     rows.forEach(function (row) {
-        var adminBild = row.querySelector('td.field-admin_team img');
+        var trainerBild = row.querySelector('td.field-trainer_team img');
         var orgaBild = row.querySelector('td.field-orga_team img');
-        var istAdmin = adminBild && adminBild.alt === 'True';
+        var istTrainer = trainerBild && trainerBild.alt === 'True';
         var istOrga = orgaBild && orgaBild.alt === 'True';
-        if (istAdmin) {
-            gruppen.admin.push(row);
+        if (istTrainer) {
+            gruppen.trainer.push(row);
         } else if (istOrga) {
             gruppen.orga.push(row);
         } else {
@@ -51,11 +51,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Nur gruppieren, wenn ueberhaupt die erwarteten Spalten vorhanden sind
     // (sonst z.B. bei aktivem Spalten-Filter nichts kaputt machen).
-    if (!rows.length || !rows[0].querySelector('td.field-admin_team')) { return; }
+    if (!rows.length || !rows[0].querySelector('td.field-trainer_team')) { return; }
 
     var anzahlSpalten = table.querySelectorAll('thead th').length;
     var reihenfolge = [
-        {schluessel: 'admin', label: 'Admin-Team'},
+        {schluessel: 'trainer', label: 'Trainer'},
         {schluessel: 'orga', label: 'Orga-Team'},
         {schluessel: 'mitglied', label: 'Mitglieder'},
     ];

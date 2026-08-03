@@ -5,7 +5,8 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth import login
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserChangeForm
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -104,15 +105,58 @@ class UnterstuetzungFilter(admin.SimpleListFilter):
         return queryset.filter(**{f"profil__{wert}": True})
 
 
+TRAINERTEAM_GRUPPENNAME = "Trainerteam"
+
+
+class CustomUserChangeForm(UserChangeForm):
+    trainer_status = forms.BooleanField(
+        label="Trainer-Status", required=False,
+        help_text=(
+            "Volle Rechte zum Eintragen/Bearbeiten überall (über die Gruppe 'Trainerteam') - "
+            "ohne Administrator-Status und ohne in der Benutzerliste als Admin/Trainer sichtbar zu sein."
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["trainer_status"].initial = self.instance.groups.filter(
+                name=TRAINERTEAM_GRUPPENNAME
+            ).exists()
+
+
 class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
     inlines = [TaenzerinInline, ProfilInline]
+    form = CustomUserChangeForm
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        ("Persönliche Informationen", {"fields": ("first_name", "last_name", "email")}),
+        (
+            "Berechtigungen",
+            {"fields": ("is_active", "is_staff", "is_superuser", "trainer_status", "groups", "user_permissions")},
+        ),
+        ("Wichtige Daten", {"fields": ("last_login", "date_joined")}),
+    )
     list_display = (
-        "first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer", "loeschen_link",
+        "first_name", "last_name", "username", "orga_team", "trainer_team", "verknuepfte_benutzer", "loeschen_link",
     )
     list_filter = UserAdmin.list_filter + (UnterstuetzungFilter,)
     ordering = ("first_name", "last_name")
     change_form_template = "admin/mitglieder_user_change_form.html"
     change_list_template = "admin/mitglieder_user_change_list.html"
+
+    def save_related(self, request, form, formsets, change):
+        # Muss NACH super().save_related() passieren: dort speichert Django ueber form.save_m2m()
+        # auch das native "groups"-Feld - wuerde das VOR diesem Aufruf passieren, wuerde die dort
+        # eingetragene Gruppenauswahl (in der die neue Gruppe i.d.R. noch nicht angehakt ist) die
+        # Trainerteam-Zuordnung sofort wieder ueberschreiben.
+        super().save_related(request, form, formsets, change)
+        if "trainer_status" in form.cleaned_data:
+            trainerteam_gruppe, _ = Group.objects.get_or_create(name=TRAINERTEAM_GRUPPENNAME)
+            if form.cleaned_data["trainer_status"]:
+                form.instance.groups.add(trainerteam_gruppe)
+            else:
+                form.instance.groups.remove(trainerteam_gruppe)
 
     def orga_team(self, obj):
         return obj.is_staff
@@ -121,12 +165,11 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
     orga_team.boolean = True
     orga_team.admin_order_field = "is_staff"
 
-    def admin_team(self, obj):
-        return obj.is_superuser
+    def trainer_team(self, obj):
+        return obj.groups.filter(name=TRAINERTEAM_GRUPPENNAME).exists()
 
-    admin_team.short_description = "Admin-Team"
-    admin_team.boolean = True
-    admin_team.admin_order_field = "is_superuser"
+    trainer_team.short_description = "Trainer"
+    trainer_team.boolean = True
 
     def verknuepfte_benutzer(self, obj):
         ids = _verknuepfte_benutzer_ids(obj)
