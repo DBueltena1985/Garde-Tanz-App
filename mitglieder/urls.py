@@ -46,4 +46,9 @@ urlpatterns = [
         views.cron_training_erinnerung,
         name="cron_training_erinnerung",
     ),
+    path(
+        "cron/veranstaltung-erinnerung/<str:secret>/",
+        views.cron_veranstaltung_erinnerung,
+        name="cron_veranstaltung_erinnerung",
+    ),
 ]

@@ -896,3 +896,12 @@ def cron_training_erinnerung(request, secret):
         raise PermissionDenied
     call_command("training_zusage_erinnerung")
     return HttpResponse("OK")
+
+
+def cron_veranstaltung_erinnerung(request, secret):
+    """Wie cron_training_erinnerung, nur fuer veranstaltung_zusage_erinnerung (Erinnerung
+    3 Tage vor einer Veranstaltung)."""
+    if not settings.CRON_SECRET or not secrets.compare_digest(secret, settings.CRON_SECRET):
+        raise PermissionDenied
+    call_command("veranstaltung_zusage_erinnerung")
+    return HttpResponse("OK")
