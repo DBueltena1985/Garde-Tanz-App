@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_delete
 from django.utils import timezone
 
-from .models import NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
+from .models import Nachricht, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
 from .utils import eltern_emails_fuer_kind, sichere_mail_senden
 
 # Django sendet Signale für Proxy-Modelle mit dem Proxy als "sender" (nicht dem
@@ -109,8 +109,27 @@ def neue_news_benachrichtigen(sender, instance, created, **kwargs):
         )
 
 
+def neue_nachricht_benachrichtigen(sender, instance, created, **kwargs):
+    """Informiert den Empfaenger per E-Mail ueber eine neue Nachricht von Admin/Orgateam."""
+    if not created or not instance.empfaenger.email:
+        return
+
+    sichere_mail_senden(
+        subject=f"Neue Nachricht: {instance.betreff}" if instance.betreff else "Neue Nachricht in der Garde-Tanz-App",
+        message=(
+            f"Hallo {instance.empfaenger.first_name or instance.empfaenger.username},\n\n"
+            f"du hast eine neue Nachricht erhalten:\n\n"
+            f"{instance.nachricht}\n\n"
+            "Logg dich in der Garde-Tanz-App ein, um sie zu lesen."
+        ),
+        from_email=None,
+        recipient_list=[instance.empfaenger.email],
+    )
+
+
 for _modell in TERMIN_MODELLE:
     pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
     post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
 
 post_save.connect(neue_news_benachrichtigen, sender=NewsPost)
+post_save.connect(neue_nachricht_benachrichtigen, sender=Nachricht)

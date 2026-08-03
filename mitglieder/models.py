@@ -469,6 +469,30 @@ class Feedback(models.Model):
         return f"{self.absender}: {self.betreff or self.nachricht[:40]}"
 
 
+class Nachricht(models.Model):
+    """Eine Nachricht von Admin/Orgateam an einen einzelnen Nutzer."""
+
+    empfaenger = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="erhaltene_nachrichten",
+        verbose_name="An",
+    )
+    absender = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="gesendete_nachrichten",
+    )
+    betreff = models.CharField("Betreff", max_length=200, blank=True)
+    nachricht = models.TextField("Nachricht")
+    gelesen = models.BooleanField("Gelesen", default=False)
+    erstellt_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Nachricht an Mitglied"
+        verbose_name_plural = "Nachrichten an Mitglieder"
+        ordering = ["-erstellt_am"]
+
+    def __str__(self):
+        return f"{self.betreff or self.nachricht[:40]} → {self.empfaenger}"
+
+
 class Ferienzeitraum(models.Model):
     """Schulferien in Bayern. Werden jährlich vom Kultusministerium neu festgelegt,
     darum hier manuell pflegen (aktuelle Termine unter www.km.bayern.de)."""

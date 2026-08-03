@@ -23,8 +23,8 @@ from .forms import (
     TaenzerinForm,
 )
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, Galerieordner, NewsPost, Profil,
-    Taenzerin, Termin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, Galerieordner, Nachricht,
+    NewsPost, Profil, Taenzerin, Termin, Zusage,
 )
 from .utils import sichere_mail_senden
 
@@ -766,6 +766,17 @@ def formulare_liste(request):
 def news_liste(request):
     news = NewsPost.objects.all()
     return render(request, "mitglieder/news_liste.html", {"news": news})
+
+
+@login_required
+def nachrichten_liste(request):
+    nachrichten = list(Nachricht.objects.filter(empfaenger=request.user).select_related("absender"))
+    ungelesene_ids = [n.id for n in nachrichten if not n.gelesen]
+    if ungelesene_ids:
+        Nachricht.objects.filter(id__in=ungelesene_ids).update(gelesen=True)
+    return render(request, "mitglieder/nachrichten_liste.html", {
+        "nachrichten": nachrichten, "ungelesene_ids": ungelesene_ids,
+    })
 
 
 def _titelbild_zuerst(bilder):

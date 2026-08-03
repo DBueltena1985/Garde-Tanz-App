@@ -56,4 +56,15 @@ KONTAKTE_ABTEILUNGEN = [
 
 
 def kontakte_abteilungen(request):
-    return {"kontakte_abteilungen": KONTAKTE_ABTEILUNGEN}
+    return {
+        "kontakte_abteilungen": sorted(KONTAKTE_ABTEILUNGEN, key=lambda eintrag: eintrag["abteilung"].lower())
+    }
+
+
+def ungelesene_nachrichten(request):
+    if not request.user.is_authenticated:
+        return {"ungelesene_nachrichten_anzahl": 0}
+    from .models import Nachricht
+
+    anzahl = Nachricht.objects.filter(empfaenger=request.user, gelesen=False).count()
+    return {"ungelesene_nachrichten_anzahl": anzahl}

@@ -30,6 +30,7 @@ urlpatterns = [
         name="kind_einverstaendnis_bildaufnahmen",
     ),
     path("news/", views.news_liste, name="news_liste"),
+    path("nachrichten/", views.nachrichten_liste, name="nachrichten_liste"),
     path("galerie/", views.galerie, name="galerie"),
     path("galerie/veranstaltung/<int:pk>/", views.galerie_veranstaltung, name="galerie_veranstaltung"),
     path("galerie/ordner/<int:pk>/", views.galerie_ordner, name="galerie_ordner"),

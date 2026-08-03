@@ -16,7 +16,7 @@ from django.utils.safestring import mark_safe
 
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, Galerieordner,
-    NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -1015,6 +1015,26 @@ class FeedbackAdmin(LoeschLinkMixin, admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(Nachricht)
+class NachrichtAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("betreff_anzeige", "empfaenger", "gelesen", "erstellt_am", "loeschen_link")
+    list_display_links = ("betreff_anzeige",)
+    list_editable = ("gelesen",)
+    list_filter = ("gelesen", "empfaenger")
+    readonly_fields = ("absender", "erstellt_am")
+    fields = ("empfaenger", "betreff", "nachricht", "gelesen", "absender", "erstellt_am")
+
+    def betreff_anzeige(self, obj):
+        return obj.betreff or obj.nachricht[:60]
+
+    betreff_anzeige.short_description = "Betreff"
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.absender = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Ferienzeitraum)

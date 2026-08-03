@@ -1,0 +1,16 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Nachrichten – Garde Tanz{% endblock %}
+{% block content %}
+<h2>📬 Nachrichten</h2>
+{% if not nachrichten %}
+<p>Noch keine Nachrichten vorhanden.</p>
+{% endif %}
+{% for eintrag in nachrichten %}
+<div class="card">
+    {% if eintrag.id in ungelesene_ids %}<span style="color:#b3261e; font-weight:600;">🆕 Neu</span><br>{% endif %}
+    <strong>{{ eintrag.betreff|default:"Nachricht" }}</strong>
+    <p style="white-space: pre-line; overflow-wrap: anywhere;">{{ eintrag.nachricht|urlize }}</p>
+    <small>{{ eintrag.erstellt_am|date:"d.m.Y H:i" }} Uhr{% if eintrag.absender %} – {{ eintrag.absender.first_name|default:eintrag.absender.username }}{% endif %}</small>
+</div>
+{% endfor %}
+{% endblock %}

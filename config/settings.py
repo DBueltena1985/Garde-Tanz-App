@@ -79,6 +79,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'mitglieder.context_processors.kontakte_abteilungen',
+                'mitglieder.context_processors.ungelesene_nachrichten',
                 'formulare.context_processors.formulare',
             ],
         },
