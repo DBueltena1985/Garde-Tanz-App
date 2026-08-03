@@ -1131,11 +1131,9 @@ _get_app_list_ohne_anzahl = admin.site.get_app_list
 _MODELLE_OHNE_ANZAHL = (TrainingTermin, Zusage)
 
 
-def _veranstaltungen_offen_abgeschlossen_text(model_name):
-    jetzt = timezone.now()
-    offen = VeranstaltungTermin.objects.filter(beginn__gte=jetzt).count()
-    abgeschlossen = VeranstaltungTermin.objects.filter(beginn__lt=jetzt).count()
-    return f"{offen} offene / {abgeschlossen} abgeschlossene {model_name}"
+def _veranstaltungen_offen_text(model_name):
+    offen = VeranstaltungTermin.objects.filter(beginn__gte=timezone.now()).count()
+    return f"{offen} offene {model_name}"
 
 
 def _get_app_list_mit_anzahl(request, app_label=None):
@@ -1147,7 +1145,7 @@ def _get_app_list_mit_anzahl(request, app_label=None):
             if model_class is None or model_class in _MODELLE_OHNE_ANZAHL:
                 continue
             if model_class is VeranstaltungTermin:
-                model["name"] = _veranstaltungen_offen_abgeschlossen_text(model["name"])
+                model["name"] = _veranstaltungen_offen_text(model["name"])
             else:
                 anzahl = model_class._default_manager.count()
                 model["name"] = f"{anzahl} {model['name']}"
