@@ -110,6 +110,7 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
         "first_name", "last_name", "username", "orga_team", "admin_team", "verknuepfte_benutzer", "loeschen_link",
     )
     list_filter = UserAdmin.list_filter + (UnterstuetzungFilter,)
+    ordering = ("first_name", "last_name")
     change_form_template = "admin/mitglieder_user_change_form.html"
     change_list_template = "admin/mitglieder_user_change_list.html"
 
