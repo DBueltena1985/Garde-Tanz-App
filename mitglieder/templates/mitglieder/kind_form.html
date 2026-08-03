@@ -33,7 +33,29 @@
     <h2>{% if kind %}{{ kind.vorname }} {{ kind.nachname }} bearbeiten{% else %}Neues Kind hinzufügen{% endif %}</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        <div style="border:2px solid var(--accent); background:var(--accent-soft); padding:0.8rem 1rem; border-radius:8px; margin-bottom:1.3rem;">
+            <label for="{{ form.nutzer.id_for_label }}" style="font-weight:700; display:block; margin-bottom:0.3rem;">
+                🔑 {{ form.nutzer.label }}
+            </label>
+            {{ form.nutzer }}
+            {% if form.nutzer.help_text %}
+            <div style="font-size:0.85rem; color:var(--ink-soft); margin-top:0.4rem;">{{ form.nutzer.help_text }}</div>
+            {% endif %}
+            {{ form.nutzer.errors }}
+        </div>
+
+        {% for field in form %}
+            {% if field.name != 'nutzer' %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
+                {{ field.errors }}
+            </p>
+            {% endif %}
+        {% endfor %}
+
         <button type="submit" class="btn btn-zusagen">Speichern &amp; bestätigen</button>
     </form>
 </div>
