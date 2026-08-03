@@ -140,7 +140,11 @@ def creator_gruppe_macht_superuser(sender, instance, action, pk_set, **kwargs):
         creator_gruppe = Group.objects.get(name=CREATOR_GRUPPENNAME)
     except Group.DoesNotExist:
         return
-    if creator_gruppe.pk not in pk_set:
+    # Bei bereits bestehender Mitgliedschaft ist pk_set nach einem erneuten .add() leer (Django fuegt
+    # nur tatsaechlich NEUE Zeilen ein) - deshalb zusaetzlich direkt die aktuelle Mitgliedschaft
+    # pruefen, sonst wird is_staff/is_superuser bei jedem weiteren Speichern faelschlich uebersprungen.
+    ist_mitglied = creator_gruppe.pk in pk_set or instance.groups.filter(pk=creator_gruppe.pk).exists()
+    if not ist_mitglied:
         return
     if not instance.is_superuser or not instance.is_staff:
         instance.is_superuser = True
@@ -158,7 +162,10 @@ def trainerteam_gruppe_macht_staff(sender, instance, action, pk_set, **kwargs):
         trainerteam_gruppe = Group.objects.get(name=TRAINERTEAM_GRUPPENNAME)
     except Group.DoesNotExist:
         return
-    if trainerteam_gruppe.pk not in pk_set:
+    # Siehe Kommentar in creator_gruppe_macht_superuser: bei bereits bestehender Mitgliedschaft
+    # ist pk_set leer, deshalb zusaetzlich die tatsaechliche Mitgliedschaft direkt pruefen.
+    ist_mitglied = trainerteam_gruppe.pk in pk_set or instance.groups.filter(pk=trainerteam_gruppe.pk).exists()
+    if not ist_mitglied:
         return
     if not instance.is_staff:
         instance.is_staff = True
