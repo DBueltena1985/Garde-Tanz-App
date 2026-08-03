@@ -281,19 +281,6 @@ def dashboard(request):
 
     kalender_wochen, kalender_legende = _kalender_monat(jahr, monat, kinder_gruppen)
 
-    meine_aufgaben = Aufgabe.objects.filter(zugewiesen_an=request.user, erledigt=False).select_related("termin")
-
-    offene_allgemeine_aufgaben = Aufgabe.objects.filter(
-        termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
-    )
-    offene_allgemeine_aufgaben = _aufgaben_fuer_nutzer_sichtbar(offene_allgemeine_aufgaben, request.user)
-    offene_allgemeine_aufgaben = _offene_aufgaben_liste(offene_allgemeine_aufgaben, request.user)
-
-    allgemeine_helferpunkte = [
-        _anmeldepunkt_info(punkt, request.user)
-        for punkt in Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern")
-    ]
-
     neueste_news = NewsPost.objects.all()[:3]
 
     return render(request, "mitglieder/dashboard.html", {
@@ -302,9 +289,6 @@ def dashboard(request):
         "veranstaltungen_gruppen": veranstaltungen_gruppen,
         "training_gruppen": training_gruppen,
         "faellige_kinder": faellige_kinder,
-        "meine_aufgaben": meine_aufgaben,
-        "offene_allgemeine_aufgaben": offene_allgemeine_aufgaben,
-        "allgemeine_helferpunkte": allgemeine_helferpunkte,
         "kalender_wochen": kalender_wochen,
         "kalender_legende": kalender_legende,
         "kalender_monat_name": MONATSNAMEN[monat - 1],
@@ -312,6 +296,34 @@ def dashboard(request):
         "kalender_heute": heute,
         "vorheriger_monat": vorheriger_monat,
         "naechster_monat": naechster_monat,
+    })
+
+
+def _aufgaben_kontext(user):
+    """Sammelt alle To-Do-bezogenen Daten (eigene Aufgaben, offene allgemeine Aufgaben,
+    allgemeine Helferpunkte) - genutzt sowohl von der ToDo-Seite als auch vom Badge-Zaehler."""
+    meine_aufgaben = Aufgabe.objects.filter(zugewiesen_an=user, erledigt=False).select_related("termin")
+
+    offene_allgemeine_aufgaben = Aufgabe.objects.filter(
+        termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
+    )
+    offene_allgemeine_aufgaben = _aufgaben_fuer_nutzer_sichtbar(offene_allgemeine_aufgaben, user)
+    offene_allgemeine_aufgaben = _offene_aufgaben_liste(offene_allgemeine_aufgaben, user)
+
+    allgemeine_helferpunkte = [
+        _anmeldepunkt_info(punkt, user)
+        for punkt in Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern")
+    ]
+    return meine_aufgaben, offene_allgemeine_aufgaben, allgemeine_helferpunkte
+
+
+@login_required
+def meine_aufgaben_liste(request):
+    meine_aufgaben, offene_allgemeine_aufgaben, allgemeine_helferpunkte = _aufgaben_kontext(request.user)
+    return render(request, "mitglieder/aufgaben_liste.html", {
+        "meine_aufgaben": meine_aufgaben,
+        "offene_allgemeine_aufgaben": offene_allgemeine_aufgaben,
+        "allgemeine_helferpunkte": allgemeine_helferpunkte,
     })
 
 
@@ -753,6 +765,11 @@ VORSTANDSCHAFT = [
 @login_required
 def vorstandschaft(request):
     return render(request, "mitglieder/vorstandschaft.html", {"vorstandschaft": VORSTANDSCHAFT})
+
+
+@login_required
+def kontakte_der_abteilungen(request):
+    return render(request, "mitglieder/kontakte_der_abteilungen.html")
 
 
 @login_required

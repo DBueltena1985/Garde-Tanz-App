@@ -68,3 +68,12 @@ def ungelesene_nachrichten(request):
 
     anzahl = Nachricht.objects.filter(empfaenger=request.user, gelesen=False).count()
     return {"ungelesene_nachrichten_anzahl": anzahl}
+
+
+def offene_aufgaben(request):
+    if not request.user.is_authenticated:
+        return {"offene_aufgaben_anzahl": 0}
+    from .models import Aufgabe
+
+    anzahl = Aufgabe.objects.filter(zugewiesen_an=request.user, erledigt=False).count()
+    return {"offene_aufgaben_anzahl": anzahl}

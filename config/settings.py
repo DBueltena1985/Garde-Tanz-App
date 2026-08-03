@@ -80,6 +80,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'mitglieder.context_processors.kontakte_abteilungen',
                 'mitglieder.context_processors.ungelesene_nachrichten',
+                'mitglieder.context_processors.offene_aufgaben',
                 'formulare.context_processors.formulare',
             ],
         },

@@ -135,14 +135,6 @@
         }
         .sheet-item:first-of-type { border-top: none; }
         .sheet-item svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
-        .sheet-kontakte-details { padding: 0.2rem 1.2rem 0.8rem; border-top: 1px solid var(--line); }
-        .sheet-kontakte-details summary {
-            display: flex; align-items: center; gap: 0.8rem; padding: 0.75rem 0; font-size: 0.92rem;
-            font-weight: 700; color: var(--ink); cursor: pointer; list-style: none;
-        }
-        .sheet-kontakte-details summary::-webkit-details-marker { display: none; }
-        .sheet-kontakte-details summary svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
-        .sheet-kontakte-inhalt { padding-top: 0.2rem; }
         .kontakte-abteilung { padding: 0.7rem 0; border-top: 1px solid var(--line); }
         .kontakte-abteilung:first-child { border-top: none; padding-top: 0; }
         .kontakte-abteilung-name {
@@ -402,15 +394,17 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/><path d="M9 14l2 2 4-4"/></svg>
             <span>Training</span>
         </a>
-        <a class="tab{% if request.resolver_match.url_name == 'nachrichten_liste' %} active{% endif %}" href="{% url 'nachrichten_liste' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v13a1 1 0 0 1-1 1H6l-2 2z"/></svg>
-            <span>Nachr.</span>
-            {% if ungelesene_nachrichten_anzahl %}<div class="tab-badge">{{ ungelesene_nachrichten_anzahl }}</div>{% endif %}
+        <a class="tab{% if request.resolver_match.url_name == 'meine_aufgaben_liste' %} active{% endif %}" href="{% url 'meine_aufgaben_liste' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/><path d="M9 14l2 2 4-4"/></svg>
+            <span>ToDo's</span>
+            {% if offene_aufgaben_anzahl %}<div class="tab-badge">{{ offene_aufgaben_anzahl }}</div>{% endif %}
         </a>
-        <button type="button" class="tab" id="mehr-oeffnen">
+        {% with url_name=request.resolver_match.url_name %}
+        <button type="button" class="tab{% if url_name == 'news_liste' or url_name == 'galerie' or url_name == 'galerie_veranstaltung' or url_name == 'galerie_ordner' or url_name == 'galerie_allgemein' or url_name == 'formulare_liste' or url_name == 'vorstandschaft' or url_name == 'kontakte_der_abteilungen' %} active{% endif %}" id="mehr-oeffnen">
             <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
             <span>Mehr</span>
         </button>
+        {% endwith %}
     </nav>
 
     <div class="sheet-overlay" id="sheet-overlay"></div>
@@ -433,41 +427,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>
             Vorstandschaft
         </a>
-        <details class="sheet-kontakte-details">
-            <summary>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
-                Kontakte der Abteilungen
-            </summary>
-            <div class="sheet-kontakte-inhalt">
-                {% for abt in kontakte_abteilungen %}
-                <div class="kontakte-abteilung">
-                    <div class="kontakte-abteilung-name">{{ abt.abteilung }}</div>
-                    {% for g in abt.gruppen %}
-                    <div class="kontakte-gruppe">
-                        {% if g.gruppe %}<div class="kontakte-gruppe-name">{{ g.gruppe }}</div>{% endif %}
-                        {% if g.trainer %}<div class="kontakte-trainer">{{ g.trainer }}</div>{% endif %}
-                        {% if g.telefon or g.email %}
-                        <div class="kontakte-links">
-                            {% if g.telefon %}
-                            <a href="tel:{{ g.telefon }}">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1.1-.2 1.2.4 2.4.6 3.7.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.8 21 3 13.2 3 3.9c0-.6.4-1 1-1h3.6c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.7.1.4 0 .8-.2 1.1z"/></svg>
-                                {{ g.telefon }}
-                            </a>
-                            {% endif %}
-                            {% if g.email %}
-                            <a href="mailto:{{ g.email }}">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 6.5l8 6 8-6"/></svg>
-                                {{ g.email }}
-                            </a>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endfor %}
-            </div>
-        </details>
+        <a class="sheet-item" href="{% url 'kontakte_der_abteilungen' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
+            Kontakte der Abteilungen
+        </a>
         </div>
     </div>
     {% endif %}

@@ -40,7 +40,9 @@ urlpatterns = [
     path("konto/datennutzung/<str:wert>/", views.profil_datennutzung, name="profil_datennutzung"),
     path("feedback/", views.feedback_senden, name="feedback_senden"),
     path("vorstandschaft/", views.vorstandschaft, name="vorstandschaft"),
+    path("kontakte-der-abteilungen/", views.kontakte_der_abteilungen, name="kontakte_der_abteilungen"),
     path("formulare/", views.formulare_liste, name="formulare_liste"),
+    path("meine-aufgaben/", views.meine_aufgaben_liste, name="meine_aufgaben_liste"),
     path("benutzername-vergessen/", views.benutzername_vergessen, name="benutzername_vergessen"),
     path(
         "cron/training-erinnerung/<str:secret>/",

@@ -1,0 +1,35 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Kontakte der Abteilungen – Garde Tanz{% endblock %}
+{% block content %}
+<p><a href="{% url 'dashboard' %}">← Zurück</a></p>
+<h2>Kontakte der Abteilungen</h2>
+<div class="card">
+    {% for abt in kontakte_abteilungen %}
+    <div class="kontakte-abteilung">
+        <div class="kontakte-abteilung-name">{{ abt.abteilung }}</div>
+        {% for g in abt.gruppen %}
+        <div class="kontakte-gruppe">
+            {% if g.gruppe %}<div class="kontakte-gruppe-name">{{ g.gruppe }}</div>{% endif %}
+            {% if g.trainer %}<div class="kontakte-trainer">{{ g.trainer }}</div>{% endif %}
+            {% if g.telefon or g.email %}
+            <div class="kontakte-links">
+                {% if g.telefon %}
+                <a href="tel:{{ g.telefon }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1.1-.2 1.2.4 2.4.6 3.7.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.8 21 3 13.2 3 3.9c0-.6.4-1 1-1h3.6c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.7.1.4 0 .8-.2 1.1z"/></svg>
+                    {{ g.telefon }}
+                </a>
+                {% endif %}
+                {% if g.email %}
+                <a href="mailto:{{ g.email }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 6.5l8 6 8-6"/></svg>
+                    {{ g.email }}
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
