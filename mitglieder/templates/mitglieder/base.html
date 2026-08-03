@@ -115,26 +115,6 @@
             display: flex; align-items: center; justify-content: center; padding: 0 3px;
         }
 
-        /* ---- "Mehr"-Sheet ---- */
-        .sheet-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(20,8,8,0.42); z-index: 45;
-        }
-        .sheet-overlay.aktiv { display: block; }
-        .sheet {
-            position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--surface);
-            border-radius: 18px 18px 0 0; box-shadow: 0 -8px 24px rgba(0,0,0,0.18);
-            transform: translateY(110%); transition: transform 0.22s ease;
-            max-height: 82vh; display: flex; flex-direction: column;
-        }
-        .sheet.aktiv { transform: translateY(0); }
-        .sheet-handle { width: 34px; height: 4px; border-radius: 999px; background: var(--line); margin: 0.6rem auto 0.2rem; flex-shrink: 0; }
-        .sheet-scroll { overflow-y: auto; padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px)); }
-        .sheet-item {
-            display: flex; align-items: center; gap: 0.8rem; padding: 0.75rem 1.2rem; font-size: 0.92rem;
-            font-weight: 700; color: var(--ink); border-top: 1px solid var(--line); text-decoration: none;
-        }
-        .sheet-item:first-of-type { border-top: none; }
-        .sheet-item svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
         .kontakte-abteilung { padding: 0.7rem 0; border-top: 1px solid var(--line); }
         .kontakte-abteilung:first-child { border-top: none; padding-top: 0; }
         .kontakte-abteilung-name {
@@ -330,6 +310,14 @@
 
         <div class="drawer-divider"></div>
 
+        <a class="drawer-item{% if request.resolver_match.url_name == 'news_liste' %} active{% endif %}" href="{% url 'news_liste' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 8 0 0 1 8 8M4 4a15 15 0 0 1 15 15M6 17.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+            News
+        </a>
+        <a class="drawer-item{% if request.resolver_match.url_name == 'galerie' or request.resolver_match.url_name == 'galerie_veranstaltung' or request.resolver_match.url_name == 'galerie_ordner' or request.resolver_match.url_name == 'galerie_allgemein' %} active{% endif %}" href="{% url 'galerie' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5.5-5-5 5-2-2-4 4"/></svg>
+            Galerie
+        </a>
         <a class="drawer-item{% if request.resolver_match.url_name == 'formulare_liste' %} active{% endif %}" href="{% url 'formulare_liste' %}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
             Formulare
@@ -337,6 +325,10 @@
         <a class="drawer-item{% if request.resolver_match.url_name == 'kontakte_der_abteilungen' %} active{% endif %}" href="{% url 'kontakte_der_abteilungen' %}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
             Kontakte der Abteilungen
+        </a>
+        <a class="drawer-item{% if request.resolver_match.url_name == 'vorstandschaft' %} active{% endif %}" href="{% url 'vorstandschaft' %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>
+            Vorstandschaft
         </a>
         <a class="drawer-item{% if request.resolver_match.url_name == 'feedback_senden' %} active{% endif %}" href="{% url 'feedback_senden' %}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.9.5-1 .9-1 1.7"/><circle cx="12" cy="17" r=".3" fill="currentColor"/></svg>
@@ -419,40 +411,7 @@
             <span>ToDo's</span>
             {% if offene_aufgaben_anzahl %}<div class="tab-badge">{{ offene_aufgaben_anzahl }}</div>{% endif %}
         </a>
-        {% with url_name=request.resolver_match.url_name %}
-        <button type="button" class="tab{% if url_name == 'news_liste' or url_name == 'galerie' or url_name == 'galerie_veranstaltung' or url_name == 'galerie_ordner' or url_name == 'galerie_allgemein' or url_name == 'formulare_liste' or url_name == 'vorstandschaft' or url_name == 'kontakte_der_abteilungen' %} active{% endif %}" id="mehr-oeffnen">
-            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
-            <span>Mehr</span>
-        </button>
-        {% endwith %}
     </nav>
-
-    <div class="sheet-overlay" id="sheet-overlay"></div>
-    <div class="sheet" id="mehr-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-scroll">
-        <a class="sheet-item" href="{% url 'news_liste' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 8 0 0 1 8 8M4 4a15 15 0 0 1 15 15M6 17.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
-            News
-        </a>
-        <a class="sheet-item" href="{% url 'galerie' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5.5-5-5 5-2-2-4 4"/></svg>
-            Galerie
-        </a>
-        <a class="sheet-item" href="{% url 'formulare_liste' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
-            Formulare
-        </a>
-        <a class="sheet-item" href="{% url 'vorstandschaft' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>
-            Vorstandschaft
-        </a>
-        <a class="sheet-item" href="{% url 'kontakte_der_abteilungen' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
-            Kontakte der Abteilungen
-        </a>
-        </div>
-    </div>
     {% endif %}
 
     <div class="app-version">v1.0.1</div>
@@ -484,22 +443,9 @@
         if (drawerSchliessen) { drawerSchliessen.addEventListener('click', function () { drawerAnzeigen(false); }); }
         if (drawerOverlay) { drawerOverlay.addEventListener('click', function () { drawerAnzeigen(false); }); }
 
-        var sheet = document.getElementById('mehr-sheet');
-        var sheetOverlay = document.getElementById('sheet-overlay');
-        var mehrOeffnen = document.getElementById('mehr-oeffnen');
-
-        function sheetAnzeigen(sichtbar) {
-            if (!sheet) { return; }
-            sheet.classList.toggle('aktiv', sichtbar);
-            sheetOverlay.classList.toggle('aktiv', sichtbar);
-        }
-        if (mehrOeffnen) { mehrOeffnen.addEventListener('click', function () { sheetAnzeigen(true); }); }
-        if (sheetOverlay) { sheetOverlay.addEventListener('click', function () { sheetAnzeigen(false); }); }
-
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Escape') { return; }
             drawerAnzeigen(false);
-            sheetAnzeigen(false);
         });
     });
     </script>
