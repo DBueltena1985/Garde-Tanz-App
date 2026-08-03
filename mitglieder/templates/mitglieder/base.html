@@ -247,6 +247,8 @@
         .monats-gruppe[open] > .monats-ueberschrift::before { content: "▾ "; }
         .monats-gruppe .card:first-of-type { margin-top: 0.8rem; }
 
+        /* ---- Termin-Karte ---- */
+        .termin-karte { border-left: 4px solid var(--accent); }
         .card-veranstaltung {
             border-left: 5px solid #e0983e;
             background: linear-gradient(to right, #fff7ec, white 12%);
@@ -255,6 +257,44 @@
             display: inline-block; margin-top: 0.5rem; font-size: 1.05rem; font-weight: 700;
             color: #1a7a3c; background: #d7f0dd; padding: 0.3rem 0.8rem; border-radius: 999px;
         }
+        .termin-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.7rem; }
+        .termin-title { font-size: 1.02rem; font-weight: 700; margin: 0; }
+        .termin-group-tag {
+            display: inline-block; margin-top: 0.3rem; font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.03em; text-transform: uppercase; color: var(--accent);
+            background: var(--accent-soft); padding: 0.12rem 0.5rem; border-radius: 999px;
+        }
+        .termin-summary-chip {
+            display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
+            background: #d7f0dd; color: #1a7a3c; font-weight: 700; font-size: 0.85rem;
+            padding: 0.35rem 0.65rem; border-radius: 999px; white-space: nowrap;
+        }
+        .termin-summary-chip svg { width: 14px; height: 14px; }
+        .termin-meta { margin-top: 0.55rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--ink-soft); }
+        .termin-meta-row { display: flex; align-items: center; gap: 0.4rem; }
+        .termin-meta-row svg { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.75; }
+        .termin-divider { height: 1px; background: var(--line); margin: 0.9rem 0 0.2rem; }
+        .kind-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+            padding: 0.6rem 0; flex-wrap: wrap;
+        }
+        .kind-row + .kind-row { border-top: 1px dashed var(--line); }
+        .kind-name { font-weight: 600; font-size: 0.92rem; }
+        .status-chip {
+            display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; font-weight: 700;
+            padding: 0.2rem 0.55rem; border-radius: 999px; margin-left: 0.5rem;
+        }
+        .status-chip-zugesagt { background: #d7f0dd; color: #1a7a3c; }
+        .status-chip-abgesagt { background: #f7d9d6; color: #b3261e; }
+        .status-chip-offen { background: #fff3cd; color: #8a6d00; }
+        .termin-actions { display: flex; gap: 0.4rem; }
+        .btn-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.38rem 0.7rem; border-radius: 8px;
+            border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; font-family: inherit;
+        }
+        .btn-chip svg { width: 13px; height: 13px; }
+        .btn-chip-zusagen { background: #1a7a3c; color: #fff; }
+        .btn-chip-absagen { background: var(--surface); color: #b3261e; border: 1px solid #f0c7c2; }
     </style>
 </head>
 <body>

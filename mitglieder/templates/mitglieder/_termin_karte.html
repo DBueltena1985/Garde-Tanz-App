@@ -1,15 +1,33 @@
-<div class="card {% if eintrag.termin.art == 'veranstaltung' %}card-veranstaltung{% endif %}" id="termin-{{ eintrag.termin.id }}">
-    <strong>{{ eintrag.termin.titel }}</strong>
-    {% if eintrag.termin.gruppe != "beide" %}({{ eintrag.termin.get_gruppe_display }}){% endif %}<br>
-    {% if eintrag.termin.uhrzeit_unbekannt %}
-    {{ eintrag.termin.beginn|date:"d.m.Y" }} – Uhrzeit folgt noch
-    {% else %}
-    {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
-    {% endif %}
-    {% if eintrag.termin.ort %} – {{ eintrag.termin.ort }}{% endif %}
-    {% if eintrag.termin.taenzerinnen_erforderlich %}
-    <div class="zusagen-badge">👥 {{ eintrag.anzahl_zusagen }} Zusage{{ eintrag.anzahl_zusagen|pluralize:",n" }}</div>
-    {% else %}
+<div class="card termin-karte {% if eintrag.termin.art == 'veranstaltung' %}card-veranstaltung{% endif %}" id="termin-{{ eintrag.termin.id }}">
+    <div class="termin-head">
+        <div>
+            <p class="termin-title">{{ eintrag.termin.titel }}</p>
+            {% if eintrag.termin.gruppe != "beide" %}<span class="termin-group-tag">{{ eintrag.termin.get_gruppe_display }}</span>{% endif %}
+        </div>
+        {% if eintrag.termin.taenzerinnen_erforderlich %}
+        <div class="termin-summary-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+            {{ eintrag.anzahl_zusagen }}
+        </div>
+        {% endif %}
+    </div>
+    <div class="termin-meta">
+        <div class="termin-meta-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            {% if eintrag.termin.uhrzeit_unbekannt %}
+            {{ eintrag.termin.beginn|date:"d.m.Y" }} – Uhrzeit folgt noch
+            {% else %}
+            {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
+            {% endif %}
+        </div>
+        {% if eintrag.termin.ort %}
+        <div class="termin-meta-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            {{ eintrag.termin.ort }}
+        </div>
+        {% endif %}
+    </div>
+    {% if not eintrag.termin.taenzerinnen_erforderlich %}
     <div style="margin-top:0.4rem; font-size:0.85rem; color:#8a6d00;">ℹ️ Kein Auftritt der Tänzerinnen bei dieser Veranstaltung</div>
     {% endif %}
     {% if eintrag.termin.beschreibung_bild %}
@@ -42,23 +60,32 @@
     {% endif %}
 
     {% if eintrag.termin.taenzerinnen_erforderlich %}
+    <div class="termin-divider"></div>
     {% for ks in eintrag.kinder_status %}
-    <div style="margin-top:0.7rem; padding-top:0.6rem; border-top:1px solid #eee;">
-        <strong>{{ ks.kind.vorname }}</strong> –
-        <span class="status-{{ ks.status }}">
-            {% if ks.status == "zugesagt" %}Zugesagt
-            {% elif ks.status == "abgesagt" %}Abgesagt
-            {% else %}Noch offen{% endif %}
+    <div class="kind-row">
+        <span class="kind-name">{{ ks.kind.vorname }}
+            <span class="status-chip status-chip-{{ ks.status }}">
+                {% if ks.status == "zugesagt" %}Zugesagt
+                {% elif ks.status == "abgesagt" %}Abgesagt
+                {% else %}Noch offen{% endif %}
+            </span>
         </span>
-        <br>
-        <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-zusagen">Zusagen</button>
-        </form>
-        <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'abgesagt' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-absagen">Absagen</button>
-        </form>
+        <div class="termin-actions">
+            <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-chip btn-chip-zusagen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    Zusagen
+                </button>
+            </form>
+            <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'abgesagt' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-chip btn-chip-absagen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    Absagen
+                </button>
+            </form>
+        </div>
     </div>
     {% endfor %}
     {% endif %}
