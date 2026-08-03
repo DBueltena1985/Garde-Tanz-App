@@ -16,7 +16,7 @@
     {% else %}
         Stammdaten noch nicht bestätigt.
     {% endif %}
-    {% if kind.bestaetigung_faellig %}<span class="status-abgesagt"> (Bestätigung fällig)</span>{% endif %}
+    {% if kind.bestaetigung_faellig %}<span class="status-abgesagt">Bestätigung fällig</span>{% endif %}
     <br><br>
     <a href="{% url 'kind_bearbeiten' kind.id %}" class="btn btn-zusagen">Bearbeiten</a>
 </div>
