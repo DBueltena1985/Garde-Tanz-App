@@ -3,8 +3,8 @@
     "short_name": "Garde Tanz",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#faf7fb",
-    "theme_color": "#7a2159",
+    "background_color": "#faf7f6",
+    "theme_color": "#c31c2b",
     "icons": [
         {
             "src": "/static/mitglieder/icons/icon-192.png",
