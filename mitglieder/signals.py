@@ -1,8 +1,11 @@
-from django.db.models.signals import post_save, pre_delete
+from django.contrib.auth.models import Group, User
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.utils import timezone
 
 from .models import Nachricht, NewsPost, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage
 from .utils import eltern_emails_fuer_kind, sichere_mail_senden
+
+CREATOR_GRUPPENNAME = "Creator"
 
 # Django sendet Signale für Proxy-Modelle mit dem Proxy als "sender" (nicht dem
 # Basis-Modell). Da Termine im Admin über die Proxys TrainingTermin/VeranstaltungTermin
@@ -127,9 +130,27 @@ def neue_nachricht_benachrichtigen(sender, instance, created, **kwargs):
     )
 
 
+def creator_gruppe_macht_superuser(sender, instance, action, pk_set, **kwargs):
+    """Wer der Gruppe 'Creator' hinzugefuegt wird, bekommt automatisch Superuser-/Staff-Status -
+    Django-Gruppen koennen das nicht selbst vergeben (nur einzelne Permissions), daher hier per Signal."""
+    if action != "post_add":
+        return
+    try:
+        creator_gruppe = Group.objects.get(name=CREATOR_GRUPPENNAME)
+    except Group.DoesNotExist:
+        return
+    if creator_gruppe.pk not in pk_set:
+        return
+    if not instance.is_superuser or not instance.is_staff:
+        instance.is_superuser = True
+        instance.is_staff = True
+        instance.save(update_fields=["is_superuser", "is_staff"])
+
+
 for _modell in TERMIN_MODELLE:
     pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
     post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
 
 post_save.connect(neue_news_benachrichtigen, sender=NewsPost)
 post_save.connect(neue_nachricht_benachrichtigen, sender=Nachricht)
+m2m_changed.connect(creator_gruppe_macht_superuser, sender=User.groups.through)
