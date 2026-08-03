@@ -1018,12 +1018,34 @@ class FeedbackAdmin(LoeschLinkMixin, admin.ModelAdmin):
         return False
 
 
+def _benutzer_name(user):
+    if not user:
+        return "–"
+    name = f"{user.first_name} {user.last_name}".strip()
+    return name or user.username
+
+
+class EmpfaengerNameFilter(admin.SimpleListFilter):
+    title = "An"
+    parameter_name = "empfaenger"
+
+    def lookups(self, request, model_admin):
+        empfaenger_ids = Nachricht.objects.values_list("empfaenger_id", flat=True).distinct()
+        nutzer = User.objects.filter(id__in=empfaenger_ids).order_by("first_name", "last_name")
+        return [(u.id, _benutzer_name(u)) for u in nutzer]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(empfaenger__id=self.value())
+        return queryset
+
+
 @admin.register(Nachricht)
 class NachrichtAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("betreff_anzeige", "empfaenger", "gelesen", "erstellt_am", "loeschen_link")
+    list_display = ("betreff_anzeige", "empfaenger_name", "gelesen", "erstellt_am", "loeschen_link")
     list_display_links = ("betreff_anzeige",)
     list_editable = ("gelesen",)
-    list_filter = ("gelesen", "empfaenger")
+    list_filter = ("gelesen", EmpfaengerNameFilter)
     readonly_fields = ("absender", "erstellt_am")
     fields = ("empfaenger", "betreff", "nachricht", "gelesen", "absender", "erstellt_am")
 
@@ -1031,6 +1053,20 @@ class NachrichtAdmin(LoeschLinkMixin, admin.ModelAdmin):
         return obj.betreff or obj.nachricht[:60]
 
     betreff_anzeige.short_description = "Betreff"
+
+    def empfaenger_name(self, obj):
+        return _benutzer_name(obj.empfaenger)
+
+    empfaenger_name.short_description = "An"
+    empfaenger_name.admin_order_field = "empfaenger__first_name"
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "empfaenger":
+            kwargs["queryset"] = User.objects.order_by("first_name", "last_name")
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == "empfaenger":
+            field.label_from_instance = _benutzer_name
+        return field
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:
