@@ -6,6 +6,7 @@ from .models import Nachricht, NewsPost, Taenzerin, Termin, TrainingTermin, Vera
 from .utils import eltern_emails_fuer_kind, sichere_mail_senden
 
 CREATOR_GRUPPENNAME = "Creator"
+TRAINERTEAM_GRUPPENNAME = "Trainerteam"
 
 # Django sendet Signale für Proxy-Modelle mit dem Proxy als "sender" (nicht dem
 # Basis-Modell). Da Termine im Admin über die Proxys TrainingTermin/VeranstaltungTermin
@@ -147,6 +148,23 @@ def creator_gruppe_macht_superuser(sender, instance, action, pk_set, **kwargs):
         instance.save(update_fields=["is_superuser", "is_staff"])
 
 
+def trainerteam_gruppe_macht_staff(sender, instance, action, pk_set, **kwargs):
+    """Wer der Gruppe 'Trainerteam' hinzugefuegt wird, bekommt Staff-Status (fuer den Admin-Login),
+    aber bewusst KEINEN Superuser-Status - die Gruppe soll volle Rechte per einzelnen Berechtigungen
+    geben, nicht das komplette Ueberspringen aller Pruefungen."""
+    if action != "post_add":
+        return
+    try:
+        trainerteam_gruppe = Group.objects.get(name=TRAINERTEAM_GRUPPENNAME)
+    except Group.DoesNotExist:
+        return
+    if trainerteam_gruppe.pk not in pk_set:
+        return
+    if not instance.is_staff:
+        instance.is_staff = True
+        instance.save(update_fields=["is_staff"])
+
+
 for _modell in TERMIN_MODELLE:
     pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
     post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
@@ -154,3 +172,4 @@ for _modell in TERMIN_MODELLE:
 post_save.connect(neue_news_benachrichtigen, sender=NewsPost)
 post_save.connect(neue_nachricht_benachrichtigen, sender=Nachricht)
 m2m_changed.connect(creator_gruppe_macht_superuser, sender=User.groups.through)
+m2m_changed.connect(trainerteam_gruppe_macht_staff, sender=User.groups.through)
