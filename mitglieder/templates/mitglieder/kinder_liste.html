@@ -19,32 +19,6 @@
     {% if kind.bestaetigung_faellig %}<span class="status-abgesagt"> (Bestätigung fällig)</span>{% endif %}
     <br><br>
     <a href="{% url 'kind_bearbeiten' kind.id %}" class="btn btn-zusagen">Bearbeiten</a>
-
-    <div style="margin-top:0.9rem; padding-top:0.7rem; border-top:1px solid #f0e8ec;">
-        <strong>Einverständnis Bild-/Videoaufnahmen</strong>
-        <div style="font-size:0.85rem; color:#666; margin:0.2rem 0 0.5rem;">
-            Für Social Media, Homepage/App, Presse. Einverständnis kann jederzeit widerrufen werden.
-        </div>
-        {% if kind.einverstaendnis_bildaufnahmen == True %}
-            <span class="status-zugesagt">✅ Einverständnis erteilt</span>
-        {% elif kind.einverstaendnis_bildaufnahmen == False %}
-            <span class="status-abgesagt">❌ Kein Einverständnis</span>
-        {% else %}
-            <span class="status-offen">Noch nicht entschieden</span>
-        {% endif %}
-        {% if kind.einverstaendnis_bildaufnahmen_am %}
-            <span style="font-size:0.8rem; color:#999;"> (zuletzt geändert am {{ kind.einverstaendnis_bildaufnahmen_am|date:"d.m.Y H:i" }} Uhr)</span>
-        {% endif %}
-        <br><br>
-        <form method="post" action="{% url 'kind_einverstaendnis_bildaufnahmen' kind.id 'ja' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-zusagen">Einverstanden</button>
-        </form>
-        <form method="post" action="{% url 'kind_einverstaendnis_bildaufnahmen' kind.id 'nein' %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-absagen">Nicht einverstanden</button>
-        </form>
-    </div>
 </div>
 {% endfor %}
 
