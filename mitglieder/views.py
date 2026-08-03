@@ -360,7 +360,7 @@ def veranstaltungen(request):
 
 @login_required
 def trainings_liste(request):
-    """Uebersicht aller Trainings (nicht nur der offenen), getrennt nach anstehend und abgeschlossen."""
+    """Uebersicht aller zukuenftigen Trainings (nicht nur der offenen), egal ob zugesagt/abgesagt/offen."""
     kinder = _kinder_fuer_termine(request.user)
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
@@ -370,15 +370,8 @@ def trainings_liste(request):
     ).order_by("beginn")
     anstehende_gruppen = _nach_monat_gruppieren(_termin_eintraege(anstehende_trainings, kinder, request.user))
 
-    abgeschlossene_trainings = _fuer_gruppen_relevant(
-        Termin.objects.filter(art=Termin.ART_TRAINING, beginn__lt=timezone.now()),
-        kinder_gruppen,
-    ).order_by("-beginn")
-    abgeschlossene_gruppen = _nach_monat_gruppieren(_termin_eintraege(abgeschlossene_trainings, kinder, request.user))
-
     return render(request, "mitglieder/trainings_liste.html", {
         "anstehende_gruppen": anstehende_gruppen,
-        "abgeschlossene_gruppen": abgeschlossene_gruppen,
     })
 
 

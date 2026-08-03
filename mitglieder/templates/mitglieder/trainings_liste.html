@@ -17,19 +17,4 @@
 </details>
 {% endfor %}
 
-<h2>✅ Abgeschlossenes Training</h2>
-
-{% if not abgeschlossene_gruppen %}
-<p>Noch kein Training abgeschlossen.</p>
-{% endif %}
-
-{% for gruppe in abgeschlossene_gruppen %}
-<details class="monats-gruppe">
-    <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
-    {% for eintrag in gruppe.eintraege %}
-        {% include "mitglieder/_termin_karte.html" %}
-    {% endfor %}
-</details>
-{% endfor %}
-
 {% endblock %}
