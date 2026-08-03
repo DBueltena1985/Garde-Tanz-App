@@ -14,7 +14,6 @@
     <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
     <link rel="manifest" href="{% static 'mitglieder/manifest.json' %}">
-    <link rel="icon" href="{% static 'mitglieder/logo.svg' %}" type="image/svg+xml">
     <link rel="icon" href="{% static 'mitglieder/icons/icon-192.png' %}">
     <link rel="apple-touch-icon" href="{% static 'mitglieder/icons/icon-192.png' %}">
     <meta name="theme-color" content="#c31c2b">
@@ -53,7 +52,7 @@
             text-decoration: none; color: #fff; min-width: 0;
         }
         .app-header .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .logo { height: 32px; width: 32px; border-radius: 50%; filter: invert(1); flex-shrink: 0; }
+        .logo { height: 34px; width: 34px; border-radius: 50%; flex-shrink: 0; }
         .header-icon-btn {
             width: 34px; height: 34px; border-radius: 50%; border: none; flex-shrink: 0;
             background: rgba(255,255,255,0.18); color: #fff; display: flex; align-items: center;
@@ -266,7 +265,7 @@
         </button>
         {% endif %}
         <a class="brand" href="{% url 'dashboard' %}">
-            <img src="{% static 'mitglieder/logo.svg' %}" alt="DJK Oberasbach" class="logo">
+            <img src="{% static 'mitglieder/garde-icon.png' %}" alt="DJK Oberasbach" class="logo">
             <span>Garde Tanz</span>
         </a>
         {% if user.is_authenticated %}
