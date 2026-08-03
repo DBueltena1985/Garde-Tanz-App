@@ -21,3 +21,11 @@ def eltern_emails_fuer_kind(kind):
     if kind.eltern.email:
         emails.add(kind.eltern.email)
     return emails
+
+
+def benutzer_name(user):
+    """Klarname eines Benutzers (Vor-/Nachname), mit Fallback auf Benutzername falls kein Name hinterlegt ist."""
+    if not user:
+        return ""
+    name = f"{user.first_name} {user.last_name}".strip()
+    return name or user.username

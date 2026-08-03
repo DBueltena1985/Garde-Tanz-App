@@ -6,6 +6,7 @@ from django.contrib.auth.forms import PasswordResetForm, UserCreationForm
 from django.contrib.auth.models import User
 
 from .models import Feedback, Profil, Taenzerin
+from .utils import benutzer_name
 
 logger = logging.getLogger("mitglieder")
 
@@ -118,9 +119,10 @@ class TaenzerinForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["geburtsdatum"].input_formats = ["%Y-%m-%d"]
         if moegliche_nutzer is not None:
-            self.fields["nutzer"].queryset = moegliche_nutzer
+            self.fields["nutzer"].queryset = moegliche_nutzer.order_by("first_name", "last_name")
             self.fields["nutzer"].required = False
             self.fields["nutzer"].empty_label = "– niemandem zugeordnet –"
+            self.fields["nutzer"].label_from_instance = benutzer_name
 
 
 class ProfilForm(forms.ModelForm):
