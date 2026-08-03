@@ -215,3 +215,9 @@ REGISTRIERUNGS_SLUG = os.environ.get('DJANGO_REGISTRIERUNGS_SLUG', 'registrieren
 # damit eine Benachrichtigung nicht ausbleibt, nur weil bei einem Konto keine
 # E-Mail-Adresse hinterlegt ist. Optional, auf dem Server per Umgebungsvariable setzen.
 ADMIN_BENACHRICHTIGUNGS_EMAIL = os.environ.get('DJANGO_ADMIN_BENACHRICHTIGUNGS_EMAIL', '')
+
+# Geheimer Schlüssel für den /cron/.../<secret>/-Aufruf durch einen externen Scheduler
+# (z.B. cron-job.org), falls kein PythonAnywhere-Tarif mit "Scheduled tasks" gebucht ist.
+# Auf dem Server per Umgebungsvariable auf einen langen, zufälligen Wert setzen - ist dieser
+# Wert leer, ist der Cron-Endpunkt komplett gesperrt.
+CRON_SECRET = os.environ.get('DJANGO_CRON_SECRET', '')

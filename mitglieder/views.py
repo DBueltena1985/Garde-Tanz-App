@@ -1,4 +1,5 @@
 import calendar
+import secrets
 from datetime import date, timedelta
 
 from django.conf import settings
@@ -9,7 +10,9 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core import signing
 from django.core.exceptions import PermissionDenied
+from django.core.management import call_command
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -882,3 +885,14 @@ def passwort_aendern(request):
         form = PasswordChangeForm(request.user)
 
     return render(request, "mitglieder/passwort_form.html", {"form": form})
+
+
+def cron_training_erinnerung(request, secret):
+    """Loest den training_zusage_erinnerung-Command per HTTP aus - fuer externe Scheduler
+    (z.B. cron-job.org), falls kein PythonAnywhere-Tarif mit 'Scheduled tasks' gebucht ist.
+    Kein @login_required, da der externe Dienst sich nicht einloggen kann - Schutz erfolgt
+    ausschliesslich ueber das geheime Token in der URL."""
+    if not settings.CRON_SECRET or not secrets.compare_digest(secret, settings.CRON_SECRET):
+        raise PermissionDenied
+    call_command("training_zusage_erinnerung")
+    return HttpResponse("OK")

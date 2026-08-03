@@ -41,4 +41,9 @@ urlpatterns = [
     path("vorstandschaft/", views.vorstandschaft, name="vorstandschaft"),
     path("formulare/", views.formulare_liste, name="formulare_liste"),
     path("benutzername-vergessen/", views.benutzername_vergessen, name="benutzername_vergessen"),
+    path(
+        "cron/training-erinnerung/<str:secret>/",
+        views.cron_training_erinnerung,
+        name="cron_training_erinnerung",
+    ),
 ]
