@@ -406,7 +406,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.9 6.4.6-4.8 4.3 1.4 6.2L12 16.9 6.4 20l1.4-6.2L3 9.5l6.4-.6z"/></svg>
             <span>Veranst.</span>
         </a>
-        <a class="tab{% if request.resolver_match.url_name == 'offene_trainings' %} active{% endif %}" href="{% url 'offene_trainings' %}">
+        <a class="tab{% if request.resolver_match.url_name == 'trainings_liste' %} active{% endif %}" href="{% url 'trainings_liste' %}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/><path d="M9 14l2 2 4-4"/></svg>
             <span>Training</span>
         </a>

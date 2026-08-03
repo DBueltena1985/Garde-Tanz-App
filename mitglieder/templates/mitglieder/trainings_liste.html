@@ -1,0 +1,35 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Training – Garde Tanz{% endblock %}
+{% block content %}
+
+<h2>💃 Anstehendes Training</h2>
+
+{% if not anstehende_gruppen %}
+<p>Aktuell ist kein Training geplant.</p>
+{% endif %}
+
+{% for gruppe in anstehende_gruppen %}
+<details class="monats-gruppe" open>
+    <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
+    {% for eintrag in gruppe.eintraege %}
+        {% include "mitglieder/_termin_karte.html" %}
+    {% endfor %}
+</details>
+{% endfor %}
+
+<h2>✅ Abgeschlossenes Training</h2>
+
+{% if not abgeschlossene_gruppen %}
+<p>Noch kein Training abgeschlossen.</p>
+{% endif %}
+
+{% for gruppe in abgeschlossene_gruppen %}
+<details class="monats-gruppe">
+    <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
+    {% for eintrag in gruppe.eintraege %}
+        {% include "mitglieder/_termin_karte.html" %}
+    {% endfor %}
+</details>
+{% endfor %}
+
+{% endblock %}
