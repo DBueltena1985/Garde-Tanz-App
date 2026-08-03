@@ -9,7 +9,7 @@
 {% endif %}
 
 {% for gruppe in anstehende_gruppen %}
-<details class="monats-gruppe" open>
+<details class="monats-gruppe">
     <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
     {% for eintrag in gruppe.eintraege %}
         {% include "mitglieder/_termin_karte.html" %}
