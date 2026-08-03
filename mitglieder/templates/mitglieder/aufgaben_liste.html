@@ -17,7 +17,7 @@
             📅 Fällig am {{ aufgabe.faellig_am|date:"d.m.Y" }}{% if aufgabe.ueberfaellig %} – überfällig{% endif %}
         </div>
         {% endif %}
-        {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:#666;">{{ aufgabe.beschreibung }}</div>{% endif %}
+        {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ aufgabe.beschreibung }}</div>{% endif %}
         <form method="post" action="{% url 'aufgabe_erledigt' aufgabe.id %}" style="margin-top:0.4rem;">
             {% csrf_token %}
             <button type="submit" class="btn btn-zusagen">✅ Erledigt</button>
@@ -43,7 +43,7 @@
             📅 Fällig am {{ eintrag.aufgabe.faellig_am|date:"d.m.Y" }}{% if eintrag.aufgabe.ueberfaellig %} – überfällig{% endif %}
         </div>
         {% endif %}
-        {% if eintrag.aufgabe.beschreibung %}<div style="font-size:0.9rem; color:#666;">{{ eintrag.aufgabe.beschreibung }}</div>{% endif %}
+        {% if eintrag.aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ eintrag.aufgabe.beschreibung }}</div>{% endif %}
         {% if eintrag.offene_kinder %}
             {% for kind in eintrag.offene_kinder %}
             <form method="post" action="{% url 'aufgabe_erledigt_fuer_kind' eintrag.aufgabe.id kind.id %}" style="display:inline; margin-top:0.4rem;">

@@ -4,6 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            var gespeichert = localStorage.getItem('garde-theme');
+            if (gespeichert) { document.documentElement.setAttribute('data-theme', gespeichert); }
+        })();
+    </script>
     <title>{% block title %}Garde Tanz{% endblock %}</title>
 
     <meta property="og:type" content="website">
@@ -32,6 +38,26 @@
             --ink-soft: #6e5b58;
             --ink-faint: #a4908d;
             --line: #f0dcda;
+        }
+        :root[data-theme="dark"] {
+            --accent-soft: #3a1216;
+            --bg: #17100f;
+            --surface: #241a18;
+            --ink: #f3ebe9;
+            --ink-soft: #c9b4b0;
+            --ink-faint: #8a726e;
+            --line: #3a2926;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --accent-soft: #3a1216;
+                --bg: #17100f;
+                --surface: #241a18;
+                --ink: #f3ebe9;
+                --ink-soft: #c9b4b0;
+                --ink-faint: #8a726e;
+                --line: #3a2926;
+            }
         }
         * { box-sizing: border-box; }
         body {
@@ -93,6 +119,19 @@
         .drawer-footer { margin-top: auto; padding-top: 1.2rem; }
         .drawer-version { text-align: center; color: rgba(255,255,255,0.45); font-size: 0.68rem; margin-top: 0.5rem; }
         .drawer .btn-logout { width: 100%; text-align: center; box-sizing: border-box; }
+        .drawer-toggle {
+            width: 100%; background: none; border: none; font: inherit; text-align: left; cursor: pointer;
+        }
+        .theme-switch {
+            margin-left: auto; width: 34px; height: 20px; border-radius: 999px; flex-shrink: 0;
+            background: rgba(255,255,255,0.25); position: relative; transition: background 0.2s;
+        }
+        .theme-switch-knob {
+            position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; transition: transform 0.2s;
+        }
+        .drawer-toggle[aria-pressed="true"] .theme-switch { background: var(--accent); }
+        .drawer-toggle[aria-pressed="true"] .theme-switch-knob { transform: translateX(14px); }
 
         /* ---- Bottom-Tab-Leiste ---- */
         .tabbar {
@@ -138,7 +177,7 @@
         .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
         .btn-logout { background: #fbdada; color: #b3261e; font-weight: 600; }
 
-        .card { background: white; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card { background: var(--surface); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 
         /* ---- Login-Titelbild ---- */
         .login-hero {
@@ -234,7 +273,7 @@
         table.kalender th { font-size: 0.68rem; color: var(--accent); padding: 0.2rem 0.1rem; text-align: center; }
         table.kalender td { border: 1px solid var(--line); vertical-align: top; height: 2.6rem; padding: 0.15rem 0.05rem; width: 14.28%; }
         .kalender-leer { background: #fafafa; }
-        .kalender-tagnummer { font-size: 0.7rem; color: #999; text-align: center; }
+        .kalender-tagnummer { font-size: 0.7rem; color: var(--ink-faint); text-align: center; }
         .kalender-heute { background: var(--accent-soft); border: 2px solid var(--accent); }
         .kalender-heute .kalender-tagnummer { color: var(--accent); font-weight: 700; }
         .kalender-feiertag { background: #fbdada; }
@@ -242,7 +281,7 @@
         .kalender-ferien { background: #fdf3d8; }
         .kalender-ferien .kalender-tagnummer { color: #8a6d00; }
         .kalender-heute.kalender-feiertag, .kalender-heute.kalender-ferien { border: 2px solid var(--accent); }
-        .kalender-legende { list-style: none; padding: 0; margin: 0.7rem 0 0; font-size: 0.8rem; color: #666; }
+        .kalender-legende { list-style: none; padding: 0; margin: 0.7rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
         .kalender-legende li { padding: 0.1rem 0; }
         .kalender-termin-punkte { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; margin-top: 2px; }
         .kalender-termin-punkt { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
@@ -412,6 +451,14 @@
             Impressum
         </a>
 
+        <div class="drawer-divider"></div>
+
+        <button type="button" class="drawer-item drawer-toggle" id="theme-umschalten" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+            Dunkelmodus
+            <span class="theme-switch"><span class="theme-switch-knob"></span></span>
+        </button>
+
         <div class="drawer-footer">
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
@@ -508,6 +555,26 @@
             if (e.key !== 'Escape') { return; }
             drawerAnzeigen(false);
         });
+
+        var themeUmschalten = document.getElementById('theme-umschalten');
+        if (themeUmschalten) {
+            var wurzel = document.documentElement;
+            function istDunkel() {
+                var attr = wurzel.getAttribute('data-theme');
+                if (attr) { return attr === 'dark'; }
+                return window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+            function schalterAktualisieren() {
+                themeUmschalten.setAttribute('aria-pressed', istDunkel() ? 'true' : 'false');
+            }
+            schalterAktualisieren();
+            themeUmschalten.addEventListener('click', function () {
+                var neuesTheme = istDunkel() ? 'light' : 'dark';
+                wurzel.setAttribute('data-theme', neuesTheme);
+                localStorage.setItem('garde-theme', neuesTheme);
+                schalterAktualisieren();
+            });
+        }
     });
     </script>
 </body>

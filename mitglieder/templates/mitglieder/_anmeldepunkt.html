@@ -3,7 +3,7 @@
         {{ ap.punkt.titel }}
         {% if ap.punkt.max_anzahl %}<span style="color:#888; font-size:0.85rem;">({{ ap.anmeldungen|length }}/{{ ap.punkt.max_anzahl }} belegt)</span>{% endif %}
     </div>
-    {% if ap.punkt.beschreibung %}<div style="font-size:0.85rem; color:#666;">{{ ap.punkt.beschreibung }}</div>{% endif %}
+    {% if ap.punkt.beschreibung %}<div style="font-size:0.85rem; color:var(--ink-soft);">{{ ap.punkt.beschreibung }}</div>{% endif %}
     {% if ap.anmeldungen %}
     <ul style="margin:0.3rem 0; padding-left:1.2rem; font-size:0.9rem;">
         {% for anmeldung in ap.anmeldungen %}

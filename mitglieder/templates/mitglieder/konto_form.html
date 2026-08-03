@@ -7,7 +7,7 @@
         {% csrf_token %}
         {{ form.as_p }}
         <h3>Unterstützung durch die Familie</h3>
-        <p style="font-size:0.85rem; color:#666; margin-top:-0.4rem;">
+        <p style="font-size:0.85rem; color:var(--ink-soft); margin-top:-0.4rem;">
             Wobei könnt ihr das Team unterstützen?
         </p>
         {{ profil_form.as_p }}
@@ -17,7 +17,7 @@
 
 <div class="card">
     <h2>Einverständnis Datennutzung</h2>
-    <p style="font-size:0.85rem; color:#666; margin-top:-0.4rem;">
+    <p style="font-size:0.85rem; color:var(--ink-soft); margin-top:-0.4rem;">
         Hiermit erteile ich mein Einverständnis, dass meine Daten für vereinsinterne Zwecke genutzt werden. Das Einverständnis kann jederzeit widerrufen werden.
     </p>
     {% if profil.einverstanden_datennutzung == True %}
@@ -28,7 +28,7 @@
         <span class="status-offen">Noch nicht entschieden</span>
     {% endif %}
     {% if profil.einverstanden_datennutzung_am %}
-        <span style="font-size:0.8rem; color:#999;"> (zuletzt geändert am {{ profil.einverstanden_datennutzung_am|date:"d.m.Y H:i" }} Uhr)</span>
+        <span style="font-size:0.8rem; color:var(--ink-faint);"> (zuletzt geändert am {{ profil.einverstanden_datennutzung_am|date:"d.m.Y H:i" }} Uhr)</span>
     {% endif %}
     <br><br>
     <form method="post" action="{% url 'profil_datennutzung' 'ja' %}" style="display:inline;">
@@ -54,8 +54,8 @@
         es wird kein neues Kind angelegt.
     </p>
     <button type="button" id="einladungslink-kopieren" data-link="{{ einladungslink }}"
-            style="display:block; width:100%; text-align:left; font:inherit; border:none; cursor:pointer;
-                   word-break: break-all; background:#f3e8ee; padding:0.6rem 0.8rem; border-radius:6px; box-sizing:border-box;">
+            style="display:block; width:100%; text-align:left; font:inherit; color:inherit; border:none; cursor:pointer;
+                   word-break: break-all; background:var(--accent-soft); padding:0.6rem 0.8rem; border-radius:6px; box-sizing:border-box;">
         <code>{{ einladungslink }}</code>
         <span id="einladungslink-status" style="display:block; margin-top:0.3rem; font-size:0.85rem; color:#1a7a3c;"></span>
     </button>
