@@ -32,6 +32,7 @@
             --accent: #c31c2b;
             --accent-strong: #841019;
             --accent-soft: #fbe1e2;
+            --veranstaltung-soft: #fff7ec;
             --bg: #faf7f6;
             --surface: #ffffff;
             --ink: #271b1a;
@@ -41,6 +42,7 @@
         }
         :root[data-theme="dark"] {
             --accent-soft: #3a1216;
+            --veranstaltung-soft: #2e2210;
             --bg: #17100f;
             --surface: #241a18;
             --ink: #f3ebe9;
@@ -51,6 +53,7 @@
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) {
                 --accent-soft: #3a1216;
+                --veranstaltung-soft: #2e2210;
                 --bg: #17100f;
                 --surface: #241a18;
                 --ink: #f3ebe9;
@@ -195,7 +198,7 @@
         .btn { display: inline-block; padding: 0.4rem 0.8rem; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; font-size: 0.9rem; margin-right: 0.3rem; }
         .btn-zusagen { background: #d7f0dd; color: #1a7a3c; }
         .btn-absagen { background: #f7d9d6; color: #b3261e; }
-        .banner-warn { background: #fff3cd; border: 1px solid #ffe08a; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; }
+        .banner-warn { background: #fff3cd; color: #6b5400; border: 1px solid #ffe08a; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; }
         .news-banner-wrap { margin-bottom: 1.2rem; }
         .news-banner {
             display: block; position: relative; background: linear-gradient(to right, var(--accent-soft), var(--surface));
@@ -259,7 +262,7 @@
         }
         label { font-weight: 600; }
         .messages { list-style: none; padding: 0; }
-        .messages li { background: #e6f4ea; padding: 0.5rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; }
+        .messages li { background: #e6f4ea; color: #1a7a3c; padding: 0.5rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; }
         ul.errorlist {
             list-style: none; padding: 0.5rem 0.8rem; margin: 0.2rem 0 0.6rem;
             background: #fbdada; color: #b3261e; border-radius: 6px; font-size: 0.9rem;
@@ -301,7 +304,7 @@
         .termin-karte { border-left: 4px solid var(--accent); }
         .card-veranstaltung {
             border-left: 5px solid #e0983e;
-            background: linear-gradient(to right, #fff7ec, white 12%);
+            background: linear-gradient(to right, var(--veranstaltung-soft), var(--surface) 12%);
         }
         .zusagen-badge {
             display: inline-block; margin-top: 0.5rem; font-size: 1.05rem; font-weight: 700;
