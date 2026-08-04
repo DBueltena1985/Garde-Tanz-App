@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 
 {% block content %}
-<p>Zeigt für jede Tänzerin, wie oft sie zu Trainings ihrer Gruppe zu- bzw. abgesagt hat.</p>
+<p>Zeigt für jede Tänzerin, wie oft sie bei Trainings ihrer Gruppe tatsächlich anwesend bzw. abwesend war (auf Basis der im Admin unter "Anwesenheit" erfassten Werte).</p>
 
 {% if not zeilen %}
 <p>Noch keine Tänzerinnen angelegt.</p>
@@ -12,10 +12,10 @@
             <th style="text-align:left; padding:6px 12px 6px 0;">Tänzerin</th>
             <th style="text-align:left; padding:6px 12px;">Gruppe</th>
             <th style="text-align:right; padding:6px 12px;">Trainings gesamt</th>
-            <th style="text-align:right; padding:6px 12px;">Zugesagt</th>
-            <th style="text-align:right; padding:6px 12px;">Abgesagt</th>
-            <th style="text-align:right; padding:6px 12px;">Offen</th>
-            <th style="text-align:right; padding:6px 12px;">Zusage-Quote</th>
+            <th style="text-align:right; padding:6px 12px;">Anwesend</th>
+            <th style="text-align:right; padding:6px 12px;">Abwesend</th>
+            <th style="text-align:right; padding:6px 12px;">Noch nicht erfasst</th>
+            <th style="text-align:right; padding:6px 12px;">Anwesenheits-Quote</th>
         </tr>
     </thead>
     <tbody>
@@ -24,8 +24,8 @@
             <td style="padding:4px 12px 4px 0;">{{ zeile.kind.vorname }} {{ zeile.kind.nachname }}</td>
             <td style="padding:4px 12px;">{{ zeile.kind.gruppe_anzeige }}</td>
             <td style="text-align:right; padding:4px 12px;">{{ zeile.gesamt }}</td>
-            <td style="text-align:right; padding:4px 12px; color:#1a7a3c;">{{ zeile.zugesagt }}</td>
-            <td style="text-align:right; padding:4px 12px; color:#b3261e;">{{ zeile.abgesagt }}</td>
+            <td style="text-align:right; padding:4px 12px; color:#1a7a3c;">{{ zeile.anwesend }}</td>
+            <td style="text-align:right; padding:4px 12px; color:#b3261e;">{{ zeile.abwesend }}</td>
             <td style="text-align:right; padding:4px 12px; color:#8a6d00;">{{ zeile.offen }}</td>
             <td style="text-align:right; padding:4px 12px;">
                 {% if zeile.quote is not None %}{{ zeile.quote }}%{% else %}–{% endif %}

@@ -827,13 +827,13 @@ class TrainingAdmin(TerminAdminBase):
                 trainings = trainings_alle.filter(gruppe=Termin.GRUPPE_BEIDE)
             gesamt = trainings.count()
             zusagen_qs = Zusage.objects.filter(taenzerin=kind, termin__in=trainings)
-            zugesagt = zusagen_qs.filter(status=Zusage.STATUS_ZUGESAGT).count()
-            abgesagt = zusagen_qs.filter(status=Zusage.STATUS_ABGESAGT).count()
-            offen = gesamt - zugesagt - abgesagt
-            quote = round(zugesagt / gesamt * 100) if gesamt else None
+            anwesend = zusagen_qs.filter(anwesend=True).count()
+            abwesend = zusagen_qs.filter(anwesend=False).count()
+            offen = gesamt - anwesend - abwesend
+            quote = round(anwesend / gesamt * 100) if gesamt else None
             zeilen.append({
-                "kind": kind, "gesamt": gesamt, "zugesagt": zugesagt,
-                "abgesagt": abgesagt, "offen": offen, "quote": quote,
+                "kind": kind, "gesamt": gesamt, "anwesend": anwesend,
+                "abwesend": abwesend, "offen": offen, "quote": quote,
             })
         zeilen.sort(key=lambda z: (z["quote"] is None, -(z["quote"] or 0)))
 
