@@ -8,13 +8,33 @@
 <p>Aktuell ist kein Training geplant.</p>
 {% endif %}
 
+{% if anstehende_gruppen|length > 1 %}
+<div class="monats-nav">
+    {% for gruppe in anstehende_gruppen %}
+    <a class="monats-nav-item{% if gruppe.monat_label == aktueller_monat %} monats-nav-item-aktiv{% endif %}"
+       href="#monat-{{ forloop.counter }}" data-monat-ziel="monat-{{ forloop.counter }}">{{ gruppe.monat_label }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
 {% for gruppe in anstehende_gruppen %}
-<details class="monats-gruppe">
+<details class="monats-gruppe" id="monat-{{ forloop.counter }}" {% if gruppe.monat_label == aktueller_monat %}open{% endif %}>
     <summary class="monats-ueberschrift">{{ gruppe.monat_label }} ({{ gruppe.eintraege|length }})</summary>
     {% for eintrag in gruppe.eintraege %}
         {% include "mitglieder/_termin_karte.html" %}
     {% endfor %}
 </details>
 {% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.monats-nav-item').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            var ziel = document.getElementById(link.dataset.monatZiel);
+            if (ziel && ziel.tagName === 'DETAILS') { ziel.open = true; }
+        });
+    });
+});
+</script>
 
 {% endblock %}

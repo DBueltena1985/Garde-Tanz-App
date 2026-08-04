@@ -296,6 +296,16 @@
         .kalender-termin-punkt { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
         .kalender-termin-punkt-training { background: #1a7a3c; }
         .kalender-termin-punkt-veranstaltung { background: #1a3d7a; }
+        .monats-nav {
+            display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 0.4rem;
+            -webkit-overflow-scrolling: touch;
+        }
+        .monats-nav-item {
+            flex-shrink: 0; padding: 0.4rem 0.9rem; border-radius: 999px; background: var(--surface);
+            border: 1px solid var(--line); color: var(--ink-soft); font-size: 0.85rem; font-weight: 600;
+            text-decoration: none; white-space: nowrap;
+        }
+        .monats-nav-item-aktiv { background: var(--accent); border-color: var(--accent); color: #fff; }
         .monats-gruppe { margin-top: 1rem; }
         .monats-ueberschrift {
             color: var(--accent); border-bottom: 2px solid var(--line); padding-bottom: 0.5rem; margin-top: 1.5rem;

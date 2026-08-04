@@ -369,9 +369,12 @@ def trainings_liste(request):
         kinder_gruppen,
     ).order_by("beginn")
     anstehende_gruppen = _nach_monat_gruppieren(_termin_eintraege(anstehende_trainings, kinder, request.user))
+    jetzt = timezone.now()
+    aktueller_monat = f"{MONATSNAMEN[jetzt.month - 1]} {jetzt.year}"
 
     return render(request, "mitglieder/trainings_liste.html", {
         "anstehende_gruppen": anstehende_gruppen,
+        "aktueller_monat": aktueller_monat,
     })
 
 
