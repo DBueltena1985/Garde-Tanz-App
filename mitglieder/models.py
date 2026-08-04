@@ -4,13 +4,40 @@ from django.db import models
 from django.utils import timezone
 
 
+class Einstellungen(models.Model):
+    """App-weite Einstellungen als einzelne Zeile (Singleton), im Admin anpassbar."""
+
+    jugend_jahrgang_ab = models.PositiveIntegerField(
+        "Jugend ab Jahrgang", default=2016,
+        help_text="Tänzerinnen mit Geburtsjahr ab dieser Zahl gehören zur Gruppe 'Jugend', "
+        "ältere zu 'Junioren'. Am besten jährlich anpassen, damit die Altersgruppen aktuell bleiben.",
+    )
+
+    class Meta:
+        verbose_name = "Einstellungen"
+        verbose_name_plural = "Einstellungen"
+
+    def __str__(self):
+        return "App-Einstellungen"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def laden(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
 class Taenzerin(models.Model):
     """Ein Kind, das von einem Elternaccount verwaltet wird, inkl. Stammdaten."""
 
     GRUPPE_JUGEND = "jugend"
     GRUPPE_JUNIOREN = "junioren"
-    # Jahrgang 2016 und juenger zaehlt zur Jugend, 2015 und aelter zu den Junioren.
-    JUGEND_JAHRGANG_AB = 2016
 
     eltern = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="kinder"
@@ -111,7 +138,8 @@ class Taenzerin(models.Model):
     def gruppe(self):
         if not self.geburtsdatum:
             return None
-        return self.GRUPPE_JUGEND if self.geburtsdatum.year >= self.JUGEND_JAHRGANG_AB else self.GRUPPE_JUNIOREN
+        grenze = Einstellungen.laden().jugend_jahrgang_ab
+        return self.GRUPPE_JUGEND if self.geburtsdatum.year >= grenze else self.GRUPPE_JUNIOREN
 
     @property
     def gruppe_anzeige(self):

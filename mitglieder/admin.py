@@ -16,8 +16,8 @@ from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, Galerieordner,
-    Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Einstellungen, Feedback, Ferienzeitraum, Galeriebild,
+    Galerieordner, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -1121,6 +1121,23 @@ class NachrichtAdmin(LoeschLinkMixin, admin.ModelAdmin):
 class FerienzeitraumAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = ("name", "start_datum", "end_datum", "loeschen_link")
     ordering = ("start_datum",)
+
+
+@admin.register(Einstellungen)
+class EinstellungenAdmin(admin.ModelAdmin):
+    """Nur eine Zeile (Singleton) - Klick auf den Menüpunkt führt direkt zum Bearbeiten,
+    ohne Liste/Hinzufügen-Button."""
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        obj = Einstellungen.laden()
+        url_name = f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change"
+        return redirect(reverse(url_name, args=[obj.pk]))
 
 
 _get_app_list_ohne_anzahl = admin.site.get_app_list
