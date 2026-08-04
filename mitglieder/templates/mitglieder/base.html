@@ -119,6 +119,11 @@
         }
         .drawer-item.active { background: rgba(255,255,255,0.16); color: #fff; }
         .drawer-item svg { width: 17px; height: 17px; flex-shrink: 0; opacity: 0.9; }
+        .drawer-gruppe-titel { cursor: pointer; list-style: none; }
+        .drawer-gruppe-titel::-webkit-details-marker { display: none; }
+        .drawer-chevron { margin-left: auto; width: 15px; height: 15px; transition: transform 0.2s; }
+        .drawer-gruppe[open] .drawer-chevron { transform: rotate(90deg); }
+        .drawer-untergruppe { padding-left: 0.9rem; }
         .drawer-divider { height: 1px; background: rgba(255,255,255,0.16); margin: 0.6rem 0.5rem; }
         .drawer-footer { margin-top: auto; padding-top: 1.2rem; }
         .drawer-version { text-align: center; color: rgba(255,255,255,0.45); font-size: 0.68rem; margin-top: 0.5rem; }
@@ -418,14 +423,35 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
             Formulare
         </a>
-        <a class="drawer-item{% if request.resolver_match.url_name == 'kontakte_der_abteilungen' %} active{% endif %}" href="{% url 'kontakte_der_abteilungen' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
-            Kontakte der Abteilungen
-        </a>
-        <a class="drawer-item{% if request.resolver_match.url_name == 'vorstandschaft' %} active{% endif %}" href="{% url 'vorstandschaft' %}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>
-            Vorstandschaft
-        </a>
+        <details class="drawer-gruppe"{% if request.resolver_match.url_name == 'kontakte_der_abteilungen' or request.resolver_match.url_name == 'vorstandschaft' %} open{% endif %}>
+            <summary class="drawer-item drawer-gruppe-titel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
+                Verein
+                <svg class="drawer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            </summary>
+            <div class="drawer-untergruppe">
+                <a class="drawer-item{% if request.resolver_match.url_name == 'kontakte_der_abteilungen' %} active{% endif %}" href="{% url 'kontakte_der_abteilungen' %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>
+                    Kontakte der Abteilungen
+                </a>
+                <a class="drawer-item{% if request.resolver_match.url_name == 'vorstandschaft' %} active{% endif %}" href="{% url 'vorstandschaft' %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>
+                    Vorstandschaft
+                </a>
+                <a class="drawer-item" href="https://www.djk-oberasbach.de/DJK_Schutzkonzept_2026_final.pdf" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
+                    Kinder- und Jugendschutzkonzept
+                </a>
+                <a class="drawer-item" href="https://www.djk-oberasbach.de/images/djk_oas_satzung.pdf" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
+                    Vereinssatzung
+                </a>
+                <a class="drawer-item" href="https://www.djk-oberasbach.de/impressum.php" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5"/></svg>
+                    Impressum
+                </a>
+            </div>
+        </details>
         <a class="drawer-item{% if request.resolver_match.url_name == 'feedback_senden' %} active{% endif %}" href="{% url 'feedback_senden' %}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.8 2.6c-.9.5-1 .9-1 1.7"/><circle cx="12" cy="17" r=".3" fill="currentColor"/></svg>
             Feedback / Nachricht an die Admins
@@ -439,21 +465,6 @@
             Admin
         </a>
         {% endif %}
-
-        <div class="drawer-divider"></div>
-
-        <a class="drawer-item" href="https://www.djk-oberasbach.de/DJK_Schutzkonzept_2026_final.pdf" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
-            Kinder- und Jugendschutzkonzept
-        </a>
-        <a class="drawer-item" href="https://www.djk-oberasbach.de/images/djk_oas_satzung.pdf" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l3 3v13H6z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
-            Vereinssatzung
-        </a>
-        <a class="drawer-item" href="https://www.djk-oberasbach.de/impressum.php" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5"/></svg>
-            Impressum
-        </a>
 
         <div class="drawer-divider"></div>
 
