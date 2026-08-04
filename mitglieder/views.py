@@ -26,7 +26,7 @@ from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, Galerieordner, Nachricht,
     NewsPost, Profil, Taenzerin, Termin, Zusage,
 )
-from .utils import sichere_mail_senden
+from .utils import benutzer_name, sichere_mail_senden
 
 FAMILIEN_EINLADUNG_SALT = "familien-einladung"
 
@@ -451,6 +451,7 @@ def anmeldepunkt_austragen(request, anmeldung_id):
     if request.method == "POST":
         anmeldung.delete()
         messages.success(request, f"Du hast dich bei '{punkt.titel}' ausgetragen.")
+        _admins_ueber_austragung_benachrichtigen(request.user, punkt)
 
     return _redirect_nach_anmeldung(punkt)
 
@@ -518,6 +519,18 @@ def _admins_benachrichtigen(subject, message):
         message=message,
         from_email=None,
         recipient_list=list(admin_emails),
+    )
+
+
+def _admins_ueber_austragung_benachrichtigen(user, punkt):
+    kontext = f" bei '{punkt.termin.titel}'" if punkt.termin else ""
+    _admins_benachrichtigen(
+        subject=f"Helfer ausgetragen: {punkt.titel}",
+        message=(
+            f"{benutzer_name(user)} hat sich wieder ausgetragen bei:\n\n"
+            f"Helferpunkt: {punkt.titel}{kontext}\n\n"
+            "Im Admin-Bereich unter Helfer-/Mitbringpunkte einsehbar."
+        ),
     )
 
 
