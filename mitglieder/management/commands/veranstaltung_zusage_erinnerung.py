@@ -29,8 +29,9 @@ class Command(BaseCommand):
             )
             # "gruppe" ist bei Taenzerin eine berechnete Property (aus dem Geburtsdatum), kein
             # echtes DB-Feld - Filterung muss daher in Python passieren, nicht per .filter().
-            if veranstaltung.gruppe != Termin.GRUPPE_BEIDE:
-                kinder = [k for k in kinder if k.gruppe == veranstaltung.gruppe]
+            veranstaltung_gruppen_ids = set(veranstaltung.gruppen.values_list("id", flat=True))
+            if veranstaltung_gruppen_ids:
+                kinder = [k for k in kinder if k.gruppe and k.gruppe.id in veranstaltung_gruppen_ids]
 
             for kind in kinder:
                 zusage = Zusage.objects.filter(taenzerin=kind, termin=veranstaltung).first()

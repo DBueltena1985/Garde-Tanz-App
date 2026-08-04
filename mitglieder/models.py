@@ -4,40 +4,38 @@ from django.db import models
 from django.utils import timezone
 
 
-class Einstellungen(models.Model):
-    """App-weite Einstellungen als einzelne Zeile (Singleton), im Admin anpassbar."""
+class Gruppe(models.Model):
+    """Eine frei anlegbare Trainingsgruppe (z.B. Jugend, Junioren, Damen), der Tänzerinnen
+    anhand ihres Geburtsjahrs automatisch zugeordnet werden."""
 
-    jugend_jahrgang_ab = models.PositiveIntegerField(
-        "Jugend ab Jahrgang", default=2016,
-        help_text="Tänzerinnen mit Geburtsjahr ab dieser Zahl gehören zur Gruppe 'Jugend', "
-        "ältere zu 'Junioren'. Am besten jährlich anpassen, damit die Altersgruppen aktuell bleiben.",
+    name = models.CharField("Name", max_length=50, unique=True, help_text="z.B. Jugend, Junioren, Damen")
+    jahrgang_ab = models.IntegerField(
+        "Jahrgang ab", unique=True,
+        help_text="Tänzerinnen mit diesem Geburtsjahr oder jünger gehören zu dieser Gruppe - "
+        "es sei denn, eine andere Gruppe hat eine noch höhere Jahrgangsgrenze und passt damit besser. "
+        "Die Gruppe mit der niedrigsten Zahl fängt automatisch auch alle älteren Jahrgänge auf.",
     )
 
     class Meta:
-        verbose_name = "Einstellungen"
-        verbose_name_plural = "Einstellungen"
+        verbose_name = "Gruppe"
+        verbose_name_plural = "Gruppen"
+        ordering = ["-jahrgang_ab"]
 
     def __str__(self):
-        return "App-Einstellungen"
-
-    def save(self, *args, **kwargs):
-        self.pk = 1
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
+        return self.name
 
     @classmethod
-    def laden(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
+    def fuer_jahrgang(cls, jahr):
+        """Liefert die passende Gruppe fuer ein Geburtsjahr, oder None falls keine Gruppe existiert."""
+        gruppen = list(cls.objects.order_by("-jahrgang_ab"))
+        for gruppe in gruppen:
+            if jahr >= gruppe.jahrgang_ab:
+                return gruppe
+        return gruppen[-1] if gruppen else None
 
 
 class Taenzerin(models.Model):
     """Ein Kind, das von einem Elternaccount verwaltet wird, inkl. Stammdaten."""
-
-    GRUPPE_JUGEND = "jugend"
-    GRUPPE_JUNIOREN = "junioren"
 
     eltern = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="kinder"
@@ -59,7 +57,7 @@ class Taenzerin(models.Model):
     nachname = models.CharField("Nachname", max_length=100)
     geburtsdatum = models.DateField(
         "Geburtsdatum", null=True, blank=True,
-        help_text="Bestimmt die Trainingsgruppe (Jugend/Junioren).",
+        help_text="Bestimmt die Trainingsgruppe (siehe Verwaltung unter Gruppen).",
     )
     adresse = models.CharField("Adresse", max_length=200, blank=True)
     plz_ort = models.CharField("PLZ / Ort", max_length=100, blank=True)
@@ -138,15 +136,12 @@ class Taenzerin(models.Model):
     def gruppe(self):
         if not self.geburtsdatum:
             return None
-        grenze = Einstellungen.laden().jugend_jahrgang_ab
-        return self.GRUPPE_JUGEND if self.geburtsdatum.year >= grenze else self.GRUPPE_JUNIOREN
+        return Gruppe.fuer_jahrgang(self.geburtsdatum.year)
 
     @property
     def gruppe_anzeige(self):
-        return {
-            self.GRUPPE_JUGEND: "Jugend",
-            self.GRUPPE_JUNIOREN: "Junioren",
-        }.get(self.gruppe, "unbekannt")
+        gruppe = self.gruppe
+        return gruppe.name if gruppe else "unbekannt"
 
 
 class Profil(models.Model):
@@ -196,18 +191,12 @@ class Termin(models.Model):
         (ART_VERANSTALTUNG, "Veranstaltung"),
     ]
 
-    GRUPPE_BEIDE = "beide"
-    GRUPPE_JUGEND = "jugend"
-    GRUPPE_JUNIOREN = "junioren"
-    GRUPPE_CHOICES = [
-        (GRUPPE_BEIDE, "Beide Gruppen"),
-        (GRUPPE_JUGEND, "Jugend"),
-        (GRUPPE_JUNIOREN, "Junioren"),
-    ]
-
     titel = models.CharField("Titel", max_length=200)
     art = models.CharField("Art", max_length=20, choices=ART_CHOICES, default=ART_TRAINING)
-    gruppe = models.CharField("Gruppe", max_length=20, choices=GRUPPE_CHOICES, default=GRUPPE_BEIDE)
+    gruppen = models.ManyToManyField(
+        Gruppe, blank=True, verbose_name="Gruppen",
+        help_text="Für welche Gruppen gilt dieser Termin? Leer lassen = gilt für alle Gruppen.",
+    )
     taenzerinnen_erforderlich = models.BooleanField(
         "Tänzerinnen müssen anwesend sein (Auftritt)", default=True,
         help_text="Deaktivieren bei Veranstaltungen ohne Auftritt der Tänzerinnen, z.B. 'Ladies Night'.",

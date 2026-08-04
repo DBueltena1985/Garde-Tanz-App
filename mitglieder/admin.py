@@ -16,8 +16,8 @@ from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Einstellungen, Feedback, Ferienzeitraum, Galeriebild,
-    Galerieordner, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, Galerieordner,
+    Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -45,12 +45,14 @@ class LoeschLinkMixin:
     loeschen_link.short_description = ""
 
 
-def _relevante_kinder(gruppe):
-    """Liefert alle Tänzerinnen, deren Gruppe zum Termin passt (oder alle bei 'beide')."""
+def _relevante_kinder(termin):
+    """Liefert alle Tänzerinnen, deren Gruppe zum Termin passt (oder alle, falls der Termin
+    für keine bestimmte Gruppe eingeschränkt ist)."""
     alle = Taenzerin.objects.select_related("eltern")
-    if gruppe == Termin.GRUPPE_BEIDE:
+    gruppen_ids = set(termin.gruppen.values_list("id", flat=True))
+    if not gruppen_ids:
         return list(alle)
-    return [k for k in alle if k.gruppe == gruppe]
+    return [k for k in alle if k.gruppe and k.gruppe.id in gruppen_ids]
 
 
 class TaenzerinInline(admin.TabularInline):
@@ -278,7 +280,11 @@ class SerienTerminForm(forms.Form):
     ]
 
     titel = forms.CharField(label="Titel", max_length=200)
-    gruppe = forms.ChoiceField(label="Gruppe", choices=Termin.GRUPPE_CHOICES)
+    gruppen = forms.ModelMultipleChoiceField(
+        label="Gruppen", queryset=Gruppe.objects.all(), required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Nichts auswählen = gilt für alle Gruppen.",
+    )
     wochentag = forms.ChoiceField(label="Wochentag", choices=WOCHENTAG_CHOICES)
     startzeit = forms.TimeField(label="Startzeit", widget=forms.TimeInput(attrs={"type": "time"}))
     endzeit = forms.TimeField(label="Endzeit", required=False, widget=forms.TimeInput(attrs={"type": "time"}))
@@ -306,9 +312,13 @@ class SerieBearbeitenForm(forms.Form):
     neue_startzeit = forms.TimeField(label="Neue Startzeit", required=False, widget=forms.TimeInput(attrs={"type": "time"}))
     neue_endzeit = forms.TimeField(label="Neue Endzeit", required=False, widget=forms.TimeInput(attrs={"type": "time"}))
     neuer_ort = forms.CharField(label="Neuer Ort", max_length=200, required=False)
-    neue_gruppe = forms.ChoiceField(
-        label="Neue Gruppe", required=False,
-        choices=[("", "— unverändert —")] + Termin.GRUPPE_CHOICES,
+    gruppen_aendern = forms.BooleanField(
+        label="Gruppen ändern", required=False,
+        help_text="Aktivieren, um die Gruppen-Zuordnung zu ändern. Ohne Auswahl unten dabei = gilt für alle Gruppen.",
+    )
+    neue_gruppen = forms.ModelMultipleChoiceField(
+        label="Neue Gruppen", queryset=Gruppe.objects.all(), required=False,
+        widget=forms.CheckboxSelectMultiple,
     )
     neue_beschreibung = forms.CharField(label="Neue Beschreibung", required=False, widget=forms.Textarea(attrs={"rows": 2}))
     serie_verlaengern_bis = forms.DateField(
@@ -480,15 +490,15 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     """Gemeinsame Basis für die getrennten Training-/Veranstaltungs-Admins (gleiche DB-Tabelle)."""
 
     ART_WERT = None  # in Unterklassen setzen
-    DUPLIKAT_FELDER = ["titel", "gruppe", "beginn", "ende", "ort", "beschreibung"]
+    DUPLIKAT_FELDER = ["titel", "beginn", "ende", "ort", "beschreibung"]
 
     form = TerminForm
-    filter_horizontal = ("wichtige_trainings",)
+    filter_horizontal = ("gruppen", "wichtige_trainings")
     list_display = (
         "titel", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
         "anzahl_zusagen", "anzahl_absagen", "loeschen_link",
     )
-    list_filter = ("gruppe",)
+    list_filter = ("gruppen",)
     search_fields = ("titel",)
     date_hierarchy = "beginn"
     ordering = ("beginn",)
@@ -496,9 +506,10 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     change_list_template = "admin/mitglieder/termin_change_list.html"
 
     def gruppe_anzeige(self, obj):
-        return obj.get_gruppe_display()
+        namen = [g.name for g in obj.gruppen.all()]
+        return ", ".join(namen) if namen else "Alle Gruppen"
 
-    gruppe_anzeige.short_description = "Gruppe"
+    gruppe_anzeige.short_description = "Gruppen"
 
     def _zusagen_link(self, obj, status):
         anzahl = obj.zusagen.filter(status=status).count()
@@ -534,6 +545,17 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
         if not obj.pk:
             obj.erstellt_von = request.user
         super().save_model(request, obj, form, change)
+
+    def save_related(self, request, form, formsets, change):
+        # Muss NACH super().save_related() passieren: dort speichert Django ueber form.save_m2m()
+        # auch die Gruppen-Auswahl - vorher waere obj.gruppen noch leer, egal ob neu angelegt
+        # oder bearbeitet.
+        war_neu = not change
+        super().save_related(request, form, formsets, change)
+        obj = form.instance
+        if war_neu and obj.art == Termin.ART_VERANSTALTUNG:
+            from .signals import neue_veranstaltung_benachrichtigen
+            neue_veranstaltung_benachrichtigen(obj)
         if change and "_save_and_notify" in request.POST:
             from .signals import termin_update_benachrichtigen
             termin_update_benachrichtigen(obj)
@@ -561,7 +583,7 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             raise PermissionDenied
 
         termin = get_object_or_404(self.model, pk=object_id)
-        kinder = _relevante_kinder(termin.gruppe)
+        kinder = _relevante_kinder(termin)
 
         if request.method == "POST":
             for kind in kinder:
@@ -652,8 +674,8 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                     if daten["neuer_ort"]:
                         termin.ort = daten["neuer_ort"]
                         geaendert = True
-                    if daten["neue_gruppe"]:
-                        termin.gruppe = daten["neue_gruppe"]
+                    if daten["gruppen_aendern"]:
+                        termin.gruppen.set(daten["neue_gruppen"])
                         geaendert = True
                     if daten["neue_beschreibung"]:
                         termin.beschreibung = daten["neue_beschreibung"]
@@ -673,7 +695,10 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                             timezone.localtime(letzter_termin.ende).time() if letzter_termin.ende else None
                         )
                         ort = daten["neuer_ort"] or letzter_termin.ort
-                        gruppe = daten["neue_gruppe"] or letzter_termin.gruppe
+                        if daten["gruppen_aendern"]:
+                            gruppen_fuer_neue = list(daten["neue_gruppen"])
+                        else:
+                            gruppen_fuer_neue = list(letzter_termin.gruppen.all())
                         beschreibung = daten["neue_beschreibung"] or letzter_termin.beschreibung
 
                         naechstes_datum = letzter_lokal.date() + timedelta(days=7)
@@ -682,11 +707,12 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                             neues_ende = (
                                 timezone.make_aware(datetime.combine(naechstes_datum, endzeit)) if endzeit else None
                             )
-                            self.model.objects.create(
-                                titel=daten["titel"], art=self.ART_WERT, gruppe=gruppe,
+                            neuer_termin = self.model.objects.create(
+                                titel=daten["titel"], art=self.ART_WERT,
                                 beginn=neuer_beginn, ende=neues_ende, ort=ort,
                                 beschreibung=beschreibung, erstellt_von=request.user,
                             )
+                            neuer_termin.gruppen.set(gruppen_fuer_neue)
                             neu_erstellt += 1
                             naechstes_datum += timedelta(days=7)
 
@@ -715,6 +741,12 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             .filter(anzahl__gt=1)
         )
 
+    @staticmethod
+    def _gruppen_signatur(termin):
+        """Sortiertes Tupel der Gruppen-IDs - Termine mit unterschiedlichen Gruppen gelten
+        nicht als Duplikate, auch wenn Titel/Beginn/Ende/Ort/Beschreibung gleich sind."""
+        return tuple(sorted(g.id for g in termin.gruppen.all()))
+
     def duplikate_bereinigen(self, request):
         if not self.has_delete_permission(request):
             raise PermissionDenied
@@ -729,11 +761,15 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                     self.model.objects.filter(**filter_kwargs)
                     .annotate(n_zusagen=Count("zusagen", distinct=True), n_anmeldepunkte=Count("anmeldepunkte", distinct=True))
                     .order_by("-n_zusagen", "-n_anmeldepunkte", "id")
-                    .values_list("id", flat=True)
+                    .prefetch_related("gruppen")
                 )
-                zu_loeschen = kandidaten[1:]
-                geloescht += len(zu_loeschen)
-                self.model.objects.filter(id__in=zu_loeschen).delete()
+                nach_signatur = {}
+                for termin in kandidaten:
+                    nach_signatur.setdefault(self._gruppen_signatur(termin), []).append(termin)
+                for gleiche in nach_signatur.values():
+                    zu_loeschen = [t.id for t in gleiche[1:]]
+                    geloescht += len(zu_loeschen)
+                    self.model.objects.filter(id__in=zu_loeschen).delete()
 
             messages.success(request, f"{geloescht} doppelte Termine wurden entfernt.")
             return self._changelist_redirect()
@@ -741,8 +777,15 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
         vorschau = []
         for gruppe in gruppen:
             filter_kwargs = {feld: gruppe[feld] for feld in self.DUPLIKAT_FELDER}
-            beispiel = self.model.objects.filter(**filter_kwargs).order_by("id").first()
-            vorschau.append({"termin": beispiel, "anzahl": gruppe["anzahl"]})
+            kandidaten = list(
+                self.model.objects.filter(**filter_kwargs).order_by("id").prefetch_related("gruppen")
+            )
+            nach_signatur = {}
+            for termin in kandidaten:
+                nach_signatur.setdefault(self._gruppen_signatur(termin), []).append(termin)
+            for gleiche in nach_signatur.values():
+                if len(gleiche) > 1:
+                    vorschau.append({"termin": gleiche[0], "anzahl": len(gleiche)})
 
         return render(
             request,
@@ -773,16 +816,16 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                     ende = None
                     if daten["endzeit"]:
                         ende = timezone.make_aware(datetime.combine(aktuelles_datum, daten["endzeit"]))
-                    self.model.objects.create(
+                    neuer_termin = self.model.objects.create(
                         titel=daten["titel"],
                         art=self.ART_WERT,
-                        gruppe=daten["gruppe"],
                         beginn=beginn,
                         ende=ende,
                         ort=daten["ort"],
                         beschreibung=daten["beschreibung"],
                         erstellt_von=request.user,
                     )
+                    neuer_termin.gruppen.set(daten["gruppen"])
                     erstellt += 1
                     aktuelles_datum += timedelta(days=7)
 
@@ -822,9 +865,9 @@ class TrainingAdmin(TerminAdminBase):
         zeilen = []
         for kind in Taenzerin.objects.select_related("eltern"):
             if kind.gruppe:
-                trainings = trainings_alle.filter(Q(gruppe=Termin.GRUPPE_BEIDE) | Q(gruppe=kind.gruppe))
+                trainings = trainings_alle.filter(Q(gruppen__isnull=True) | Q(gruppen=kind.gruppe)).distinct()
             else:
-                trainings = trainings_alle.filter(gruppe=Termin.GRUPPE_BEIDE)
+                trainings = trainings_alle.filter(gruppen__isnull=True)
             gesamt = trainings.count()
             zusagen_qs = Zusage.objects.filter(taenzerin=kind, termin__in=trainings)
             anwesend = zusagen_qs.filter(anwesend=True).count()
@@ -1123,21 +1166,10 @@ class FerienzeitraumAdmin(LoeschLinkMixin, admin.ModelAdmin):
     ordering = ("start_datum",)
 
 
-@admin.register(Einstellungen)
-class EinstellungenAdmin(admin.ModelAdmin):
-    """Nur eine Zeile (Singleton) - Klick auf den Menüpunkt führt direkt zum Bearbeiten,
-    ohne Liste/Hinzufügen-Button."""
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def changelist_view(self, request, extra_context=None):
-        obj = Einstellungen.laden()
-        url_name = f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change"
-        return redirect(reverse(url_name, args=[obj.pk]))
+@admin.register(Gruppe)
+class GruppeAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("name", "jahrgang_ab", "loeschen_link")
+    ordering = ("-jahrgang_ab",)
 
 
 _get_app_list_ohne_anzahl = admin.site.get_app_list

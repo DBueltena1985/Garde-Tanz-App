@@ -2,7 +2,11 @@
     <div class="termin-head">
         <div>
             <p class="termin-title">{{ eintrag.termin.titel }}</p>
-            {% if eintrag.termin.gruppe != "beide" %}<span class="termin-group-tag">{{ eintrag.termin.get_gruppe_display }}</span>{% endif %}
+            {% if eintrag.termin.gruppen.all %}
+            <span class="termin-group-tag">
+                {% for g in eintrag.termin.gruppen.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </span>
+            {% endif %}
         </div>
         {% if eintrag.termin.taenzerinnen_erforderlich %}
         <div class="termin-summary-chip">

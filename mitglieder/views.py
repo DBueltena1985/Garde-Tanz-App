@@ -129,8 +129,8 @@ MONATSNAMEN = [
 
 
 def _fuer_gruppen_relevant(queryset, gruppen):
-    """Schränkt Termine auf 'Beide Gruppen' plus die übergebenen Gruppen ein."""
-    return queryset.filter(Q(gruppe=Termin.GRUPPE_BEIDE) | Q(gruppe__in=gruppen))
+    """Schränkt Termine auf 'gilt für alle Gruppen' (keine Gruppe zugewiesen) plus die übergebenen Gruppen ein."""
+    return queryset.filter(Q(gruppen__isnull=True) | Q(gruppen__in=gruppen)).distinct()
 
 
 def _nach_monat_gruppieren(termin_liste, offener_termin_id=None):
@@ -218,9 +218,11 @@ def _termin_eintraege(termine, kinder, user):
 
     termin_liste = []
     for termin in termine:
+        termin_gruppen_ids = set(termin.gruppen.values_list("id", flat=True))
         kinder_status = []
         for kind in kinder:
-            if termin.gruppe != Termin.GRUPPE_BEIDE and kind.gruppe != termin.gruppe:
+            kind_gruppe = kind.gruppe
+            if termin_gruppen_ids and (kind_gruppe is None or kind_gruppe.id not in termin_gruppen_ids):
                 continue
             zusage = zusagen.get((termin.id, kind.id))
             kinder_status.append({
@@ -654,10 +656,12 @@ def offene_trainings(request):
 
     termin_liste = []
     for termin in trainings:
+        termin_gruppen_ids = set(termin.gruppen.values_list("id", flat=True))
         kinder_status = []
         hat_offene = False
         for kind in kinder:
-            if termin.gruppe != Termin.GRUPPE_BEIDE and kind.gruppe != termin.gruppe:
+            kind_gruppe = kind.gruppe
+            if termin_gruppen_ids and (kind_gruppe is None or kind_gruppe.id not in termin_gruppen_ids):
                 continue
             status = zusagen.get((termin.id, kind.id), Zusage.STATUS_OFFEN)
             if status == Zusage.STATUS_OFFEN:

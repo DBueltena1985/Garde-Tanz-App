@@ -25,11 +25,13 @@ def _zeitraum_text(termin):
     return text
 
 
-def _alle_kinder_emails(gruppe=None):
-    """E-Mails aller Eltern/Mitverwalter, optional eingeschränkt auf eine Gruppe."""
+def _alle_kinder_emails(gruppen=None):
+    """E-Mails aller Eltern/Mitverwalter, optional eingeschränkt auf bestimmte Gruppen
+    (leer/None = gilt für alle Gruppen)."""
+    gruppen_ids = {g.id for g in gruppen} if gruppen else set()
     empfaenger_emails = set()
     for kind in Taenzerin.objects.select_related("eltern").prefetch_related("mitverwaltet_von"):
-        if gruppe is None or gruppe == Termin.GRUPPE_BEIDE or kind.gruppe == gruppe:
+        if not gruppen_ids or (kind.gruppe and kind.gruppe.id in gruppen_ids):
             empfaenger_emails |= eltern_emails_fuer_kind(kind)
     return empfaenger_emails
 
@@ -55,12 +57,12 @@ def termin_absage_benachrichtigen(sender, instance, **kwargs):
             )
 
 
-def neue_veranstaltung_benachrichtigen(sender, instance, created, **kwargs):
-    """Informiert passende Eltern per E-Mail über neu angelegte Veranstaltungen."""
-    if not created or instance.art != Termin.ART_VERANSTALTUNG:
-        return
-
-    for email in _alle_kinder_emails(instance.gruppe):
+def neue_veranstaltung_benachrichtigen(instance):
+    """Informiert passende Eltern per E-Mail über eine neu angelegte Veranstaltung.
+    Wird explizit aus dem Admin aufgerufen (in save_related, NACH dem Speichern der
+    Gruppen-Auswahl) statt über ein post_save-Signal, da beim Anlegen die
+    Gruppen-Zuordnung (ManyToMany) erst nach dem eigentlichen obj.save() gespeichert wird."""
+    for email in _alle_kinder_emails(instance.gruppen.all()):
         sichere_mail_senden(
             subject=f"Neue Veranstaltung: {instance.titel}",
             message=(
@@ -79,7 +81,7 @@ def termin_update_benachrichtigen(instance):
     """Informiert passende Eltern per E-Mail über eine Aktualisierung eines Termins.
     Wird NICHT automatisch bei jedem Speichern ausgelöst, sondern nur, wenn im Admin
     bewusst der Button 'Speichern und Mitglieder benachrichtigen' genutzt wurde."""
-    for email in _alle_kinder_emails(instance.gruppe):
+    for email in _alle_kinder_emails(instance.gruppen.all()):
         sichere_mail_senden(
             subject=f"Termin aktualisiert: {instance.titel}",
             message=(
@@ -174,7 +176,6 @@ def trainerteam_gruppe_macht_staff(sender, instance, action, pk_set, **kwargs):
 
 for _modell in TERMIN_MODELLE:
     pre_delete.connect(termin_absage_benachrichtigen, sender=_modell)
-    post_save.connect(neue_veranstaltung_benachrichtigen, sender=_modell)
 
 post_save.connect(neue_news_benachrichtigen, sender=NewsPost)
 post_save.connect(neue_nachricht_benachrichtigen, sender=Nachricht)
