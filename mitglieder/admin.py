@@ -485,8 +485,8 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     form = TerminForm
     filter_horizontal = ("wichtige_trainings",)
     list_display = (
-        "titel", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
-        "anzahl_zusagen", "anzahl_absagen", "anwesenheit_link", "loeschen_link",
+        "titel", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
+        "anzahl_zusagen", "anzahl_absagen", "loeschen_link",
     )
     list_filter = ("gruppe",)
     search_fields = ("titel",)
