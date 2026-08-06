@@ -552,6 +552,9 @@
     document.addEventListener('submit', function (e) {
         var form = e.target;
         if (!(form instanceof HTMLFormElement)) { return; }
+        if (form.classList.contains('zusage-form')) {
+            sessionStorage.setItem('garde-scroll-y', String(window.scrollY));
+        }
         document.documentElement.style.cursor = 'wait';
         form.querySelectorAll('button[type="submit"]').forEach(function (btn) {
             btn.disabled = true;
@@ -561,6 +564,12 @@
     }, true);
 
     document.addEventListener('DOMContentLoaded', function () {
+        var gespeicherteScrollY = sessionStorage.getItem('garde-scroll-y');
+        if (gespeicherteScrollY !== null) {
+            window.scrollTo(0, parseInt(gespeicherteScrollY, 10) || 0);
+            sessionStorage.removeItem('garde-scroll-y');
+        }
+
         var drawer = document.getElementById('drawer');
         var drawerOverlay = document.getElementById('drawer-overlay');
         var drawerOeffnen = document.getElementById('drawer-oeffnen');

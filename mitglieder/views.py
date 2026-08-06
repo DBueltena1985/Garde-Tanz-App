@@ -395,7 +395,9 @@ def _zurueck_zu_termin_seite(request, termin_id):
     statt immer zum Dashboard zu springen."""
     naechste_seite = request.POST.get("next")
     ziel = naechste_seite if naechste_seite in SEITEN_MIT_TERMIN_KARTEN else "dashboard"
-    return redirect(f"{reverse(ziel)}?offener_termin={termin_id}#termin-{termin_id}")
+    # Kein #termin-...-Anker hier: der wuerde die Seite zu der Karte hochscrollen. Die
+    # Scroll-Position wird stattdessen per JavaScript erhalten (siehe base.html).
+    return redirect(f"{reverse(ziel)}?offener_termin={termin_id}")
 
 
 @login_required
