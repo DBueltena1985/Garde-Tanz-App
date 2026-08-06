@@ -847,6 +847,18 @@ class TrainingAdmin(TerminAdminBase):
     change_list_template = "admin/mitglieder/training_change_list.html"
     exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
 
+    def changelist_view(self, request, extra_context=None):
+        # Standardmaessig nur den aktuellen Monat zeigen (sonst waechst die Liste durch die
+        # wiederkehrenden Trainings unbegrenzt). Wurde bereits innerhalb der Liste navigiert
+        # (z.B. ein anderer Monat oder "Alle Daten" angeklickt, Suche/Filter/Seite gewaehlt),
+        # soll das respektiert werden statt wieder auf den aktuellen Monat zurueckzuspringen.
+        referer = request.META.get("HTTP_REFERER", "")
+        kommt_von_derselben_liste = bool(referer) and request.path in referer
+        if not request.GET and not kommt_von_derselben_liste:
+            heute = timezone.localdate()
+            return redirect(f"{request.path}?beginn__year={heute.year}&beginn__month={heute.month}")
+        return super().changelist_view(request, extra_context)
+
     def get_urls(self):
         eigene_urls = [
             path(
