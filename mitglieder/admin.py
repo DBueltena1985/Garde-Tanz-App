@@ -848,15 +848,23 @@ class TrainingAdmin(TerminAdminBase):
     exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
 
     def changelist_view(self, request, extra_context=None):
-        # Standardmaessig nur den aktuellen Monat zeigen (sonst waechst die Liste durch die
-        # wiederkehrenden Trainings unbegrenzt). Wurde bereits innerhalb der Liste navigiert
-        # (z.B. ein anderer Monat oder "Alle Daten" angeklickt, Suche/Filter/Seite gewaehlt),
-        # soll das respektiert werden statt wieder auf den aktuellen Monat zurueckzuspringen.
+        # Standardmaessig nur einen Monat zeigen (sonst waechst die Liste durch die
+        # wiederkehrenden Trainings unbegrenzt) - und zwar den naechsten Monat, der
+        # tatsaechlich Trainings enthaelt (nicht stur den aktuellen Kalendermonat, der z.B.
+        # in den Ferien leer sein kann). Wurde bereits innerhalb der Liste navigiert (z.B. ein
+        # anderer Monat oder "Alle Daten" angeklickt, Suche/Filter/Seite gewaehlt), soll das
+        # respektiert werden statt wieder zurueckzuspringen.
         referer = request.META.get("HTTP_REFERER", "")
         kommt_von_derselben_liste = bool(referer) and request.path in referer
         if not request.GET and not kommt_von_derselben_liste:
             heute = timezone.localdate()
-            return redirect(f"{request.path}?beginn__year={heute.year}&beginn__month={heute.month}")
+            ziel_termin = (
+                self.model.objects.filter(beginn__date__gte=heute).order_by("beginn").first()
+                or self.model.objects.order_by("-beginn").first()
+            )
+            if ziel_termin:
+                lokal = timezone.localtime(ziel_termin.beginn)
+                return redirect(f"{request.path}?beginn__year={lokal.year}&beginn__month={lokal.month}")
         return super().changelist_view(request, extra_context)
 
     def get_urls(self):
