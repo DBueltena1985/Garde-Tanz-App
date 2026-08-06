@@ -140,7 +140,8 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
         ("Wichtige Daten", {"fields": ("last_login", "date_joined")}),
     )
     list_display = (
-        "first_name", "last_name", "username", "orga_team", "trainer_team", "verknuepfte_benutzer", "loeschen_link",
+        "first_name", "last_name", "username", "orga_team", "trainer_team", "verknuepfte_benutzer",
+        "sonstige_unterstuetzung", "loeschen_link",
     )
     list_filter = UserAdmin.list_filter + (UnterstuetzungFilter,)
     ordering = ("first_name", "last_name")
@@ -166,6 +167,14 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
     orga_team.short_description = "Orga-Team"
     orga_team.boolean = True
     orga_team.admin_order_field = "is_staff"
+
+    def sonstige_unterstuetzung(self, obj):
+        try:
+            return obj.profil.hilfe_sonstiges or "–"
+        except Profil.DoesNotExist:
+            return "–"
+
+    sonstige_unterstuetzung.short_description = "Kann unterstützen bei (Sonstiges)"
 
     def trainer_team(self, obj):
         return obj.groups.filter(name=TRAINERTEAM_GRUPPENNAME).exists()
