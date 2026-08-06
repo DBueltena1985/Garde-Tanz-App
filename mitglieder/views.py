@@ -133,6 +133,13 @@ def _fuer_gruppen_relevant(queryset, gruppen):
     return queryset.filter(Q(gruppen__isnull=True) | Q(gruppen__in=gruppen)).distinct()
 
 
+def _offener_termin_id(request):
+    try:
+        return int(request.GET.get("offener_termin", 0)) or None
+    except (ValueError, TypeError):
+        return None
+
+
 def _nach_monat_gruppieren(termin_liste, offener_termin_id=None):
     """Gruppiert eine Liste von Termin-Einträgen nach Monat (Reihenfolge bleibt erhalten)."""
     gruppen = []
@@ -256,10 +263,7 @@ def dashboard(request):
 
     termin_liste = _termin_eintraege(termine, kinder, request.user)
 
-    try:
-        offener_termin_id = int(request.GET.get("offener_termin", 0)) or None
-    except (ValueError, TypeError):
-        offener_termin_id = None
+    offener_termin_id = _offener_termin_id(request)
 
     veranstaltungen_gruppen = _nach_monat_gruppieren(
         [e for e in termin_liste if e["termin"].art == Termin.ART_VERANSTALTUNG], offener_termin_id
@@ -370,7 +374,9 @@ def trainings_liste(request):
         Termin.objects.filter(art=Termin.ART_TRAINING, beginn__gte=timezone.now()),
         kinder_gruppen,
     ).order_by("beginn")
-    anstehende_gruppen = _nach_monat_gruppieren(_termin_eintraege(anstehende_trainings, kinder, request.user))
+    anstehende_gruppen = _nach_monat_gruppieren(
+        _termin_eintraege(anstehende_trainings, kinder, request.user), _offener_termin_id(request)
+    )
     jetzt = timezone.now()
     aktueller_monat = f"{MONATSNAMEN[jetzt.month - 1]} {jetzt.year}"
 
@@ -378,6 +384,18 @@ def trainings_liste(request):
         "anstehende_gruppen": anstehende_gruppen,
         "aktueller_monat": aktueller_monat,
     })
+
+
+SEITEN_MIT_TERMIN_KARTEN = {"dashboard", "veranstaltungen", "trainings_liste", "offene_trainings"}
+
+
+def _zurueck_zu_termin_seite(request, termin_id):
+    """Leitet zurueck zu der Seite, von der das Formular abgeschickt wurde (Dashboard,
+    Veranstaltungen, Training, Offene Trainings), damit man nach Zu-/Absagen dort bleibt,
+    statt immer zum Dashboard zu springen."""
+    naechste_seite = request.POST.get("next")
+    ziel = naechste_seite if naechste_seite in SEITEN_MIT_TERMIN_KARTEN else "dashboard"
+    return redirect(f"{reverse(ziel)}?offener_termin={termin_id}#termin-{termin_id}")
 
 
 @login_required
@@ -394,7 +412,7 @@ def termin_zusage(request, termin_id, kind_id, status):
     zusage.status = status
     zusage.save()
     messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
-    return redirect(f"{reverse('dashboard')}?offener_termin={termin_id}#termin-{termin_id}")
+    return _zurueck_zu_termin_seite(request, termin_id)
 
 
 @login_required

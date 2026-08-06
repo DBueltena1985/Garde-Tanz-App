@@ -77,6 +77,7 @@
         <div class="termin-actions">
             <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
                 <button type="submit" class="btn-chip btn-chip-zusagen">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                     Zusagen
@@ -84,6 +85,7 @@
             </form>
             <form method="post" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'abgesagt' %}">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
                 <button type="submit" class="btn-chip btn-chip-absagen">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                     Absagen
