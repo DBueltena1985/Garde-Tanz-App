@@ -12,7 +12,7 @@ from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -749,7 +749,13 @@ def kind_bearbeiten(request, kind_id=None):
     else:
         form = TaenzerinForm(instance=kind, moegliche_nutzer=moegliche_nutzer)
 
-    return render(request, "mitglieder/kind_form.html", {"form": form, "kind": kind})
+    kind_konto_profil = None
+    if kind is not None and kind.nutzer_id:
+        kind_konto_profil, _ = Profil.objects.get_or_create(user_id=kind.nutzer_id)
+
+    return render(request, "mitglieder/kind_form.html", {
+        "form": form, "kind": kind, "kind_konto_profil": kind_konto_profil,
+    })
 
 
 @login_required
@@ -777,6 +783,37 @@ def kind_einverstaendnis_bildaufnahmen(request, kind_id, wert):
             )
 
     return redirect("kinder_liste")
+
+
+@login_required
+def kind_konto_datennutzung(request, kind_id, wert):
+    """Einverstaendnis Datennutzung fuer das EIGENE Konto eines Kindes setzen (falls das Kind
+    einen eigenen Login hat) - fuer Eltern/Mitverwalter, da das Kind dafuer ggf. noch zu jung ist."""
+    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
+
+    if not kind.nutzer_id:
+        raise Http404
+
+    if wert not in ("ja", "nein"):
+        messages.error(request, "Ungültiger Wert.")
+        return redirect("kind_bearbeiten", kind_id=kind.id)
+
+    if request.method == "POST":
+        profil, _ = Profil.objects.get_or_create(user_id=kind.nutzer_id)
+        war_erteilt = profil.einverstanden_datennutzung is True
+        profil.datennutzung_setzen(wert == "ja")
+        messages.success(request, f"Einverständnis zur Datennutzung für {kind.vorname} gespeichert.")
+        if war_erteilt and wert == "nein":
+            _admins_benachrichtigen(
+                subject=f"Einverständnis Datennutzung entzogen: {kind.vorname} {kind.nachname}",
+                message=(
+                    "Das Einverständnis zur Datennutzung für vereinsinterne Zwecke wurde soeben "
+                    f"widerrufen fuer das Konto von {kind.vorname} {kind.nachname}\n"
+                    f"Verwaltet von: {request.user.first_name or request.user.username}"
+                ),
+            )
+
+    return redirect("kind_bearbeiten", kind_id=kind.id)
 
 
 @login_required

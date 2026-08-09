@@ -29,6 +29,35 @@
 </div>
 {% endif %}
 
+{% if kind_konto_profil %}
+<div class="card">
+    <h2>Einverständnis Datennutzung (Konto von {{ kind.vorname }})</h2>
+    <p style="font-size:0.85rem; color:var(--ink-soft); margin-top:-0.4rem;">
+        {{ kind.vorname }} hat ein eigenes Login-Konto. Da das Einverständnis zur Datennutzung
+        ggf. noch nicht selbst entschieden werden kann, könnt ihr es hier als Eltern/Mitverwalter setzen.
+    </p>
+    {% if kind_konto_profil.einverstanden_datennutzung == True %}
+        <span class="status-zugesagt">✅ Einverständnis erteilt</span>
+    {% elif kind_konto_profil.einverstanden_datennutzung == False %}
+        <span class="status-abgesagt">❌ Kein Einverständnis</span>
+    {% else %}
+        <span class="status-offen">Noch nicht entschieden</span>
+    {% endif %}
+    {% if kind_konto_profil.einverstanden_datennutzung_am %}
+        <span style="font-size:0.8rem; color:var(--ink-faint);"> (zuletzt geändert am {{ kind_konto_profil.einverstanden_datennutzung_am|date:"d.m.Y H:i" }} Uhr)</span>
+    {% endif %}
+    <br><br>
+    <form method="post" action="{% url 'kind_konto_datennutzung' kind.id 'ja' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-zusagen">Einverstanden</button>
+    </form>
+    <form method="post" action="{% url 'kind_konto_datennutzung' kind.id 'nein' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-absagen">Nicht einverstanden</button>
+    </form>
+</div>
+{% endif %}
+
 <div class="card">
     <h2>{% if kind %}{{ kind.vorname }} {{ kind.nachname }} bearbeiten{% else %}Neues Kind hinzufügen{% endif %}</h2>
     <form method="post">

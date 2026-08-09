@@ -30,6 +30,11 @@ urlpatterns = [
         views.kind_einverstaendnis_bildaufnahmen,
         name="kind_einverstaendnis_bildaufnahmen",
     ),
+    path(
+        "kinder/<int:kind_id>/konto-datennutzung/<str:wert>/",
+        views.kind_konto_datennutzung,
+        name="kind_konto_datennutzung",
+    ),
     path("news/", views.news_liste, name="news_liste"),
     path("nachrichten/", views.nachrichten_liste, name="nachrichten_liste"),
     path("galerie/", views.galerie, name="galerie"),
