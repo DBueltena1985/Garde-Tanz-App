@@ -289,6 +289,8 @@ def dashboard(request):
 
     neueste_news = NewsPost.objects.all()[:3]
 
+    meine_aufgaben, offene_allgemeine_aufgaben, allgemeine_helferpunkte = _aufgaben_kontext(request.user)
+
     return render(request, "mitglieder/dashboard.html", {
         "kinder": kinder,
         "neueste_news": neueste_news,
@@ -302,6 +304,9 @@ def dashboard(request):
         "kalender_heute": heute,
         "vorheriger_monat": vorheriger_monat,
         "naechster_monat": naechster_monat,
+        "meine_aufgaben": meine_aufgaben,
+        "offene_allgemeine_aufgaben": offene_allgemeine_aufgaben,
+        "allgemeine_helferpunkte": allgemeine_helferpunkte,
     })
 
 

@@ -16,6 +16,12 @@
 </div>
 {% endif %}
 
+{% if meine_aufgaben or offene_allgemeine_aufgaben or allgemeine_helferpunkte %}
+<h2>📝 Meine ToDo's</h2>
+{% include "mitglieder/_aufgaben_abschnitt.html" %}
+<p style="margin-top:0.6rem;"><a href="{% url 'meine_aufgaben_liste' %}">Alle ToDo's ansehen</a></p>
+{% endif %}
+
 {% if neueste_news %}
 <div class="news-banner-wrap">
     <div class="news-banner" id="news-banner" data-news-url="{% url 'news_liste' %}">
