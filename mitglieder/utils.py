@@ -1,8 +1,12 @@
 import logging
 
+from django.conf import settings
 from django.core.mail import send_mail
+from django.db.models import Q
 
 logger = logging.getLogger("mitglieder")
+
+TRAINERTEAM_GRUPPENNAME = "Trainerteam"
 
 
 def sichere_mail_senden(**kwargs):
@@ -20,6 +24,20 @@ def eltern_emails_fuer_kind(kind):
     emails = {u.email for u in kind.mitverwaltet_von.all() if u.email}
     if kind.eltern.email:
         emails.add(kind.eltern.email)
+    return emails
+
+
+def trainer_und_orga_emails():
+    """E-Mails von Trainerinnen (Gruppe 'Trainerteam') und Orga-Team (is_staff)."""
+    from django.contrib.auth.models import User
+
+    emails = set(
+        User.objects.filter(Q(is_staff=True) | Q(groups__name=TRAINERTEAM_GRUPPENNAME))
+        .exclude(email="")
+        .values_list("email", flat=True)
+    )
+    if settings.ADMIN_BENACHRICHTIGUNGS_EMAIL:
+        emails.add(settings.ADMIN_BENACHRICHTIGUNGS_EMAIL)
     return emails
 
 

@@ -127,6 +127,23 @@ class Taenzerin(models.Model):
         self.stammdaten_bestaetigt_am = timezone.now()
         self.save(update_fields=["stammdaten_bestaetigt_am"])
 
+    @property
+    def fehlende_pflichtfelder(self):
+        """Namen der Pflichtfelder, die noch nicht ausgefüllt sind (unabhängig vom Bestätigt-Status)."""
+        pflichtfelder = [
+            "schuhgroesse", "kleidergroesse", "notfallkontakt_name", "notfallkontakt_telefon",
+        ]
+        fehlend = [
+            self._meta.get_field(feld).verbose_name
+            for feld in pflichtfelder
+            if not getattr(self, feld)
+        ]
+        if self.alleine_nach_hause is None:
+            fehlend.append(self._meta.get_field("alleine_nach_hause").verbose_name)
+        elif self.alleine_nach_hause is False and not self.abholberechtigte:
+            fehlend.append(self._meta.get_field("abholberechtigte").verbose_name)
+        return fehlend
+
     def einverstaendnis_bildaufnahmen_setzen(self, wert):
         self.einverstaendnis_bildaufnahmen = wert
         self.einverstaendnis_bildaufnahmen_am = timezone.now()
