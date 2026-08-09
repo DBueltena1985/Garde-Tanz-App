@@ -724,9 +724,12 @@ def kind_bearbeiten(request, kind_id=None):
         kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
 
     mitverwalter, einladende = _verbundene_mitglieder(request.user)
-    moegliche_nutzer = User.objects.filter(
-        Q(id=request.user.id) | Q(id__in=[u.id for u in mitverwalter | einladende])
-    ).filter(Q(taenzerin_konto__isnull=True) | Q(taenzerin_konto=kind))
+    infrage_kommend = Q(id=request.user.id) | Q(id__in=[u.id for u in mitverwalter | einladende])
+    if kind is not None and kind.nutzer_id:
+        infrage_kommend |= Q(id=kind.nutzer_id)
+    moegliche_nutzer = User.objects.filter(infrage_kommend).filter(
+        Q(taenzerin_konto__isnull=True) | Q(taenzerin_konto=kind)
+    )
 
     if request.method == "POST":
         form = TaenzerinForm(request.POST, instance=kind, moegliche_nutzer=moegliche_nutzer)
