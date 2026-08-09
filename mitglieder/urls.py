@@ -55,4 +55,9 @@ urlpatterns = [
         views.cron_veranstaltung_erinnerung,
         name="cron_veranstaltung_erinnerung",
     ),
+    path(
+        "cron/stammdaten-unvollstaendig/<str:secret>/",
+        views.cron_stammdaten_unvollstaendig,
+        name="cron_stammdaten_unvollstaendig",
+    ),
 ]
