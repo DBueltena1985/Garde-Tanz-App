@@ -65,4 +65,9 @@ urlpatterns = [
         views.cron_stammdaten_unvollstaendig,
         name="cron_stammdaten_unvollstaendig",
     ),
+    path(
+        "cron/todo-erinnerung/<str:secret>/",
+        views.cron_todo_erinnerung,
+        name="cron_todo_erinnerung",
+    ),
 ]

@@ -1044,3 +1044,12 @@ def cron_stammdaten_unvollstaendig(request, secret):
         raise PermissionDenied
     call_command("stammdaten_unvollstaendig_melden")
     return HttpResponse("OK")
+
+
+def cron_todo_erinnerung(request, secret):
+    """Wie cron_training_erinnerung, nur fuer todo_erinnerung (Erinnerung an offene,
+    zugewiesene ToDo's/Aufgaben)."""
+    if not settings.CRON_SECRET or not secrets.compare_digest(secret, settings.CRON_SECRET):
+        raise PermissionDenied
+    call_command("todo_erinnerung")
+    return HttpResponse("OK")
