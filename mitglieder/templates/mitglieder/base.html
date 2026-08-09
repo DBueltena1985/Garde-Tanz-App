@@ -267,6 +267,14 @@
             outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
         }
         label { font-weight: 600; }
+        .passwort-wrapper { position: relative; margin-bottom: 0.9rem; }
+        .passwort-wrapper input { padding-right: 2.6rem; margin-bottom: 0; }
+        .passwort-toggle {
+            position: absolute; top: 0.35rem; right: 0.3rem; width: 2.1rem; height: 2.1rem;
+            display: flex; align-items: center; justify-content: center;
+            background: none; border: none; cursor: pointer; color: var(--ink-soft); padding: 0;
+        }
+        .passwort-toggle svg { width: 20px; height: 20px; }
         .messages { list-style: none; padding: 0; }
         .messages li { background: #e6f4ea; color: #1a7a3c; padding: 0.5rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; }
         ul.errorlist {
@@ -613,6 +621,36 @@
                 schalterAktualisieren();
             });
         }
+
+        var AUGE_OFFEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+            + 'stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>'
+            + '<circle cx="12" cy="12" r="3"/></svg>';
+        var AUGE_ZU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+            + 'stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 5.1A11 11 0 0112 5c7 0 11 7 11 7a13.3 13.3 0 01-3.2 4.2M6.6 6.6A13.3 13.3 0 001 12s4 7 11 7a11 11 0 005.1-1.1"/>'
+            + '<path d="M10.6 10.6a2 2 0 002.8 2.8"/><path d="M3 3l18 18"/></svg>';
+
+        document.querySelectorAll('input[type="password"]').forEach(function (feld) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'passwort-wrapper';
+            feld.parentNode.insertBefore(wrapper, feld);
+            wrapper.appendChild(feld);
+
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'passwort-toggle';
+            button.setAttribute('aria-label', 'Passwort anzeigen');
+            button.setAttribute('aria-pressed', 'false');
+            button.innerHTML = AUGE_OFFEN;
+            wrapper.appendChild(button);
+
+            button.addEventListener('click', function () {
+                var sichtbar = feld.type === 'text';
+                feld.type = sichtbar ? 'password' : 'text';
+                button.innerHTML = sichtbar ? AUGE_OFFEN : AUGE_ZU;
+                button.setAttribute('aria-pressed', sichtbar ? 'false' : 'true');
+                button.setAttribute('aria-label', sichtbar ? 'Passwort anzeigen' : 'Passwort verbergen');
+            });
+        });
     });
     </script>
 </body>
