@@ -142,6 +142,8 @@ class Taenzerin(models.Model):
             fehlend.append(self._meta.get_field("alleine_nach_hause").verbose_name)
         elif self.alleine_nach_hause is False and not self.abholberechtigte:
             fehlend.append(self._meta.get_field("abholberechtigte").verbose_name)
+        if self.einverstaendnis_bildaufnahmen is None:
+            fehlend.append(self._meta.get_field("einverstaendnis_bildaufnahmen").verbose_name)
         return fehlend
 
     def einverstaendnis_bildaufnahmen_setzen(self, wert):
