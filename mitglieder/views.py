@@ -122,14 +122,6 @@ def _verbundene_mitglieder(user):
     return mitverwalter, einladende
 
 
-def _kinder_mit_eigenem_konto(user):
-    """Kinder, die dieser Benutzer sieht/verwaltet und die zusätzlich ein eigenes Login-Konto haben."""
-    kinder = Taenzerin.objects.filter(
-        Q(eltern=user) | Q(mitverwaltet_von=user)
-    ).filter(nutzer__isnull=False).exclude(nutzer=user).select_related("nutzer").distinct()
-    return list(kinder)
-
-
 MONATSNAMEN = [
     "Januar", "Februar", "März", "April", "Mai", "Juni",
     "Juli", "August", "September", "Oktober", "November", "Dezember",
@@ -721,7 +713,7 @@ def impersonation_beenden(request):
 
 @login_required
 def kinder_liste(request):
-    kinder = _kinder_fuer_nutzer(request.user)
+    kinder = _kinder_fuer_nutzer(request.user).select_related("nutzer")
     return render(request, "mitglieder/kinder_liste.html", {"kinder": kinder})
 
 
@@ -954,7 +946,6 @@ def konto_bearbeiten(request):
         reverse("familie_einladen", args=[_familien_einladungs_token(request.user)])
     )
     verbundene_mitverwalter, verbundene_einladende = _verbundene_mitglieder(request.user)
-    kinder_mit_eigenem_konto = _kinder_mit_eigenem_konto(request.user)
 
     return render(request, "mitglieder/konto_form.html", {
         "form": form,
@@ -963,7 +954,6 @@ def konto_bearbeiten(request):
         "einladungslink": einladungslink,
         "verbundene_mitverwalter": verbundene_mitverwalter,
         "verbundene_einladende": verbundene_einladende,
-        "kinder_mit_eigenem_konto": kinder_mit_eigenem_konto,
     })
 
 

@@ -17,6 +17,13 @@
         Stammdaten noch nicht bestätigt.
     {% endif %}
     {% if kind.bestaetigung_faellig %}<span class="status-abgesagt">Bestätigung fällig</span>{% endif %}
+    {% if kind.nutzer and kind.nutzer != request.user %}
+        <br>
+        <span style="font-size:0.9rem;">
+            ✅ Eigenes Konto verknüpft
+            ({{ kind.nutzer.first_name|default:kind.nutzer.username }}{% if kind.nutzer.last_name %} {{ kind.nutzer.last_name }}{% endif %}{% if kind.nutzer.email %}, {{ kind.nutzer.email }}{% endif %})
+        </span>
+    {% endif %}
     <br><br>
     <a href="{% url 'kind_bearbeiten' kind.id %}" class="btn btn-zusagen">Bearbeiten</a>
 </div>
