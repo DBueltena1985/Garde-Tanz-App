@@ -98,12 +98,15 @@ class UnterstuetzungFilter(admin.SimpleListFilter):
             ("hilfe_fotos_social_media", "Fotos / Social Media"),
             ("hilfe_organisation", "Organisation"),
             ("hilfe_sponsoring_kontakte", "Sponsoring / Kontakte"),
+            ("hilfe_sonstiges", "Sonstiges"),
         )
 
     def queryset(self, request, queryset):
         wert = self.value()
         if not wert:
             return queryset
+        if wert == "hilfe_sonstiges":
+            return queryset.filter(profil__isnull=False).exclude(profil__hilfe_sonstiges="")
         return queryset.filter(**{f"profil__{wert}": True})
 
 
