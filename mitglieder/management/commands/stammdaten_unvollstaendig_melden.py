@@ -16,20 +16,30 @@ class Command(BaseCommand):
         "erinnert."
     )
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--dry-run", action="store_true",
+            help="Nur anzeigen, was verschickt werden wuerde, ohne tatsaechlich Mails zu senden.",
+        )
+
     def handle(self, *args, **options):
-        angeschrieben, offene_kinder = self._kinder_pruefen()
-        offene_konten = self._konten_pruefen()
+        trockenlauf = options["dry_run"]
+        if trockenlauf:
+            self.stdout.write(self.style.WARNING("Trockenlauf - es werden KEINE Mails versendet.\n"))
+
+        angeschrieben, offene_kinder = self._kinder_pruefen(trockenlauf)
+        offene_konten = self._konten_pruefen(trockenlauf)
 
         if offene_kinder or offene_konten:
-            self._trainer_zusammenfassung_senden(offene_kinder, offene_konten)
+            self._trainer_zusammenfassung_senden(offene_kinder, offene_konten, trockenlauf)
 
         self.stdout.write(self.style.SUCCESS(
-            f"{angeschrieben} Kind(er) mit Erinnerungs-Mail(s) angeschrieben, "
+            f"\n{angeschrieben} Kind(er) mit Erinnerungs-Mail(s) angeschrieben, "
             f"{len(offene_kinder)} Kind(er) mit fehlenden Pflichtfeldern, "
             f"{len(offene_konten)} Konto/Konten mit offenem Einverständnis Datennutzung."
         ))
 
-    def _kinder_pruefen(self):
+    def _kinder_pruefen(self, trockenlauf):
         kinder = Taenzerin.objects.select_related("eltern").filter(eltern__is_active=True).prefetch_related(
             "mitverwaltet_von"
         )
@@ -53,23 +63,26 @@ class Command(BaseCommand):
 
             fehlend_liste = "\n".join(f"- {feld}" for feld in fehlend)
             for email in empfaenger:
-                sichere_mail_senden(
-                    subject=f"Bitte fehlende Angaben zu {kind.vorname} ergänzen – Garde Tanz",
-                    message=(
-                        f"Hallo,\n\n"
-                        f"bei {kind.vorname} fehlen noch folgende Angaben in der Garde-Tanz-App "
-                        "(unter „Meine Kinder“ zu ergänzen):\n\n"
-                        f"{fehlend_liste}\n\n"
-                        "Bitte einmal kurz nachtragen - danke!"
-                    ),
-                    from_email=None,
-                    recipient_list=[email],
-                )
+                if trockenlauf:
+                    self.stdout.write(f"[würde senden] {email}: fehlende Angaben zu {kind.vorname} ({', '.join(fehlend)})")
+                else:
+                    sichere_mail_senden(
+                        subject=f"Bitte fehlende Angaben zu {kind.vorname} ergänzen – Garde Tanz",
+                        message=(
+                            f"Hallo,\n\n"
+                            f"bei {kind.vorname} fehlen noch folgende Angaben in der Garde-Tanz-App "
+                            "(unter „Meine Kinder“ zu ergänzen):\n\n"
+                            f"{fehlend_liste}\n\n"
+                            "Bitte einmal kurz nachtragen - danke!"
+                        ),
+                        from_email=None,
+                        recipient_list=[email],
+                    )
             angeschrieben += 1
 
         return angeschrieben, offene_kinder
 
-    def _konten_pruefen(self):
+    def _konten_pruefen(self, trockenlauf):
         """Benutzer, deren Einverstaendnis Datennutzung im eigenen Konto noch offen ist
         (weder erteilt noch abgelehnt) - unabhaengig von etwaigen Kindern."""
         offene_konten = []
@@ -79,22 +92,29 @@ class Command(BaseCommand):
                 continue
 
             offene_konten.append(user)
-            sichere_mail_senden(
-                subject="Bitte Einverständnis Datennutzung angeben – Garde Tanz",
-                message=(
-                    f"Hallo,\n\n"
-                    "bei deinem Konto in der Garde-Tanz-App steht das Einverständnis zur "
-                    "Datennutzung noch aus (weder erteilt noch abgelehnt).\n\n"
-                    "Bitte unter „Mein Konto“ kurz Bescheid geben - danke!"
-                ),
-                from_email=None,
-                recipient_list=[user.email],
-            )
+            if trockenlauf:
+                self.stdout.write(f"[würde senden] {user.email}: Einverständnis Datennutzung offen ({benutzer_name(user)})")
+            else:
+                sichere_mail_senden(
+                    subject="Bitte Einverständnis Datennutzung angeben – Garde Tanz",
+                    message=(
+                        f"Hallo,\n\n"
+                        "bei deinem Konto in der Garde-Tanz-App steht das Einverständnis zur "
+                        "Datennutzung noch aus (weder erteilt noch abgelehnt).\n\n"
+                        "Bitte unter „Mein Konto“ kurz Bescheid geben - danke!"
+                    ),
+                    from_email=None,
+                    recipient_list=[user.email],
+                )
         return offene_konten
 
-    def _trainer_zusammenfassung_senden(self, offene_kinder, offene_konten):
+    def _trainer_zusammenfassung_senden(self, offene_kinder, offene_konten, trockenlauf):
         trainer_emails = trainer_und_orga_emails()
         if not trainer_emails:
+            return
+
+        if trockenlauf:
+            self.stdout.write(f"[würde senden] Sammel-Mail ans Team an: {', '.join(trainer_emails)}")
             return
 
         abschnitte = []
