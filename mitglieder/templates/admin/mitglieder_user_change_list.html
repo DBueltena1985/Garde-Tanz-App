@@ -17,6 +17,7 @@
         <option value="hilfe_fotos_social_media" {% if request.GET.kann_unterstuetzen_bei == "hilfe_fotos_social_media" %}selected{% endif %}>Fotos / Social Media</option>
         <option value="hilfe_organisation" {% if request.GET.kann_unterstuetzen_bei == "hilfe_organisation" %}selected{% endif %}>Organisation</option>
         <option value="hilfe_sponsoring_kontakte" {% if request.GET.kann_unterstuetzen_bei == "hilfe_sponsoring_kontakte" %}selected{% endif %}>Sponsoring / Kontakte</option>
+        <option value="hilfe_sonstiges" {% if request.GET.kann_unterstuetzen_bei == "hilfe_sonstiges" %}selected{% endif %}>Sonstiges</option>
     </select>
 </form>
 {% endblock %}
