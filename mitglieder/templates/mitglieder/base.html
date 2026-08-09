@@ -39,6 +39,11 @@
             --ink-soft: #6e5b58;
             --ink-faint: #a4908d;
             --line: #f0dcda;
+            --feiertag-bg: #fbdada;
+            --feiertag-ink: #b3261e;
+            --ferien-bg: #fdf3d8;
+            --ferien-ink: #8a6d00;
+            --kalender-leer-bg: #fafafa;
         }
         :root[data-theme="dark"] {
             --accent-soft: #3a1216;
@@ -49,6 +54,11 @@
             --ink-soft: #c9b4b0;
             --ink-faint: #8a726e;
             --line: #3a2926;
+            --feiertag-bg: #4a1d21;
+            --feiertag-ink: #ff8a80;
+            --ferien-bg: #3d3011;
+            --ferien-ink: #e0c46b;
+            --kalender-leer-bg: #1c1412;
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) {
@@ -60,6 +70,11 @@
                 --ink-soft: #c9b4b0;
                 --ink-faint: #8a726e;
                 --line: #3a2926;
+                --feiertag-bg: #4a1d21;
+                --feiertag-ink: #ff8a80;
+                --ferien-bg: #3d3011;
+                --ferien-ink: #e0c46b;
+                --kalender-leer-bg: #1c1412;
             }
         }
         * { box-sizing: border-box; }
@@ -289,14 +304,14 @@
         table.kalender { width: 100%; border-collapse: collapse; table-layout: fixed; }
         table.kalender th { font-size: 0.68rem; color: var(--accent); padding: 0.2rem 0.1rem; text-align: center; }
         table.kalender td { border: 1px solid var(--line); vertical-align: top; height: 2.6rem; padding: 0.15rem 0.05rem; width: 14.28%; }
-        .kalender-leer { background: #fafafa; }
+        .kalender-leer { background: var(--kalender-leer-bg); }
         .kalender-tagnummer { font-size: 0.7rem; color: var(--ink-faint); text-align: center; }
         .kalender-heute { background: var(--accent-soft); border: 2px solid var(--accent); }
         .kalender-heute .kalender-tagnummer { color: var(--accent); font-weight: 700; }
-        .kalender-feiertag { background: #fbdada; }
-        .kalender-feiertag .kalender-tagnummer { color: #b3261e; font-weight: 700; }
-        .kalender-ferien { background: #fdf3d8; }
-        .kalender-ferien .kalender-tagnummer { color: #8a6d00; }
+        .kalender-feiertag { background: var(--feiertag-bg); }
+        .kalender-feiertag .kalender-tagnummer { color: var(--feiertag-ink); font-weight: 700; }
+        .kalender-ferien { background: var(--ferien-bg); }
+        .kalender-ferien .kalender-tagnummer { color: var(--ferien-ink); }
         .kalender-heute.kalender-feiertag, .kalender-heute.kalender-ferien { border: 2px solid var(--accent); }
         .kalender-legende { list-style: none; padding: 0; margin: 0.7rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
         .kalender-legende li { padding: 0.1rem 0; }
