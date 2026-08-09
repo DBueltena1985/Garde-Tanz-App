@@ -76,6 +76,18 @@
         verbunden.
     </p>
     {% endif %}
+
+    {% if kinder_mit_eigenem_konto %}
+    <p style="margin-top:1rem;"><strong>✅ Eigenes Konto bereits verknüpft:</strong></p>
+    <ul style="margin-top:0.3rem;">
+        {% for kind in kinder_mit_eigenem_konto %}
+        <li>
+            {{ kind.vorname }} {{ kind.nachname }} hat bereits ein eigenes Login
+            ({{ kind.nutzer.first_name|default:kind.nutzer.username }}{% if kind.nutzer.last_name %} {{ kind.nutzer.last_name }}{% endif %}{% if kind.nutzer.email %}, {{ kind.nutzer.email }}{% endif %})
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 </div>
 
 <script>
