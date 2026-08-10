@@ -1076,7 +1076,8 @@ class ZusageAdmin(LoeschLinkMixin, admin.ModelAdmin):
 
 @admin.register(NewsPost)
 class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("titel", "autor", "erstellt_am", "loeschen_link")
+    list_display = ("titel", "autor", "erstellt_am", "anzeigen_bis", "loeschen_link")
+    list_editable = ("anzeigen_bis",)
     readonly_fields = ("autor", "erstellt_am")
 
     def save_model(self, request, obj, form, change):

@@ -287,7 +287,7 @@ def dashboard(request):
 
     kalender_wochen, kalender_legende = _kalender_monat(jahr, monat, kinder_gruppen)
 
-    neueste_news = NewsPost.objects.all()[:3]
+    neueste_news = NewsPost.objects.aktuell()[:3]
 
     meine_aufgaben, offene_allgemeine_aufgaben, allgemeine_helferpunkte = _aufgaben_kontext(request.user)
 
@@ -883,7 +883,7 @@ def formulare_liste(request):
 
 @login_required
 def news_liste(request):
-    news = NewsPost.objects.all()
+    news = NewsPost.objects.aktuell()
     return render(request, "mitglieder/news_liste.html", {"news": news})
 
 

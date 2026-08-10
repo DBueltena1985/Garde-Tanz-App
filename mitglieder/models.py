@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -463,6 +464,13 @@ class AufgabeErledigung(models.Model):
         return f"{self.aufgabe.titel} – {self.taenzerin} erledigt"
 
 
+class NewsPostManager(models.Manager):
+    def aktuell(self):
+        """Nur Beitraege, deren 'Anzeigen bis'-Datum noch nicht erreicht ist (oder leer ist)."""
+        heute = timezone.localdate()
+        return self.filter(Q(anzeigen_bis__isnull=True) | Q(anzeigen_bis__gte=heute))
+
+
 class NewsPost(models.Model):
     titel = models.CharField("Titel", max_length=200)
     text = models.TextField("Text", blank=True, help_text="Optional, wenn stattdessen nur ein Bild gezeigt werden soll.")
@@ -471,6 +479,12 @@ class NewsPost(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="news_posts"
     )
     erstellt_am = models.DateTimeField(auto_now_add=True)
+    anzeigen_bis = models.DateField(
+        "Anzeigen bis", null=True, blank=True,
+        help_text="Optional: ab dem Folgetag wird der Beitrag nicht mehr angezeigt. Leer = zeitlich unbegrenzt.",
+    )
+
+    objects = NewsPostManager()
 
     class Meta:
         verbose_name = "News-Beitrag"
