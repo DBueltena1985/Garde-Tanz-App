@@ -18,8 +18,8 @@ class Gruppe(models.Model):
     )
 
     class Meta:
-        verbose_name = "Gruppe"
-        verbose_name_plural = "Gruppen"
+        verbose_name = "Trainingsgruppe"
+        verbose_name_plural = "Trainingsgruppen"
         ordering = ["-jahrgang_ab"]
 
     def __str__(self):
@@ -348,8 +348,8 @@ class Anmeldepunkt(models.Model):
     )
 
     class Meta:
-        verbose_name = "Helfer-/Mitbringpunkt"
-        verbose_name_plural = "Helfer-/Mitbringpunkte"
+        verbose_name = "Helfer-/Mitbringliste"
+        verbose_name_plural = "Helfer-/Mitbringlisten"
 
     def __str__(self):
         return f"{self.titel} ({self.termin.titel})" if self.termin else self.titel

@@ -15,6 +15,8 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
+from formulare.models import Formular
+
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, Galerieordner,
     Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
@@ -1205,8 +1207,13 @@ class FerienzeitraumAdmin(LoeschLinkMixin, admin.ModelAdmin):
 
 @admin.register(Gruppe)
 class GruppeAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("name", "jahrgang_ab", "loeschen_link")
+    list_display = ("name", "jahrgang_ab", "anzahl_taenzerinnen", "loeschen_link")
     ordering = ("-jahrgang_ab",)
+
+    def anzahl_taenzerinnen(self, obj):
+        return sum(1 for kind in Taenzerin.objects.all() if kind.gruppe == obj)
+
+    anzahl_taenzerinnen.short_description = "Tänzerinnen"
 
 
 _get_app_list_ohne_anzahl = admin.site.get_app_list
@@ -1222,20 +1229,64 @@ def _veranstaltungen_offen_text(model_name):
     return f"{offen} offene {model_name}"
 
 
+def _mit_anzahl_versehen(model):
+    """Setzt fuer ein einzelnes Modell im Admin-Menue den Anzeigenamen inkl. Anzahl (mutiert
+    das übergebene dict nicht, sondern gibt eine Kopie zurueck)."""
+    model = dict(model)
+    model_class = model.get("model")
+    if model_class is None or model_class in _MODELLE_OHNE_ANZAHL:
+        return model
+    if model_class is VeranstaltungTermin:
+        model["name"] = _veranstaltungen_offen_text(model["name"])
+    else:
+        anzahl = model_class._default_manager.count()
+        model["name"] = f"{anzahl} {model['name']}"
+    return model
+
+
+# Das Admin-Menue wird fachlich in drei Abschnitte umgruppiert (unabhaengig von den
+# technischen Django-Apps auth/mitglieder/formulare), jeweils in dieser Reihenfolge.
+_ADMIN_ABSCHNITTE = [
+    ("Mitglieder", [User, Taenzerin, Gruppe]),
+    ("Verwaltung", [
+        TrainingTermin, VeranstaltungTermin, Aufgabe, Anmeldepunkt, NewsPost, Ferienzeitraum, Zusage, Group,
+    ]),
+    ("Sonstiges", [Feedback, Nachricht, Galerieordner, Formular]),
+]
+
+
 def _get_app_list_mit_anzahl(request, app_label=None):
-    """Zeigt vor jedem Modellnamen im Admin-Menü die Anzahl der Datensätze an."""
+    """Zeigt vor jedem Modellnamen im Admin-Menü die Anzahl der Datensätze an und gruppiert
+    das Menue (nur auf der Hauptseite, app_label=None) in die fachlichen Abschnitte oben um."""
     app_list = _get_app_list_ohne_anzahl(request, app_label=app_label)
+
+    if app_label is not None:
+        for app in app_list:
+            app["models"] = [_mit_anzahl_versehen(model) for model in app["models"]]
+        return app_list
+
+    modelle_nach_klasse = {}
     for app in app_list:
         for model in app["models"]:
             model_class = model.get("model")
-            if model_class is None or model_class in _MODELLE_OHNE_ANZAHL:
-                continue
-            if model_class is VeranstaltungTermin:
-                model["name"] = _veranstaltungen_offen_text(model["name"])
-            else:
-                anzahl = model_class._default_manager.count()
-                model["name"] = f"{anzahl} {model['name']}"
-    return app_list
+            if model_class is not None:
+                modelle_nach_klasse[model_class] = model
+
+    abschnitte = []
+    for name, klassen in _ADMIN_ABSCHNITTE:
+        modelle = [
+            _mit_anzahl_versehen(modelle_nach_klasse[klasse])
+            for klasse in klassen if klasse in modelle_nach_klasse
+        ]
+        if modelle:
+            abschnitte.append({
+                "name": name,
+                "app_label": name.lower(),
+                "app_url": reverse("admin:index"),
+                "has_module_perms": True,
+                "models": modelle,
+            })
+    return abschnitte
 
 
 admin.site.get_app_list = _get_app_list_mit_anzahl
