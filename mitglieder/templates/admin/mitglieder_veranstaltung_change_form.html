@@ -1,0 +1,9 @@
+{% extends "admin/mitglieder_termin_change_form.html" %}
+{% load admin_urls %}
+
+{% block object-tools-items %}
+{% if not add %}
+<li><a href="{% url opts|admin_urlname:'bilder_hochladen' original.pk %}" class="addlink">📷 Bilder hochladen</a></li>
+{% endif %}
+{{ block.super }}
+{% endblock %}

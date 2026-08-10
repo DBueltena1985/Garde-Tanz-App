@@ -926,6 +926,10 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline, GalerieordnerVeranstaltungInline]
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
+    # Ueberschreibt sowohl BildBulkUploadMixin.change_form_template als auch
+    # TerminAdminBase.change_form_template mit einer Variante, die beides kombiniert
+    # (Bilder-hochladen-Button UND Speichern-und-benachrichtigen-Button).
+    change_form_template = "admin/mitglieder_veranstaltung_change_form.html"
 
     def loeschen_link(self, obj):
         """Versteckte Markierung mit dem Beginn-Zeitpunkt (als Unix-Millisekunden, um
