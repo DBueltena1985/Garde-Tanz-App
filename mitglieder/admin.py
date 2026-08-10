@@ -1226,7 +1226,7 @@ _MODELLE_OHNE_ANZAHL = (TrainingTermin, Zusage)
 
 def _veranstaltungen_offen_text(model_name):
     offen = VeranstaltungTermin.objects.filter(beginn__gte=timezone.now()).count()
-    return f"{offen} offene {model_name}"
+    return f"{model_name} ({offen} offen)"
 
 
 def _mit_anzahl_versehen(model):
@@ -1240,7 +1240,7 @@ def _mit_anzahl_versehen(model):
         model["name"] = _veranstaltungen_offen_text(model["name"])
     else:
         anzahl = model_class._default_manager.count()
-        model["name"] = f"{anzahl} {model['name']}"
+        model["name"] = f"{model['name']} ({anzahl})"
     return model
 
 
