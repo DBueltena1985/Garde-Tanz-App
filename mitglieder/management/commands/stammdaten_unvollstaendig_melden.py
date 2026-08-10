@@ -2,7 +2,9 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
 from mitglieder.models import Profil, Taenzerin
-from mitglieder.utils import benutzer_name, eltern_emails_fuer_kind, sichere_mail_senden, trainer_und_orga_emails
+from mitglieder.utils import (
+    absolute_url, benutzer_name, eltern_emails_fuer_kind, sichere_mail_senden, trainer_und_orga_emails,
+)
 
 
 class Command(BaseCommand):
@@ -62,6 +64,7 @@ class Command(BaseCommand):
                 continue
 
             fehlend_liste = "\n".join(f"- {feld}" for feld in fehlend)
+            link = absolute_url("kind_bearbeiten", kind.id)
             for email in empfaenger:
                 if trockenlauf:
                     self.stdout.write(f"[würde senden] {email}: fehlende Angaben zu {kind.vorname} ({', '.join(fehlend)})")
@@ -70,9 +73,9 @@ class Command(BaseCommand):
                         subject=f"Bitte fehlende Angaben zu {kind.vorname} ergänzen – Garde Tanz",
                         message=(
                             f"Hallo,\n\n"
-                            f"bei {kind.vorname} fehlen noch folgende Angaben in der Garde-Tanz-App "
-                            "(unter „Meine Kinder“ zu ergänzen):\n\n"
+                            f"bei {kind.vorname} fehlen noch folgende Angaben in der Garde-Tanz-App:\n\n"
                             f"{fehlend_liste}\n\n"
+                            f"Hier direkt ergänzen: {link}\n\n"
                             "Bitte einmal kurz nachtragen - danke!"
                         ),
                         from_email=None,
@@ -101,7 +104,8 @@ class Command(BaseCommand):
                         f"Hallo,\n\n"
                         "bei deinem Konto in der Garde-Tanz-App steht das Einverständnis zur "
                         "Datennutzung noch aus (weder erteilt noch abgelehnt).\n\n"
-                        "Bitte unter „Mein Konto“ kurz Bescheid geben - danke!"
+                        f"Hier direkt entscheiden: {absolute_url('konto_bearbeiten')}\n\n"
+                        "Bitte kurz Bescheid geben - danke!"
                     ),
                     from_email=None,
                     recipient_list=[user.email],

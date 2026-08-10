@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from mitglieder.models import Aufgabe
-from mitglieder.utils import sichere_mail_senden
+from mitglieder.utils import absolute_url, sichere_mail_senden
 
 VORLAUF_TAGE = (7, 1)
 
@@ -66,11 +66,13 @@ class Command(BaseCommand):
             zeilen = []
             for aufgabe, datum in faellige_aufgaben:
                 tage_bis_faellig = (datum - heute).days
+                link = absolute_url("meine_aufgaben_liste", fragment=f"aufgabe-{aufgabe.id}")
                 zeile = f"- {aufgabe.titel}"
                 if aufgabe.termin:
                     zeile += f" ({aufgabe.termin.titel})"
                 zeile += f" – fällig am {datum:%d.%m.%Y}"
                 zeile += " (morgen)" if tage_bis_faellig == 1 else f" (in {tage_bis_faellig} Tagen)"
+                zeile += f"\n  {link}"
                 zeilen.append(zeile)
             aufgaben_liste = "\n".join(zeilen)
 

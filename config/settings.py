@@ -212,6 +212,11 @@ EINLADUNGSCODE = os.environ.get('DJANGO_EINLADUNGSCODE', 'gardetanz')
 # Auf dem Server per Umgebungsvariable überschreiben, um den Link umzubenennen.
 REGISTRIERUNGS_SLUG = os.environ.get('DJANGO_REGISTRIERUNGS_SLUG', 'registrieren')
 
+# Basis-URL der Seite (ohne abschließenden Slash), z.B. fuer absolute Links in
+# Erinnerungs-Mails aus Management-Commands (dort gibt es keinen Request, aus dem
+# man die Domain wie sonst ueblich per request.build_absolute_uri() ableiten koennte).
+SITE_URL = os.environ.get('DJANGO_SITE_URL', 'https://dbueltena.pythonanywhere.com')
+
 # Feste Zusatz-Adresse für System-Benachrichtigungen (z.B. neue Registrierung).
 # Wird IMMER zusätzlich zu den E-Mail-Adressen aller Admin-/Betreuer-Konten benutzt,
 # damit eine Benachrichtigung nicht ausbleibt, nur weil bei einem Konto keine

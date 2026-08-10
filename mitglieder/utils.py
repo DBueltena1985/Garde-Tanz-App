@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Q
+from django.urls import reverse
 
 logger = logging.getLogger("mitglieder")
 
@@ -39,6 +40,13 @@ def trainer_und_orga_emails():
     if settings.ADMIN_BENACHRICHTIGUNGS_EMAIL:
         emails.add(settings.ADMIN_BENACHRICHTIGUNGS_EMAIL)
     return emails
+
+
+def absolute_url(url_name, *args, fragment=""):
+    """Baut eine absolute URL (fuer Mails aus Management-Commands, wo es keinen Request
+    gibt, aus dem man das sonst per request.build_absolute_uri() ableiten koennte)."""
+    url = f"{settings.SITE_URL}{reverse(url_name, args=args)}"
+    return f"{url}#{fragment}" if fragment else url
 
 
 def benutzer_name(user):
