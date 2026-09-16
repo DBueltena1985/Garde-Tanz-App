@@ -666,7 +666,7 @@ def offene_trainings(request):
 
     trainings = _fuer_gruppen_relevant(
         Termin.objects.filter(art=Termin.ART_TRAINING), kinder_gruppen
-    ).order_by("-beginn")
+    ).order_by("beginn")
 
     zusagen = {
         (z.termin_id, z.taenzerin_id): z.status
