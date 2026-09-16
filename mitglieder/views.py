@@ -24,7 +24,7 @@ from .forms import (
 )
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, Galerieordner, Nachricht,
-    NewsPost, Profil, Taenzerin, Termin, Zusage,
+    NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, Zusage,
 )
 from .utils import benutzer_name, sichere_mail_senden
 
@@ -879,6 +879,14 @@ def formulare_liste(request):
     from formulare.models import Formular
 
     return render(request, "mitglieder/formulare_liste.html", {"formulare": Formular.objects.all()})
+
+
+@login_required
+def trainingsmaterial_liste(request):
+    return render(
+        request, "mitglieder/trainingsmaterial_liste.html",
+        {"trainingsmaterialien": Trainingsmaterial.objects.all()},
+    )
 
 
 @login_required

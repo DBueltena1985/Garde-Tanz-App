@@ -659,3 +659,50 @@ class Galeriebild(models.Model):
             Galeriebild.objects.filter(ordner=self.ordner, termin=self.termin).exclude(pk=self.pk).update(
                 titelbild=False
             )
+
+
+# PDFs brauchen bei Cloudinary die "raw"-Storage, Videos die "video"-Storage (sonst nicht
+# korrekt abrufbar bzw. nicht als Video erkannt). Ohne Cloudinary-Zugangsdaten (z.B. lokal)
+# ganz normal lokal speichern.
+if settings.CLOUDINARY_STORAGE.get("CLOUD_NAME"):
+    from cloudinary_storage.storage import RawMediaCloudinaryStorage, VideoMediaCloudinaryStorage
+
+    _trainingsmaterial_pdf_storage = RawMediaCloudinaryStorage()
+    _trainingsmaterial_video_storage = VideoMediaCloudinaryStorage()
+else:
+    from django.core.files.storage import FileSystemStorage
+
+    _trainingsmaterial_pdf_storage = FileSystemStorage()
+    _trainingsmaterial_video_storage = FileSystemStorage()
+
+
+class Trainingsmaterial(models.Model):
+    """Ein Trainingsplan (PDF) oder Video, das im Mitgliederbereich unter Trainings verlinkt wird."""
+
+    titel = models.CharField("Titel", max_length=200)
+    beschreibung = models.TextField("Beschreibung", blank=True)
+    pdf = models.FileField(
+        "PDF (Trainingsplan)", upload_to="trainingsmaterial/pdf/", storage=_trainingsmaterial_pdf_storage,
+        blank=True, null=True,
+    )
+    video = models.FileField(
+        "Video", upload_to="trainingsmaterial/video/", storage=_trainingsmaterial_video_storage,
+        blank=True, null=True, help_text="Grössere Videos können beim Hochladen etwas dauern.",
+    )
+    hochgeladen_von = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="hochgeladene_trainingsmaterialien",
+    )
+    hochgeladen_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Trainingsplan / Video"
+        verbose_name_plural = "Trainingspläne / Videos"
+        ordering = ["-hochgeladen_am"]
+
+    def __str__(self):
+        return self.titel
+
+    def clean(self):
+        if not self.pdf and not self.video:
+            raise ValidationError("Bitte entweder eine PDF-Datei oder ein Video hochladen.")

@@ -19,7 +19,8 @@ from formulare.models import Formular
 
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeDatei, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild,
-    Galerieordner, Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Galerieordner, Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, TrainingTermin,
+    VeranstaltungTermin, Zusage,
 )
 
 
@@ -1082,6 +1083,29 @@ class ZusageAdmin(LoeschLinkMixin, admin.ModelAdmin):
     termin_datum.admin_order_field = "termin__beginn"
 
 
+@admin.register(Trainingsmaterial)
+class TrainingsmaterialAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("titel", "hat_pdf", "hat_video", "hochgeladen_von", "hochgeladen_am", "loeschen_link")
+    readonly_fields = ("hochgeladen_von", "hochgeladen_am")
+
+    def hat_pdf(self, obj):
+        return bool(obj.pdf)
+
+    hat_pdf.short_description = "PDF"
+    hat_pdf.boolean = True
+
+    def hat_video(self, obj):
+        return bool(obj.video)
+
+    hat_video.short_description = "Video"
+    hat_video.boolean = True
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.hochgeladen_von = request.user
+        super().save_model(request, obj, form, change)
+
+
 @admin.register(NewsPost)
 class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = ("titel", "autor", "erstellt_am", "anzeigen_bis", "loeschen_link")
@@ -1255,7 +1279,8 @@ def _mit_anzahl_versehen(model):
 _ADMIN_ABSCHNITTE = [
     ("Mitglieder", [User, Taenzerin, Gruppe]),
     ("Verwaltung", [
-        TrainingTermin, VeranstaltungTermin, Aufgabe, Anmeldepunkt, NewsPost, Ferienzeitraum, Zusage, Group,
+        TrainingTermin, Trainingsmaterial, VeranstaltungTermin, Aufgabe, Anmeldepunkt, NewsPost, Ferienzeitraum,
+        Zusage, Group,
     ]),
     ("Sonstiges", [Feedback, Nachricht, Galerieordner, Formular]),
 ]

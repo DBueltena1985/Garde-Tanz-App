@@ -1,0 +1,20 @@
+{% extends "mitglieder/base.html" %}
+{% block title %}Trainingspläne & Videos – Garde Tanz{% endblock %}
+{% block content %}
+<h2>Trainingspläne &amp; Videos</h2>
+
+{% if not trainingsmaterialien %}
+<p>Aktuell sind keine Trainingspläne oder Videos hinterlegt.</p>
+{% endif %}
+
+{% for material in trainingsmaterialien %}
+<div class="card">
+    <strong>{{ material.titel }}</strong>
+    {% if material.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft); margin-top:0.2rem;">{{ material.beschreibung }}</div>{% endif %}
+    <div style="margin-top:0.5rem;">
+        {% if material.pdf %}<a href="{{ material.pdf.url }}" target="_blank" rel="noopener" class="btn btn-zusagen">📄 PDF öffnen</a>{% endif %}
+        {% if material.video %}<a href="{{ material.video.url }}" target="_blank" rel="noopener" class="btn btn-zusagen">🎬 Video ansehen</a>{% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
