@@ -38,7 +38,7 @@
     <img src="{{ eintrag.termin.beschreibung_bild.url }}" alt="" style="max-width:100%; border-radius:6px; margin-top:0.5rem;">
     {% endif %}
     {% if eintrag.termin.beschreibung %}
-    <p>{{ eintrag.termin.beschreibung }}</p>
+    <p>{{ eintrag.termin.beschreibung|linebreaksbr }}</p>
     {% elif eintrag.termin.art == "veranstaltung" %}
     <p><em>Nähere Infos sowie Helfer-/Bringlisten folgen noch.</em></p>
     {% endif %}
