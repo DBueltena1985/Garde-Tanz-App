@@ -447,6 +447,38 @@ class Aufgabe(models.Model):
         super().save(*args, **kwargs)
 
 
+# PDFs/Dokumente sind bei Cloudinary kein "image", sondern "raw" - mit der normalen (Bild-)
+# Storage waeren hochgeladene PDFs/Dokumente nicht korrekt abrufbar. Ohne Cloudinary-Zugangsdaten
+# (z.B. lokal) ganz normal lokal speichern.
+if settings.CLOUDINARY_STORAGE.get("CLOUD_NAME"):
+    from cloudinary_storage.storage import RawMediaCloudinaryStorage
+
+    _aufgabe_datei_storage = RawMediaCloudinaryStorage()
+else:
+    from django.core.files.storage import FileSystemStorage
+
+    _aufgabe_datei_storage = FileSystemStorage()
+
+
+class AufgabeDatei(models.Model):
+    """Eine Datei (z.B. Anleitung, Vorlage, Foto), die an ein ToDo angehaengt ist."""
+
+    aufgabe = models.ForeignKey(Aufgabe, on_delete=models.CASCADE, related_name="dateien")
+    datei = models.FileField("Datei", upload_to="aufgaben/", storage=_aufgabe_datei_storage)
+    hochgeladen_am = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Datei"
+        verbose_name_plural = "Dateien"
+
+    def __str__(self):
+        return self.dateiname
+
+    @property
+    def dateiname(self):
+        return self.datei.name.rsplit("/", 1)[-1]
+
+
 class AufgabeErledigung(models.Model):
     """Pro-Taenzerin-Erledigt-Status fuer eine Aufgabe mit Zielgruppe 'Taenzerinnen'
     (z.B. waescht jede Taenzerin ihr eigenes Leibchen - eine Aufgabe, aber pro Kind einzeln erledigt)."""

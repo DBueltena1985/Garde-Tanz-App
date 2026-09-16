@@ -9,6 +9,13 @@
         </div>
         {% endif %}
         {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ aufgabe.beschreibung }}</div>{% endif %}
+        {% if aufgabe.dateien.all %}
+        <div style="margin-top:0.3rem;">
+            {% for datei in aufgabe.dateien.all %}
+            <a href="{{ datei.datei.url }}" target="_blank" rel="noopener" style="display:inline-block; font-size:0.85rem; margin-right:0.6rem;">📎 {{ datei.dateiname }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
         <form method="post" action="{% url 'aufgabe_erledigt' aufgabe.id %}" style="margin-top:0.4rem;">
             {% csrf_token %}
             <button type="submit" class="btn btn-zusagen">✅ Erledigt</button>
@@ -35,6 +42,13 @@
         </div>
         {% endif %}
         {% if eintrag.aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ eintrag.aufgabe.beschreibung }}</div>{% endif %}
+        {% if eintrag.aufgabe.dateien.all %}
+        <div style="margin-top:0.3rem;">
+            {% for datei in eintrag.aufgabe.dateien.all %}
+            <a href="{{ datei.datei.url }}" target="_blank" rel="noopener" style="display:inline-block; font-size:0.85rem; margin-right:0.6rem;">📎 {{ datei.dateiname }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% if eintrag.offene_kinder %}
             <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.4rem;">
             {% for kind in eintrag.offene_kinder %}

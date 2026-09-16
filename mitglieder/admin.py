@@ -18,8 +18,8 @@ from django.utils.safestring import mark_safe
 from formulare.models import Formular
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild, Galerieordner,
-    Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
+    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeDatei, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild,
+    Galerieordner, Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -1034,6 +1034,12 @@ class AufgabeErledigungInline(admin.TabularInline):
     readonly_fields = ("erledigt_am",)
 
 
+class AufgabeDateiInline(admin.TabularInline):
+    model = AufgabeDatei
+    extra = 1
+    fields = ("datei",)
+
+
 @admin.register(Aufgabe)
 class AufgabeAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
@@ -1045,7 +1051,7 @@ class AufgabeAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_filter = ("erledigt", "sichtbar_fuer", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
     ordering = ("erledigt", "faellig_am", "termin__beginn", "-erstellt_am")
-    inlines = [AufgabeErledigungInline]
+    inlines = [AufgabeDateiInline, AufgabeErledigungInline]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "zugewiesen_an":
