@@ -560,6 +560,16 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
         if not obj.pk:
             obj.erstellt_von = request.user
         super().save_model(request, obj, form, change)
+        if change and "beginn" in form.changed_data:
+            zurueckgesetzt = Zusage.objects.filter(termin=obj).exclude(status=Zusage.STATUS_OFFEN).update(
+                status=Zusage.STATUS_OFFEN
+            )
+            if zurueckgesetzt:
+                messages.info(
+                    request,
+                    f"{zurueckgesetzt} bestehende Zu-/Absage(n) wurden wegen der Zeitänderung auf "
+                    "'Noch offen' zurückgesetzt.",
+                )
 
     def save_related(self, request, form, formsets, change):
         # Muss NACH super().save_related() passieren: dort speichert Django ueber form.save_m2m()
