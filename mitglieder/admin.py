@@ -1294,16 +1294,37 @@ def _mit_anzahl_versehen(model):
     return model
 
 
-# Das Admin-Menue wird fachlich in drei Abschnitte umgruppiert (unabhaengig von den
-# technischen Django-Apps auth/mitglieder/formulare), jeweils in dieser Reihenfolge.
+# Das Admin-Menue wird fachlich in Abschnitte umgruppiert (unabhaengig von den
+# technischen Django-Apps auth/mitglieder/formulare), jeweils in dieser Reihenfolge,
+# und auf der Startseite als Kacheln (statt einer flachen Liste) angezeigt.
 _ADMIN_ABSCHNITTE = [
-    ("Mitglieder", [User, Taenzerin, Gruppe]),
-    ("Verwaltung", [
-        TrainingTermin, Trainingsmaterial, VeranstaltungTermin, Aufgabe, Anmeldepunkt, NewsPost, Ferienzeitraum,
-        Zusage, Group,
-    ]),
+    ("Training", [TrainingTermin, Trainingsmaterial, Ferienzeitraum, Zusage, Gruppe]),
+    ("Mitglieder", [User, Taenzerin, Group]),
+    ("Veranstaltungen & Aufgaben", [VeranstaltungTermin, Aufgabe, Anmeldepunkt, NewsPost]),
     ("Sonstiges", [Feedback, Nachricht, Galerieordner, Formular]),
 ]
+
+_ABSCHNITT_STROKE_ICON = (
+    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" '
+    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{}</svg>'
+)
+
+_ADMIN_ABSCHNITT_ICONS = {
+    "Training": mark_safe(_ABSCHNITT_STROKE_ICON.format(
+        '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/>'
+    )),
+    "Mitglieder": mark_safe(_ABSCHNITT_STROKE_ICON.format(
+        '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>'
+        '<circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2c2.6.4 4.5 2.6 4.5 5.3"/>'
+    )),
+    "Veranstaltungen & Aufgaben": mark_safe(_ABSCHNITT_STROKE_ICON.format(
+        '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/>'
+    )),
+    "Sonstiges": mark_safe(_ABSCHNITT_STROKE_ICON.format(
+        '<rect x="4" y="4" width="6" height="6" rx="1.4"/><rect x="14" y="4" width="6" height="6" rx="1.4"/>'
+        '<rect x="4" y="14" width="6" height="6" rx="1.4"/><rect x="14" y="14" width="6" height="6" rx="1.4"/>'
+    )),
+}
 
 
 def _get_app_list_mit_anzahl(request, app_label=None):
@@ -1336,6 +1357,7 @@ def _get_app_list_mit_anzahl(request, app_label=None):
                 "app_url": reverse("admin:index"),
                 "has_module_perms": True,
                 "models": modelle,
+                "icon_svg": _ADMIN_ABSCHNITT_ICONS.get(name, ""),
             })
     return abschnitte
 
