@@ -619,8 +619,18 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             return self._changelist_redirect()
 
         zusagen = {z.taenzerin_id: z for z in Zusage.objects.filter(termin=termin)}
+        status_reihenfolge = {
+            Zusage.STATUS_ZUGESAGT: 0,
+            Zusage.STATUS_ABGESAGT: 1,
+            Zusage.STATUS_OFFEN: 2,
+        }
+
+        def sortierschluessel(kind):
+            status = zusagen[kind.id].status if kind.id in zusagen else Zusage.STATUS_OFFEN
+            return (status_reihenfolge[status], kind.vorname)
+
         zeilen = []
-        for kind in sorted(kinder, key=lambda k: k.vorname):
+        for kind in sorted(kinder, key=sortierschluessel):
             zusage = zusagen.get(kind.id)
             zeilen.append({
                 "kind": kind,
