@@ -697,6 +697,12 @@ class TerminForm(forms.ModelForm):
     class Meta:
         model = Termin
         fields = "__all__"
+        widgets = {
+            # Nur eine Handvoll Trainingsgruppen - Checkboxen statt des wuchtigen
+            # "Verfuegbar/Ausgewaehlt"-Auswahlkastens (filter_horizontal), der auf dem
+            # Handy sehr viel Platz braucht und unuebersichtlich wirkt.
+            "gruppen": forms.CheckboxSelectMultiple,
+        }
 
 
 class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
@@ -706,7 +712,7 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     DUPLIKAT_FELDER = ["titel", "beginn", "ende", "ort", "beschreibung"]
 
     form = TerminForm
-    filter_horizontal = ("gruppen", "wichtige_trainings")
+    filter_horizontal = ("wichtige_trainings",)
     list_display = (
         "titel", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort", "erstellt_am",
         "anzahl_zusagen", "anzahl_absagen", "loeschen_link",
@@ -1091,8 +1097,11 @@ class TrainingAdmin(TerminAdminBase):
     exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
     fieldsets = (
         ("Wann & Wo", {"fields": ("titel", "beginn", "ende", "ort", "beschreibung", "beschreibung_bild")}),
-        ("Für wen", {"fields": ("gruppen", "wichtige_trainings", "taenzerinnen_erforderlich")}),
-        ("Weitere Einstellungen", {"classes": ("collapse",), "fields": ("erstellt_von",)}),
+        ("Für wen", {"fields": ("gruppen", "taenzerinnen_erforderlich")}),
+        (
+            "Weitere Einstellungen",
+            {"classes": ("collapse",), "fields": ("wichtige_trainings", "erstellt_von")},
+        ),
     )
 
     def changelist_view(self, request, extra_context=None):
@@ -1205,8 +1214,11 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
         ("Wann & Wo", {
             "fields": ("titel", "beginn", "ende", "uhrzeit_unbekannt", "ort", "beschreibung", "beschreibung_bild"),
         }),
-        ("Für wen", {"fields": ("gruppen", "wichtige_trainings", "taenzerinnen_erforderlich")}),
-        ("Weitere Einstellungen", {"classes": ("collapse",), "fields": ("interne_notiz", "erstellt_von")}),
+        ("Für wen", {"fields": ("gruppen", "taenzerinnen_erforderlich")}),
+        (
+            "Weitere Einstellungen",
+            {"classes": ("collapse",), "fields": ("wichtige_trainings", "interne_notiz", "erstellt_von")},
+        ),
     )
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
