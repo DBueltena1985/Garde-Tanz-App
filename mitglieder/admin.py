@@ -784,6 +784,15 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
         war_neu = not change
         super().save_related(request, form, formsets, change)
         obj = form.instance
+
+        # "Tänzerinnen müssen anwesend sein" wird nicht mehr manuell gepflegt, sondern leitet sich
+        # automatisch daraus ab, ob mindestens eine Gruppe ausgewählt ist (keine Gruppe = allgemeiner
+        # Termin ohne Auftritt, z.B. "Ladies Night").
+        automatisch_erforderlich = obj.gruppen.exists()
+        if obj.taenzerinnen_erforderlich != automatisch_erforderlich:
+            obj.taenzerinnen_erforderlich = automatisch_erforderlich
+            obj.save(update_fields=["taenzerinnen_erforderlich"])
+
         if war_neu and obj.art == Termin.ART_VERANSTALTUNG:
             from .signals import neue_veranstaltung_benachrichtigen
             neue_veranstaltung_benachrichtigen(obj)
@@ -1075,6 +1084,8 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                         erstellt_von=request.user,
                     )
                     neuer_termin.gruppen.set(daten["gruppen"])
+                    neuer_termin.taenzerinnen_erforderlich = bool(daten["gruppen"])
+                    neuer_termin.save(update_fields=["taenzerinnen_erforderlich"])
                     erstellt += 1
                     aktuelles_datum += timedelta(days=7)
 
@@ -1103,6 +1114,7 @@ class TrainingAdmin(TerminAdminBase):
             {"classes": ("collapse",), "fields": ("wichtige_trainings", "erstellt_von")},
         ),
     )
+    readonly_fields = ("taenzerinnen_erforderlich",)
 
     def changelist_view(self, request, extra_context=None):
         # Standardmaessig nur einen Monat zeigen (sonst waechst die Liste durch die
@@ -1220,6 +1232,7 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
             {"classes": ("collapse",), "fields": ("wichtige_trainings", "interne_notiz", "erstellt_von")},
         ),
     )
+    readonly_fields = ("taenzerinnen_erforderlich",)
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
     # Ueberschreibt sowohl BildBulkUploadMixin.change_form_template als auch
