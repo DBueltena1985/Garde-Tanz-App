@@ -391,6 +391,72 @@ class TaenzerinAdmin(LoeschLinkMixin, admin.ModelAdmin):
     eltern_name.short_description = "Eltern"
     eltern_name.admin_order_field = "eltern__first_name"
     filter_horizontal = ("mitverwaltet_von",)
+
+    def get_urls(self):
+        eigene_urls = [
+            path(
+                "uebersicht/",
+                self.admin_site.admin_view(self.taenzerinnen_uebersicht),
+                name="mitglieder_taenzerin_uebersicht",
+            ),
+            path(
+                "uebersicht/<int:gruppe_id>/",
+                self.admin_site.admin_view(self.taenzerinnen_uebersicht_gruppe),
+                name="mitglieder_taenzerin_uebersicht_gruppe",
+            ),
+        ]
+        return eigene_urls + super().get_urls()
+
+    def taenzerinnen_uebersicht(self, request):
+        """Kachel-Übersicht aller Tänzerinnen nach Trainingsgruppe (Jugend/Junioren/...) -
+        fuer den Schnellzugriff 'Tänzerinnen' im Hauptmenue."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        nach_gruppe = {}
+        ohne_gruppe = []
+        for kind in Taenzerin.objects.all():
+            gruppe = kind.gruppe
+            if gruppe is None:
+                ohne_gruppe.append(kind)
+            else:
+                nach_gruppe.setdefault(gruppe, []).append(kind)
+
+        gruppen_kacheln = [
+            {"gruppe": gruppe, "anzahl": len(nach_gruppe.get(gruppe, []))}
+            for gruppe in Gruppe.objects.order_by("-jahrgang_ab")
+        ]
+        return render(
+            request,
+            "admin/mitglieder/taenzerinnen_uebersicht.html",
+            {
+                "gruppen_kacheln": gruppen_kacheln,
+                "anzahl_ohne_gruppe": len(ohne_gruppe),
+                "opts": self.model._meta,
+                "title": "Tänzerinnen",
+            },
+        )
+
+    def taenzerinnen_uebersicht_gruppe(self, request, gruppe_id):
+        """Liste der Tänzerinnen einer einzelnen Trainingsgruppe (gruppe_id=0 = ohne Gruppe,
+        da dafuer kein echtes Gruppe-Objekt existiert)."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        if gruppe_id == 0:
+            kinder = [k for k in Taenzerin.objects.all() if k.gruppe is None]
+            titel = "Tänzerinnen – ohne Gruppe"
+        else:
+            gruppe = get_object_or_404(Gruppe, pk=gruppe_id)
+            kinder = [k for k in Taenzerin.objects.all() if k.gruppe and k.gruppe.id == gruppe.id]
+            titel = f"Tänzerinnen – {gruppe.name}"
+        kinder.sort(key=lambda k: (k.vorname, k.nachname))
+
+        return render(
+            request,
+            "admin/mitglieder/taenzerinnen_liste.html",
+            {"kinder": kinder, "opts": self.model._meta, "title": titel},
+        )
     fields = (
         "eltern", "mitverwaltet_von", "nutzer", "vorname", "nachname", "geburtsdatum",
         "adresse", "plz_ort", "mobil",
@@ -1466,6 +1532,8 @@ def _mit_anzahl_versehen(model):
         model["name"] = f"{model['name']} ({anzahl})"
     if model_class is User and model.get("admin_url"):
         model["admin_url"] = reverse("admin:auth_user_uebersicht")
+    if model_class is Taenzerin and model.get("admin_url"):
+        model["admin_url"] = reverse("admin:mitglieder_taenzerin_uebersicht")
     return model
 
 

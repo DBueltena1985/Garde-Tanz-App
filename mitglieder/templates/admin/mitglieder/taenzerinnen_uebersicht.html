@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+    .garde-kacheln{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:18px;margin-top:1.2rem;}
+    @media (max-width:767px){.garde-kacheln{grid-template-columns:1fr;}}
+    .garde-kachel-link{display:block;background:var(--darkened-bg);border:1px solid var(--hairline-color);border-radius:12px;padding:20px 18px;text-decoration:none;color:var(--body-fg);}
+    .garde-kachel-link:hover{background:var(--selected-bg);}
+    .garde-kachel-titel{font-size:17px;font-weight:600;}
+    .garde-kachel-anzahl{font-size:13px;color:var(--body-quiet-color);margin-top:4px;}
+</style>
+
+<div class="garde-kacheln">
+    {% for eintrag in gruppen_kacheln %}
+    <a class="garde-kachel-link" href="{% url 'admin:mitglieder_taenzerin_uebersicht_gruppe' eintrag.gruppe.id %}">
+        <div class="garde-kachel-titel">{{ eintrag.gruppe.name }}</div>
+        <div class="garde-kachel-anzahl">{{ eintrag.anzahl }}</div>
+    </a>
+    {% endfor %}
+    {% if anzahl_ohne_gruppe %}
+    <a class="garde-kachel-link" href="{% url 'admin:mitglieder_taenzerin_uebersicht_gruppe' 0 %}">
+        <div class="garde-kachel-titel">Ohne Gruppe</div>
+        <div class="garde-kachel-anzahl">{{ anzahl_ohne_gruppe }}</div>
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

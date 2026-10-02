@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+    .garde-benutzer-liste{display:flex;flex-direction:column;gap:2px;margin-top:1rem;}
+    .garde-benutzer-liste a{padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--link-fg);}
+    .garde-benutzer-liste a:hover{background:var(--darkened-bg);}
+</style>
+
+{% if kinder %}
+<div class="garde-benutzer-liste">
+    {% for kind in kinder %}
+    <a href="{% url 'admin:mitglieder_taenzerin_change' kind.id %}">{{ kind.vorname }} {{ kind.nachname }}</a>
+    {% endfor %}
+</div>
+{% else %}
+<p>Noch niemand zugeordnet.</p>
+{% endif %}
+{% endblock %}
