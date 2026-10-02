@@ -905,12 +905,35 @@ class TrainingAdmin(TerminAdminBase):
     def get_urls(self):
         eigene_urls = [
             path(
+                "anwesenheit-aktuell/",
+                self.admin_site.admin_view(self.anwesenheit_aktuell),
+                name=self._url_name("anwesenheit_aktuell"),
+            ),
+            path(
                 "teilnahme-statistik/",
                 self.admin_site.admin_view(self.teilnahme_statistik),
                 name=self._url_name("teilnahme_statistik"),
             ),
         ]
         return eigene_urls + super().get_urls()
+
+    def anwesenheit_aktuell(self, request):
+        """Springt direkt zur Anwesenheitsliste des aktuellen Trainings (heute, sonst das
+        naechste bevorstehende, sonst das letzte vergangene) - fuer den Schnellzugriff
+        'Anwesenheit' im Hauptmenue, ohne erst in der Liste suchen zu muessen."""
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+
+        heute = timezone.localdate()
+        ziel_termin = (
+            self.model.objects.filter(beginn__date=heute).order_by("beginn").first()
+            or self.model.objects.filter(beginn__date__gt=heute).order_by("beginn").first()
+            or self.model.objects.order_by("-beginn").first()
+        )
+        if not ziel_termin:
+            messages.info(request, "Es ist noch kein Training angelegt.")
+            return self._changelist_redirect()
+        return redirect(f"admin:{self._url_name('anwesenheit')}", ziel_termin.pk)
 
     def teilnahme_statistik(self, request):
         if not self.has_view_permission(request):
