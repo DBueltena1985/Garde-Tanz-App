@@ -737,6 +737,8 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     anzahl_absagen.short_description = "Absagen"
 
     def anwesenheit_link(self, obj):
+        if not obj.taenzerinnen_erforderlich:
+            return "–"
         url = reverse(f"admin:{self._url_name('anwesenheit')}", args=[obj.pk])
         return format_html('<a class="button" href="{}">📋 Anwesenheit</a>', url)
 
@@ -802,6 +804,10 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             raise PermissionDenied
 
         termin = get_object_or_404(self.model, pk=object_id)
+        if not termin.taenzerinnen_erforderlich:
+            messages.info(request, f"Bei '{termin.titel}' müssen Tänzerinnen nicht anwesend sein.")
+            return self._changelist_redirect()
+
         kinder = _relevante_kinder(termin)
 
         if request.method == "POST":
