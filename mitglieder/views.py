@@ -316,7 +316,7 @@ def _aufgaben_kontext(user):
     meine_aufgaben = Aufgabe.objects.filter(zugewiesen_an=user, erledigt=False).select_related("termin")
 
     offene_allgemeine_aufgaben = Aufgabe.objects.filter(
-        termin__isnull=True, zugewiesen_an__isnull=True, erledigt=False,
+        zugewiesen_an__isnull=True, erledigt=False,
     )
     offene_allgemeine_aufgaben = _aufgaben_fuer_nutzer_sichtbar(offene_allgemeine_aufgaben, user)
     offene_allgemeine_aufgaben = _offene_aufgaben_liste(offene_allgemeine_aufgaben, user)
