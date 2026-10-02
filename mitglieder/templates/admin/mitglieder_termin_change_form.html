@@ -1,5 +1,32 @@
 {% extends "admin/change_form.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Sobald mindestens eine Gruppe angehakt wird, "Tänzerinnen müssen anwesend sein" automatisch
+    // mitsetzen (z.B. bei einem Auftritt der Jugend). Manuelles Abwählen bleibt weiterhin möglich -
+    // wird NICHT automatisch wieder abgewählt, falls alle Gruppen wieder entfernt werden (ein Termin
+    // ohne Gruppenauswahl gilt ja für ALLE Gruppen und braucht oft trotzdem Anwesenheit).
+    var gruppenCheckboxen = document.querySelectorAll('input[name="gruppen"]');
+    var erforderlichCheckbox = document.getElementById('id_taenzerinnen_erforderlich');
+    if (!erforderlichCheckbox) {
+        return;
+    }
+    gruppenCheckboxen.forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            var mindestensEineGewaehlt = Array.prototype.some.call(gruppenCheckboxen, function (cb) {
+                return cb.checked;
+            });
+            if (mindestensEineGewaehlt) {
+                erforderlichCheckbox.checked = true;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
 {% block submit_buttons_bottom %}
 {{ block.super }}
 {% if change %}
