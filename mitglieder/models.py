@@ -219,7 +219,8 @@ class Termin(models.Model):
     )
     taenzerinnen_erforderlich = models.BooleanField(
         "Tänzerinnen müssen anwesend sein (Auftritt)", default=True,
-        help_text="Deaktivieren bei Veranstaltungen ohne Auftritt der Tänzerinnen, z.B. 'Ladies Night'.",
+        help_text="Ergibt sich automatisch aus der Gruppenauswahl oben: keine Gruppe ausgewählt = "
+        "kein Auftritt nötig (z.B. 'Ladies Night'), mindestens eine Gruppe = Auftritt.",
     )
     beginn = models.DateTimeField("Beginn")
     ende = models.DateTimeField("Ende", null=True, blank=True)
