@@ -211,8 +211,66 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
                 self.admin_site.admin_view(self.als_mitglied_ansehen),
                 name="auth_user_impersonate_start",
             ),
+            path(
+                "uebersicht/",
+                self.admin_site.admin_view(self.benutzer_uebersicht),
+                name="auth_user_uebersicht",
+            ),
         ]
         return eigene_urls + super().get_urls()
+
+    def benutzer_uebersicht(self, request):
+        """Kachel-Übersicht der Benutzer nach Rolle (Trainer, Orga, Tänzerinnen mit eigenem
+        Konto, Mitglieder) statt der flachen Standardliste - fuer den Schnellzugriff
+        'Benutzer' im Hauptmenue. Tänzerinnen werden zusätzlich nach Trainingsgruppe
+        unterteilt (Jugend/Junioren/...)."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        alle = User.objects.all().order_by("first_name", "last_name")
+        trainerteam_ids = set(
+            User.objects.filter(groups__name=TRAINERTEAM_GRUPPENNAME).values_list("id", flat=True)
+        )
+
+        trainer, orga, taenzerinnen_nutzer, mitglieder = [], [], [], []
+        for user in alle:
+            if user.id in trainerteam_ids:
+                trainer.append(user)
+            elif user.is_staff:
+                orga.append(user)
+            elif hasattr(user, "taenzerin_konto"):
+                taenzerinnen_nutzer.append(user)
+            else:
+                mitglieder.append(user)
+
+        nutzer_nach_gruppe = {}
+        ohne_gruppe = []
+        for user in taenzerinnen_nutzer:
+            gruppe = user.taenzerin_konto.gruppe
+            if gruppe is None:
+                ohne_gruppe.append(user)
+            else:
+                nutzer_nach_gruppe.setdefault(gruppe, []).append(user)
+
+        taenzerinnen_gruppen = [
+            {"gruppe": gruppe, "nutzer": nutzer_nach_gruppe.get(gruppe, [])}
+            for gruppe in Gruppe.objects.order_by("-jahrgang_ab")
+        ]
+
+        return render(
+            request,
+            "admin/mitglieder/benutzer_uebersicht.html",
+            {
+                "trainer": trainer,
+                "orga": orga,
+                "taenzerinnen_gruppen": taenzerinnen_gruppen,
+                "taenzerinnen_ohne_gruppe": ohne_gruppe,
+                "anzahl_taenzerinnen": len(taenzerinnen_nutzer),
+                "mitglieder": mitglieder,
+                "opts": self.model._meta,
+                "title": "Benutzer",
+            },
+        )
 
     def als_mitglied_ansehen(self, request, user_id):
         if not request.user.is_superuser:
@@ -1336,6 +1394,8 @@ def _mit_anzahl_versehen(model):
     else:
         anzahl = model_class._default_manager.count()
         model["name"] = f"{model['name']} ({anzahl})"
+    if model_class is User and model.get("admin_url"):
+        model["admin_url"] = reverse("admin:auth_user_uebersicht")
     return model
 
 
