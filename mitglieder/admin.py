@@ -1108,13 +1108,12 @@ class TrainingAdmin(TerminAdminBase):
     exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
     fieldsets = (
         ("Wann & Wo", {"fields": ("titel", "beginn", "ende", "ort", "beschreibung", "beschreibung_bild")}),
-        ("Für wen", {"fields": ("gruppen", "taenzerinnen_erforderlich")}),
+        ("Für wen", {"fields": ("gruppen",)}),
         (
             "Weitere Einstellungen",
             {"classes": ("collapse",), "fields": ("wichtige_trainings", "erstellt_von")},
         ),
     )
-    readonly_fields = ("taenzerinnen_erforderlich",)
 
     def changelist_view(self, request, extra_context=None):
         # Standardmaessig nur einen Monat zeigen (sonst waechst die Liste durch die
@@ -1226,13 +1225,12 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
         ("Wann & Wo", {
             "fields": ("titel", "beginn", "ende", "uhrzeit_unbekannt", "ort", "beschreibung", "beschreibung_bild"),
         }),
-        ("Für wen", {"fields": ("gruppen", "taenzerinnen_erforderlich")}),
+        ("Für wen", {"fields": ("gruppen",)}),
         (
             "Weitere Einstellungen",
             {"classes": ("collapse",), "fields": ("wichtige_trainings", "interne_notiz", "erstellt_von")},
         ),
     )
-    readonly_fields = ("taenzerinnen_erforderlich",)
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
     # Ueberschreibt sowohl BildBulkUploadMixin.change_form_template als auch
