@@ -1317,11 +1317,40 @@ class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
     )
     list_filter = ("termin", "mit_kommentar", AnmeldepunktOffenFilter)
     inlines = [AnmeldungInline]
+    change_list_template = "admin/mitglieder/anmeldepunkt_change_list.html"
+    change_form_template = "admin/mitglieder/anmeldepunkt_change_form.html"
 
     def anzahl_angemeldet(self, obj):
         return obj.anmeldungen.count()
 
     anzahl_angemeldet.short_description = "Angemeldet"
+
+    def loeschen_link(self, obj):
+        """Versteckte Markierung mit dem Beginn-Zeitpunkt der zugehoerigen Veranstaltung/des
+        Trainings (Unix-Millisekunden), damit die Liste per JS in offene/abgeschlossene
+        Helfer-/Mitbringlisten aufgeteilt werden kann (siehe change_list_template). Punkte ohne
+        Termin (allgemeine Helferpunkte) bleiben immer in "offen", da es dafuer kein Datum gibt.
+        """
+        link = super().loeschen_link(obj)
+        if not obj.termin_id:
+            return link
+        beginn_ms = round(obj.termin.beginn.timestamp() * 1000)
+        return format_html('<span data-beginn-ms="{}" style="display:none;"></span>{}', beginn_ms, link)
+
+    loeschen_link.short_description = ""
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields["titel"].widget.attrs["list"] = "anmeldepunkt-titel-vorschlaege"
+        return form
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["titel_vorschlaege"] = (
+            Anmeldepunkt.objects.exclude(titel="").order_by("titel")
+            .values_list("titel", flat=True).distinct()
+        )
+        return super().changeform_view(request, object_id, form_url, extra_context)
 
     def noch_offen(self, obj):
         if obj.max_anzahl is None:
@@ -1417,11 +1446,26 @@ class NewsPostAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = ("titel", "autor", "erstellt_am", "anzeigen_bis", "loeschen_link")
     list_editable = ("anzeigen_bis",)
     readonly_fields = ("autor", "erstellt_am")
+    change_list_template = "admin/mitglieder/newspost_change_list.html"
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:
             obj.autor = request.user
         super().save_model(request, obj, form, change)
+
+    def loeschen_link(self, obj):
+        """Versteckte Markierung mit dem Ende des 'Anzeigen bis'-Tages (Unix-Millisekunden),
+        damit die Liste per JS in aktuelle/abgeschlossene News aufgeteilt werden kann (siehe
+        change_list_template). Ohne 'Anzeigen bis' (zeitlich unbegrenzt) bleibt der Beitrag
+        immer in "aktuell"."""
+        link = super().loeschen_link(obj)
+        if not obj.anzeigen_bis:
+            return link
+        ende_des_tages = timezone.make_aware(datetime.combine(obj.anzeigen_bis, datetime.max.time()))
+        beginn_ms = round(ende_des_tages.timestamp() * 1000)
+        return format_html('<span data-beginn-ms="{}" style="display:none;"></span>{}', beginn_ms, link)
+
+    loeschen_link.short_description = ""
 
 
 @admin.register(Galerieordner)

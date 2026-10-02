@@ -1,8 +1,8 @@
-{% extends "admin/mitglieder/termin_change_list.html" %}
+{% extends "admin/change_list.html" %}
 
 {% block content %}
 {{ block.super }}
-{% with abgeschlossen_label="Abgeschlossene Veranstaltungen" %}
+{% with abgeschlossen_label="Abgeschlossene Helfer-/Mitbringlisten" %}
 {% include "admin/mitglieder/_abgeschlossen_js.html" %}
 {% endwith %}
 {% endblock %}
