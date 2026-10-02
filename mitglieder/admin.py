@@ -1665,8 +1665,13 @@ _each_context_ohne_einladung = admin.site.each_context
 def _each_context_mit_einladung(request):
     """Ergänzt Registrierungslink und Einladungscode im Admin-Kontext (für die Startseite)."""
     context = _each_context_ohne_einladung(request)
+    registrierungslink = request.build_absolute_uri(reverse("registrieren"))
     context["einladungscode"] = settings.EINLADUNGSCODE
-    context["registrierungslink"] = request.build_absolute_uri(reverse("registrieren"))
+    context["registrierungslink"] = registrierungslink
+    context["einladung_whatsapp_text"] = (
+        f"Hier geht's zur Registrierung für die Garde-App: {registrierungslink}\n"
+        f"Einladungscode: {settings.EINLADUNGSCODE}"
+    )
     return context
 
 

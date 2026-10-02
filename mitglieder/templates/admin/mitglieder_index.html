@@ -14,6 +14,11 @@
         <code style="background:none; color:inherit;">{{ einladungscode }}</code>
     </button>
     <span id="admin-kopier-status" style="margin-left:0.5rem; font-size:0.85rem; color:#1a7a3c;"></span>
+    <br>
+    <a href="https://wa.me/?text={{ einladung_whatsapp_text|urlencode }}" target="_blank" rel="noopener"
+       style="display:inline-block; margin-top:0.5rem; background:#25D366; color:#0d2b4e; font-weight:600; text-decoration:none; padding:0.35rem 0.8rem; border-radius:4px;">
+        📱 Per WhatsApp senden
+    </a>
 </div>
 
 {% if app_list %}
