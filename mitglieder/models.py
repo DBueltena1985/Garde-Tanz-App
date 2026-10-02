@@ -215,9 +215,8 @@ class Termin(models.Model):
     art = models.CharField("Art", max_length=20, choices=ART_CHOICES, default=ART_TRAINING)
     gruppen = models.ManyToManyField(
         Gruppe, blank=True, verbose_name="Gruppen",
-        help_text="Für welche Gruppen gilt dieser Termin? Leer lassen = gilt für alle Gruppen, aber ohne "
-        "Auftritt der Tänzerinnen (siehe unten) - für Trainings und Auftritte daher die betreffende(n) "
-        "Gruppe(n) auswählen.",
+        help_text="Für welche Gruppen hat dieser Termin einen Auftritt? Leer lassen = kein Auftritt nötig "
+        "(z.B. 'Ladies Night'). Gruppe(n) auswählen = die Tänzerinnen dieser Gruppe(n) müssen anwesend sein.",
     )
     taenzerinnen_erforderlich = models.BooleanField(
         "Tänzerinnen müssen anwesend sein (Auftritt)", default=True,
