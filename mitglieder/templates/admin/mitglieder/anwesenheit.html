@@ -9,6 +9,9 @@
 {% if not zeilen %}
 <p>Keine Tänzerinnen in der passenden Gruppe gefunden.</p>
 {% else %}
+<style>
+    .garde-gruppengrenze td { border-top: 2px solid var(--hairline-color, #999); }
+</style>
 <form method="post">
     {% csrf_token %}
     <table>
@@ -21,7 +24,7 @@
         </thead>
         <tbody>
             {% for zeile in zeilen %}
-            <tr>
+            <tr{% if zeile.neue_gruppe %} class="garde-gruppengrenze"{% endif %}>
                 <td style="padding:4px 12px 4px 0;">{{ zeile.kind.vorname }} {{ zeile.kind.nachname }}</td>
                 <td style="padding:4px 12px;">
                     {% if zeile.status == "zugesagt" %}Zugesagt

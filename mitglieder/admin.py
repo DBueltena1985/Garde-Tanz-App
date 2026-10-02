@@ -630,13 +630,17 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             return (status_reihenfolge[status], kind.vorname)
 
         zeilen = []
+        vorheriger_status = None
         for kind in sorted(kinder, key=sortierschluessel):
             zusage = zusagen.get(kind.id)
+            status = zusage.status if zusage else Zusage.STATUS_OFFEN
             zeilen.append({
                 "kind": kind,
-                "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
+                "status": status,
                 "anwesend": zusage.anwesend if zusage else None,
+                "neue_gruppe": vorheriger_status is not None and status != vorheriger_status,
             })
+            vorheriger_status = status
 
         return render(
             request,
