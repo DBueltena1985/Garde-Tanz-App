@@ -9,6 +9,7 @@ from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
 from django.utils import timezone
@@ -216,17 +217,22 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
                 self.admin_site.admin_view(self.benutzer_uebersicht),
                 name="auth_user_uebersicht",
             ),
+            path(
+                "uebersicht/<str:kategorie>/",
+                self.admin_site.admin_view(self.benutzer_kategorie),
+                name="auth_user_uebersicht_kategorie",
+            ),
+            path(
+                "uebersicht/taenzerinnen/<int:gruppe_id>/",
+                self.admin_site.admin_view(self.benutzer_taenzerinnen_gruppe),
+                name="auth_user_uebersicht_taenzerinnen_gruppe",
+            ),
         ]
         return eigene_urls + super().get_urls()
 
-    def benutzer_uebersicht(self, request):
-        """Kachel-Übersicht der Benutzer nach Rolle (Trainer, Orga, Tänzerinnen mit eigenem
-        Konto, Mitglieder) statt der flachen Standardliste - fuer den Schnellzugriff
-        'Benutzer' im Hauptmenue. Tänzerinnen werden zusätzlich nach Trainingsgruppe
-        unterteilt (Jugend/Junioren/...)."""
-        if not self.has_view_permission(request):
-            raise PermissionDenied
-
+    def _benutzer_kategorisieren(self):
+        """Teilt alle Benutzer in Trainer / Orga / Tänzerinnen (eigenes Konto) / Mitglieder
+        ein (in dieser Reihenfolge, jeder Benutzer zaehlt nur zu einer Kategorie)."""
         alle = User.objects.all().order_by("first_name", "last_name")
         trainerteam_ids = set(
             User.objects.filter(groups__name=TRAINERTEAM_GRUPPENNAME).values_list("id", flat=True)
@@ -242,34 +248,98 @@ class CustomUserAdmin(LoeschLinkMixin, UserAdmin):
                 taenzerinnen_nutzer.append(user)
             else:
                 mitglieder.append(user)
+        return trainer, orga, taenzerinnen_nutzer, mitglieder
 
-        nutzer_nach_gruppe = {}
-        ohne_gruppe = []
-        for user in taenzerinnen_nutzer:
-            gruppe = user.taenzerin_konto.gruppe
-            if gruppe is None:
-                ohne_gruppe.append(user)
-            else:
-                nutzer_nach_gruppe.setdefault(gruppe, []).append(user)
+    def benutzer_uebersicht(self, request):
+        """Kachel-Übersicht der Benutzer nach Rolle (Trainer, Orga, Tänzerinnen mit eigenem
+        Konto, Mitglieder) statt der flachen Standardliste - fuer den Schnellzugriff
+        'Benutzer' im Hauptmenue. Jede Kachel zeigt nur die Anzahl, erst ein Klick zeigt,
+        wer konkret drin ist."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
 
-        taenzerinnen_gruppen = [
-            {"gruppe": gruppe, "nutzer": nutzer_nach_gruppe.get(gruppe, [])}
-            for gruppe in Gruppe.objects.order_by("-jahrgang_ab")
-        ]
-
+        trainer, orga, taenzerinnen_nutzer, mitglieder = self._benutzer_kategorisieren()
         return render(
             request,
             "admin/mitglieder/benutzer_uebersicht.html",
             {
-                "trainer": trainer,
-                "orga": orga,
-                "taenzerinnen_gruppen": taenzerinnen_gruppen,
-                "taenzerinnen_ohne_gruppe": ohne_gruppe,
+                "anzahl_trainer": len(trainer),
+                "anzahl_orga": len(orga),
                 "anzahl_taenzerinnen": len(taenzerinnen_nutzer),
-                "mitglieder": mitglieder,
+                "anzahl_mitglieder": len(mitglieder),
                 "opts": self.model._meta,
                 "title": "Benutzer",
             },
+        )
+
+    def benutzer_kategorie(self, request, kategorie):
+        """Liste der Benutzer einer Kategorie (trainer/orga/mitglieder) - oder bei
+        'taenzerinnen' die Zwischenseite mit den Trainingsgruppen-Kacheln."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        trainer, orga, taenzerinnen_nutzer, mitglieder = self._benutzer_kategorisieren()
+
+        if kategorie == "taenzerinnen":
+            nutzer_nach_gruppe = {}
+            ohne_gruppe = []
+            for user in taenzerinnen_nutzer:
+                gruppe = user.taenzerin_konto.gruppe
+                if gruppe is None:
+                    ohne_gruppe.append(user)
+                else:
+                    nutzer_nach_gruppe.setdefault(gruppe, []).append(user)
+
+            gruppen_kacheln = [
+                {"gruppe": gruppe, "anzahl": len(nutzer_nach_gruppe.get(gruppe, []))}
+                for gruppe in Gruppe.objects.order_by("-jahrgang_ab")
+            ]
+            return render(
+                request,
+                "admin/mitglieder/benutzer_taenzerinnen.html",
+                {
+                    "gruppen_kacheln": gruppen_kacheln,
+                    "anzahl_ohne_gruppe": len(ohne_gruppe),
+                    "opts": self.model._meta,
+                    "title": "Benutzer – Tänzerinnen",
+                },
+            )
+
+        titel_und_nutzer = {
+            "trainer": ("Benutzer – Trainer", trainer),
+            "orga": ("Benutzer – Orga", orga),
+            "mitglieder": ("Benutzer – Mitglieder", mitglieder),
+        }
+        if kategorie not in titel_und_nutzer:
+            raise Http404
+        titel, nutzer = titel_und_nutzer[kategorie]
+        return render(
+            request,
+            "admin/mitglieder/benutzer_liste.html",
+            {"nutzer": nutzer, "opts": self.model._meta, "title": titel},
+        )
+
+    def benutzer_taenzerinnen_gruppe(self, request, gruppe_id):
+        """Liste der Tänzerinnen-Konten einer einzelnen Trainingsgruppe (gruppe_id=0 steht
+        fuer 'ohne Gruppe', da ein echtes Gruppe-Objekt dafuer nicht existiert)."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        _, _, taenzerinnen_nutzer, _ = self._benutzer_kategorisieren()
+        if gruppe_id == 0:
+            nutzer = [u for u in taenzerinnen_nutzer if u.taenzerin_konto.gruppe is None]
+            titel = "Benutzer – Tänzerinnen ohne Gruppe"
+        else:
+            gruppe = get_object_or_404(Gruppe, pk=gruppe_id)
+            nutzer = [
+                u for u in taenzerinnen_nutzer
+                if u.taenzerin_konto.gruppe and u.taenzerin_konto.gruppe.id == gruppe.id
+            ]
+            titel = f"Benutzer – Tänzerinnen ({gruppe.name})"
+        return render(
+            request,
+            "admin/mitglieder/benutzer_liste.html",
+            {"nutzer": nutzer, "opts": self.model._meta, "title": titel},
         )
 
     def als_mitglied_ansehen(self, request, user_id):

@@ -2,91 +2,30 @@
 
 {% block content %}
 <style>
-    .garde-benutzer-grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:18px;margin-top:1.2rem;}
-    @media (max-width:767px){.garde-benutzer-grid{grid-template-columns:1fr;}}
-    .garde-benutzer-karte{background:var(--darkened-bg);border:1px solid var(--hairline-color);border-radius:12px;padding:0;}
-    .garde-benutzer-karte summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;font-size:16px;font-weight:600;}
-    .garde-benutzer-karte summary::-webkit-details-marker{display:none;}
-    .garde-anzahl{font-size:12.5px;background:var(--hairline-color);padding:2px 10px;border-radius:999px;font-weight:600;margin-left:8px;}
-    .garde-benutzer-liste{padding:0 18px 16px;display:flex;flex-direction:column;gap:4px;}
-    .garde-benutzer-liste a{color:var(--link-fg);text-decoration:none;}
-    .garde-benutzer-liste a:hover{text-decoration:underline;}
-    .garde-benutzer-leer{color:var(--body-quiet-color);font-size:13.5px;padding:0 18px 16px;}
-    .garde-untergruppen{padding:0 18px 16px;display:flex;flex-direction:column;gap:12px;}
-    .garde-untertile{background:var(--body-bg);border:1px solid var(--hairline-color);border-radius:10px;padding:12px 14px;}
-    .garde-untertile h3{margin:0 0 6px;font-size:14px;}
+    .garde-kacheln{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:18px;margin-top:1.2rem;}
+    @media (max-width:767px){.garde-kacheln{grid-template-columns:1fr;}}
+    .garde-kachel-link{display:block;background:var(--darkened-bg);border:1px solid var(--hairline-color);border-radius:12px;padding:20px 18px;text-decoration:none;color:var(--body-fg);}
+    .garde-kachel-link:hover{background:var(--selected-bg);}
+    .garde-kachel-titel{font-size:17px;font-weight:600;}
+    .garde-kachel-anzahl{font-size:13px;color:var(--body-quiet-color);margin-top:4px;}
 </style>
 
-<div class="garde-benutzer-grid">
-
-    <details class="garde-benutzer-karte" open>
-        <summary>Trainer<span class="garde-anzahl">{{ trainer|length }}</span></summary>
-        {% if trainer %}
-        <div class="garde-benutzer-liste">
-            {% for user in trainer %}
-            <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="garde-benutzer-leer">Noch niemand zugeordnet.</div>
-        {% endif %}
-    </details>
-
-    <details class="garde-benutzer-karte" open>
-        <summary>Orga<span class="garde-anzahl">{{ orga|length }}</span></summary>
-        {% if orga %}
-        <div class="garde-benutzer-liste">
-            {% for user in orga %}
-            <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="garde-benutzer-leer">Noch niemand zugeordnet.</div>
-        {% endif %}
-    </details>
-
-    <details class="garde-benutzer-karte" style="grid-column: span 2;" open>
-        <summary>Tänzerinnen (eigenes Konto)<span class="garde-anzahl">{{ anzahl_taenzerinnen }}</span></summary>
-        <div class="garde-untergruppen">
-            {% for eintrag in taenzerinnen_gruppen %}
-            <div class="garde-untertile">
-                <h3>{{ eintrag.gruppe.name }}<span class="garde-anzahl">{{ eintrag.nutzer|length }}</span></h3>
-                {% if eintrag.nutzer %}
-                <div class="garde-benutzer-liste" style="padding:0;">
-                    {% for user in eintrag.nutzer %}
-                    <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="garde-benutzer-leer" style="padding:0;">Noch niemand zugeordnet.</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-            {% if taenzerinnen_ohne_gruppe %}
-            <div class="garde-untertile">
-                <h3>Ohne Gruppe<span class="garde-anzahl">{{ taenzerinnen_ohne_gruppe|length }}</span></h3>
-                <div class="garde-benutzer-liste" style="padding:0;">
-                    {% for user in taenzerinnen_ohne_gruppe %}
-                    <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </details>
-
-    <details class="garde-benutzer-karte" style="grid-column: span 2;">
-        <summary>Mitglieder (Eltern/Mitverwalter)<span class="garde-anzahl">{{ mitglieder|length }}</span></summary>
-        {% if mitglieder %}
-        <div class="garde-benutzer-liste" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:4px;">
-            {% for user in mitglieder %}
-            <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="garde-benutzer-leer">Noch niemand zugeordnet.</div>
-        {% endif %}
-    </details>
-
+<div class="garde-kacheln">
+    <a class="garde-kachel-link" href="{% url 'admin:auth_user_uebersicht_kategorie' 'trainer' %}">
+        <div class="garde-kachel-titel">Trainer</div>
+        <div class="garde-kachel-anzahl">{{ anzahl_trainer }}</div>
+    </a>
+    <a class="garde-kachel-link" href="{% url 'admin:auth_user_uebersicht_kategorie' 'orga' %}">
+        <div class="garde-kachel-titel">Orga</div>
+        <div class="garde-kachel-anzahl">{{ anzahl_orga }}</div>
+    </a>
+    <a class="garde-kachel-link" href="{% url 'admin:auth_user_uebersicht_kategorie' 'taenzerinnen' %}">
+        <div class="garde-kachel-titel">Tänzerinnen (eigenes Konto)</div>
+        <div class="garde-kachel-anzahl">{{ anzahl_taenzerinnen }}</div>
+    </a>
+    <a class="garde-kachel-link" href="{% url 'admin:auth_user_uebersicht_kategorie' 'mitglieder' %}">
+        <div class="garde-kachel-titel">Mitglieder (Eltern/Mitverwalter)</div>
+        <div class="garde-kachel-anzahl">{{ anzahl_mitglieder }}</div>
+    </a>
 </div>
 {% endblock %}

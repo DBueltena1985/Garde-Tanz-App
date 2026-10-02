@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+    .garde-benutzer-liste{display:flex;flex-direction:column;gap:2px;margin-top:1rem;}
+    .garde-benutzer-liste a{padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--link-fg);}
+    .garde-benutzer-liste a:hover{background:var(--darkened-bg);}
+</style>
+
+{% if nutzer %}
+<div class="garde-benutzer-liste">
+    {% for user in nutzer %}
+    <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
+    {% endfor %}
+</div>
+{% else %}
+<p>Noch niemand zugeordnet.</p>
+{% endif %}
+{% endblock %}
