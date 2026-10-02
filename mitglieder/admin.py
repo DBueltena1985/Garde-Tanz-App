@@ -558,6 +558,7 @@ class SerieLoeschenForm(forms.Form):
 class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
+    classes = ("collapse",)
     fields = ("titel", "beschreibung", "max_anzahl", "mit_kommentar", "status_anzeige")
     readonly_fields = ("status_anzeige",)
 
@@ -576,6 +577,7 @@ class AnmeldepunktInline(admin.TabularInline):
 class AufgabeInline(admin.TabularInline):
     model = Aufgabe
     extra = 0
+    classes = ("collapse",)
     fields = ("titel", "beschreibung", "faellig_am", "zugewiesen_an", "erledigt")
 
     def get_formset(self, request, obj=None, **kwargs):
@@ -587,6 +589,7 @@ class AufgabeInline(admin.TabularInline):
 class GaleriebildInline(admin.TabularInline):
     model = Galeriebild
     extra = 1
+    classes = ("collapse",)
     fields = ("bild", "vorschau", "beschreibung", "titelbild")
     readonly_fields = ("vorschau",)
 
@@ -603,6 +606,7 @@ class GalerieordnerVeranstaltungInline(admin.TabularInline):
     model = Galerieordner
     fk_name = "veranstaltung"
     extra = 0
+    classes = ("collapse",)
     can_delete = False
     show_change_link = True
     fields = ("name", "anzahl_bilder_anzeige", "erstellt_am")
@@ -1085,6 +1089,11 @@ class TrainingAdmin(TerminAdminBase):
     ART_WERT = Termin.ART_TRAINING
     change_list_template = "admin/mitglieder/training_change_list.html"
     exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
+    fieldsets = (
+        ("Wann & Wo", {"fields": ("titel", "beginn", "ende", "ort", "beschreibung", "beschreibung_bild")}),
+        ("Für wen", {"fields": ("gruppen", "wichtige_trainings", "taenzerinnen_erforderlich")}),
+        ("Weitere Einstellungen", {"classes": ("collapse",), "fields": ("erstellt_von",)}),
+    )
 
     def changelist_view(self, request, extra_context=None):
         # Standardmaessig nur einen Monat zeigen (sonst waechst die Liste durch die
@@ -1192,6 +1201,13 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     ART_WERT = Termin.ART_VERANSTALTUNG
     bild_fk_feld = "termin"
     inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline, GalerieordnerVeranstaltungInline]
+    fieldsets = (
+        ("Wann & Wo", {
+            "fields": ("titel", "beginn", "ende", "uhrzeit_unbekannt", "ort", "beschreibung", "beschreibung_bild"),
+        }),
+        ("Für wen", {"fields": ("gruppen", "wichtige_trainings", "taenzerinnen_erforderlich")}),
+        ("Weitere Einstellungen", {"classes": ("collapse",), "fields": ("interne_notiz", "erstellt_von")}),
+    )
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
     # Ueberschreibt sowohl BildBulkUploadMixin.change_form_template als auch
@@ -1297,12 +1313,14 @@ class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
 class AufgabeErledigungInline(admin.TabularInline):
     model = AufgabeErledigung
     extra = 0
+    classes = ("collapse",)
     readonly_fields = ("erledigt_am",)
 
 
 class AufgabeDateiInline(admin.TabularInline):
     model = AufgabeDatei
     extra = 1
+    classes = ("collapse",)
     fields = ("datei",)
 
 
