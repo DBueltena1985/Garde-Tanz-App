@@ -924,7 +924,9 @@ class TrainingAdmin(TerminAdminBase):
     def anwesenheit_aktuell(self, request):
         """Springt direkt zur Anwesenheitsliste des aktuellen Trainings (heute, sonst das
         naechste bevorstehende, sonst das letzte vergangene) - fuer den Schnellzugriff
-        'Anwesenheit' im Hauptmenue, ohne erst in der Liste suchen zu muessen."""
+        'Anwesenheit' im Hauptmenue, ohne erst in der Liste suchen zu muessen. Gibt es am
+        massgeblichen Tag mehrere Trainings (z.B. Jugend und Junioren getrennt), wird erst
+        eine kurze Auswahl angezeigt statt stur das zeitlich erste zu nehmen."""
         if not self.has_change_permission(request):
             raise PermissionDenied
 
@@ -937,7 +939,23 @@ class TrainingAdmin(TerminAdminBase):
         if not ziel_termin:
             messages.info(request, "Es ist noch kein Training angelegt.")
             return self._changelist_redirect()
-        return redirect(f"admin:{self._url_name('anwesenheit')}", ziel_termin.pk)
+
+        ziel_datum = timezone.localtime(ziel_termin.beginn).date()
+        trainings_am_tag = list(
+            self.model.objects.filter(beginn__date=ziel_datum).order_by("beginn").prefetch_related("gruppen")
+        )
+        if len(trainings_am_tag) == 1:
+            return redirect(f"admin:{self._url_name('anwesenheit')}", trainings_am_tag[0].pk)
+
+        return render(
+            request,
+            "admin/mitglieder/anwesenheit_auswahl.html",
+            {
+                "trainings": trainings_am_tag,
+                "opts": self.model._meta,
+                "title": "Anwesenheit – Training wählen",
+            },
+        )
 
     def teilnahme_statistik(self, request):
         if not self.has_view_permission(request):

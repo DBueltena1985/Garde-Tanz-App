@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<p>An diesem Tag gibt es mehrere Trainings — bitte auswählen:</p>
+
+<ul style="list-style:none; padding:0;">
+    {% for training in trainings %}
+    <li style="margin-bottom:8px;">
+        <a class="button" href="{% url 'admin:mitglieder_trainingtermin_anwesenheit' training.pk %}">
+            {{ training.beginn|date:"H:i" }} Uhr – {{ training.titel }}
+            {% if training.gruppen.all %}
+                ({% for gruppe in training.gruppen.all %}{{ gruppe.name }}{% if not forloop.last %}, {% endif %}{% endfor %})
+            {% endif %}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
