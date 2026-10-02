@@ -33,7 +33,8 @@
 <div class="card">
     {% for eintrag in offene_allgemeine_aufgaben %}
     <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid var(--line);{% endif %}">
-        <strong>{{ eintrag.aufgabe.titel }}</strong>{% if eintrag.aufgabe.termin %} <span style="color:var(--ink-faint); font-size:0.85rem;">({{ eintrag.aufgabe.termin.titel }})</span>{% endif %}
+        <strong>{{ eintrag.aufgabe.titel }}</strong>
+        {% if eintrag.aufgabe.termin %}<div style="color:var(--ink-faint); font-size:0.85rem;">{{ eintrag.aufgabe.termin.titel }}</div>{% endif %}
         {% if eintrag.aufgabe.sichtbar_fuer == "team" %}<span style="color:#8a6d00; font-size:0.8rem;">🔒 Nur Team</span>{% endif %}
         {% if eintrag.aufgabe.sichtbar_fuer == "taenzerinnen" %}<span style="color:#8a6d00; font-size:0.8rem;">💃 Für Tänzerinnen</span>{% endif %}
         {% if eintrag.aufgabe.faellig_am %}
