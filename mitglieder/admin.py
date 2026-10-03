@@ -1735,7 +1735,8 @@ _each_context_ohne_einladung = admin.site.each_context
 
 
 def _each_context_mit_einladung(request):
-    """Ergänzt Registrierungslink und Einladungscode im Admin-Kontext (für die Startseite)."""
+    """Ergänzt Registrierungslink, Einladungscode und offene Veranstaltungs-Entwürfe im
+    Admin-Kontext (für die Startseite)."""
     context = _each_context_ohne_einladung(request)
     registrierungslink = request.build_absolute_uri(reverse("registrieren"))
     context["einladungscode"] = settings.EINLADUNGSCODE
@@ -1744,6 +1745,16 @@ def _each_context_mit_einladung(request):
         f"Hier geht's zur Registrierung für die Garde-App: {registrierungslink}\n"
         f"Einladungscode: {settings.EINLADUNGSCODE}"
     )
+    context["veranstaltungs_entwuerfe"] = [
+        {
+            "titel": termin.titel,
+            "beginn": termin.beginn,
+            "admin_url": reverse("admin:mitglieder_veranstaltungtermin_change", args=[termin.pk]),
+        }
+        for termin in Termin.objects.filter(
+            art=Termin.ART_VERANSTALTUNG, ist_entwurf=True
+        ).order_by("beginn")
+    ]
     return context
 
 

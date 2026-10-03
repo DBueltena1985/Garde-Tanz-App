@@ -21,6 +21,20 @@
     </a>
 </div>
 
+{% if veranstaltungs_entwuerfe %}
+<div class="garde-entwurf-hinweis">
+    {% for entwurf in veranstaltungs_entwuerfe %}
+    <a class="garde-entwurf-zeile" href="{{ entwurf.admin_url }}">
+        <span class="garde-entwurf-text">
+            📝 <strong>{{ entwurf.titel }}</strong>
+            {% if entwurf.beginn %}<span class="garde-entwurf-datum">({{ entwurf.beginn|date:"d.m.Y H:i" }} Uhr)</span>{% endif %}
+        </span>
+        <span class="garde-entwurf-badge">Entwurf – Eltern wissen noch nicht Bescheid</span>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
 {% if app_list %}
 <div class="garde-kacheln">
     {% for app in app_list %}
@@ -72,6 +86,12 @@
 .garde-chevron{color:var(--body-quiet-color);flex:none;}
 .garde-hinzufuegen{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:var(--link-fg);text-decoration:none;}
 .garde-hinzufuegen:hover{background:var(--hairline-color);}
+.garde-entwurf-hinweis{display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem;}
+.garde-entwurf-zeile{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;background:#fff8e1;border:1px solid #f0d47a;border-radius:8px;padding:10px 14px;text-decoration:none;color:#5c4a05;}
+.garde-entwurf-zeile:hover{background:#fdf0c4;}
+.garde-entwurf-text{color:#5c4a05;}
+.garde-entwurf-datum{color:#7a6620;font-weight:normal;}
+.garde-entwurf-badge{flex:none;background:#f0d47a;color:#5c4a05;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;}
 </style>
 {% endblock %}
 
