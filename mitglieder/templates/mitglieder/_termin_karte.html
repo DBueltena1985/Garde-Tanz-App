@@ -1,4 +1,9 @@
 <div class="card termin-karte {% if eintrag.termin.art == 'veranstaltung' %}card-veranstaltung{% endif %}" id="termin-{{ eintrag.termin.id }}">
+    {% if eintrag.termin.ist_entwurf %}
+    <div class="banner-warn" style="margin-bottom:0.6rem;">
+        📝 <strong>Entwurf</strong> – Eltern wissen noch nicht Bescheid
+    </div>
+    {% endif %}
     <div class="termin-head">
         <div>
             <p class="termin-title">{{ eintrag.termin.titel }}</p>

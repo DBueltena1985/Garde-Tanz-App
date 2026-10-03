@@ -1,6 +1,7 @@
 import calendar
 import secrets
 from datetime import date, timedelta
+from itertools import chain
 
 from django.conf import settings
 from django.contrib import messages
@@ -136,6 +137,17 @@ def _fuer_gruppen_relevant(queryset, gruppen):
     ).distinct()
 
 
+def _mit_offenen_entwuerfen(termine, user, **filter_kwargs):
+    """Ergänzt für Trainer/Orgateam (is_staff) noch nicht veröffentlichte Veranstaltungs-Entwürfe,
+    die _fuer_gruppen_relevant sonst ausblendet - für Eltern bleiben Entwürfe weiterhin unsichtbar."""
+    if not user.is_staff:
+        return termine
+    entwuerfe = Termin.objects.filter(
+        art=Termin.ART_VERANSTALTUNG, ist_entwurf=True, **filter_kwargs
+    ).prefetch_related("anmeldepunkte__anmeldungen__eltern")
+    return sorted(chain(termine, entwuerfe), key=lambda t: t.beginn)
+
+
 def _offener_termin_id(request):
     try:
         return int(request.GET.get("offener_termin", 0)) or None
@@ -263,6 +275,7 @@ def dashboard(request):
         Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
         kinder_gruppen,
     ).order_by("beginn")
+    termine = _mit_offenen_entwuerfen(termine, request.user, beginn__gte=timezone.now())
 
     termin_liste = _termin_eintraege(termine, kinder, request.user)
 
@@ -354,6 +367,7 @@ def veranstaltungen(request):
         ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
         kinder_gruppen,
     ).order_by("beginn")
+    offene_veranstaltungen = _mit_offenen_entwuerfen(offene_veranstaltungen, request.user, beginn__gte=timezone.now())
     offene_gruppen = _nach_monat_gruppieren(_termin_eintraege(offene_veranstaltungen, kinder, request.user))
 
     abgeschlossene_veranstaltungen = _fuer_gruppen_relevant(
