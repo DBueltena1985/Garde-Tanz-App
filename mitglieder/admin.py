@@ -714,15 +714,23 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     form = TerminForm
     filter_horizontal = ("wichtige_trainings",)
     list_display = (
-        "titel", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort",
+        "titel_anzeige", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort",
         "anzahl_zusagen", "anzahl_absagen", "loeschen_link",
     )
-    list_filter = ("gruppen",)
+    list_filter = ("gruppen", "ist_entwurf")
     search_fields = ("titel",)
     date_hierarchy = "beginn"
     ordering = ("beginn",)
     exclude = ("art",)
     change_list_template = "admin/mitglieder/termin_change_list.html"
+
+    def titel_anzeige(self, obj):
+        if obj.ist_entwurf:
+            return format_html("📝 {} <small>(Entwurf)</small>", obj.titel)
+        return obj.titel
+
+    titel_anzeige.short_description = "Titel"
+    titel_anzeige.admin_order_field = "titel"
 
     def gruppe_anzeige(self, obj):
         namen = [g.name for g in obj.gruppen.all()]
@@ -1107,6 +1115,7 @@ class TrainingAdmin(TerminAdminBase):
     change_list_template = "admin/mitglieder/training_change_list.html"
     exclude = TerminAdminBase.exclude + ("interne_notiz", "uhrzeit_unbekannt")
     fieldsets = (
+        ("Sichtbarkeit", {"fields": ("ist_entwurf",)}),
         ("Wann & Wo", {"fields": ("titel", "beginn", "ende", "ort", "beschreibung", "beschreibung_bild")}),
         ("Für wen", {"fields": ("gruppen",)}),
         (
@@ -1222,6 +1231,7 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     bild_fk_feld = "termin"
     inlines = [AnmeldepunktInline, AufgabeInline, GaleriebildInline, GalerieordnerVeranstaltungInline]
     fieldsets = (
+        ("Sichtbarkeit", {"fields": ("ist_entwurf",)}),
         ("Wann & Wo", {
             "fields": ("titel", "beginn", "ende", "uhrzeit_unbekannt", "ort", "beschreibung", "beschreibung_bild"),
         }),
@@ -1241,7 +1251,10 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
     def teilen_link(self, obj):
         """Button, der WhatsApp mit einem vorausgefuellten Link zur oeffentlichen
         Veranstaltungsseite oeffnet - fuer Eltern ohne App-Konto, die sich dort auch in die
-        Helfer-/Mitbringlisten eintragen koennen."""
+        Helfer-/Mitbringlisten eintragen koennen. Bei Entwuerfen (noch nicht veroeffentlicht)
+        gibt es den Button bewusst nicht, da der Link sonst ins Leere (404) fuehren wuerde."""
+        if obj.ist_entwurf:
+            return "–"
         link = absolute_url("veranstaltung_oeffentlich", obj.oeffentlicher_token)
         text = f"Hier die Infos zu '{obj.titel}' (inkl. Helfer-/Mitbringliste): {link}"
         wa_url = f"https://wa.me/?text={quote(text)}"

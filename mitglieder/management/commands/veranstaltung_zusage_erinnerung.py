@@ -20,6 +20,7 @@ class Command(BaseCommand):
         zieltag = timezone.localdate() + timedelta(days=VORLAUF_TAGE)
         veranstaltungen = Termin.objects.filter(
             art=Termin.ART_VERANSTALTUNG, taenzerinnen_erforderlich=True, beginn__date=zieltag,
+            ist_entwurf=False,
         )
 
         angeschrieben = 0

@@ -129,8 +129,11 @@ MONATSNAMEN = [
 
 
 def _fuer_gruppen_relevant(queryset, gruppen):
-    """Schränkt Termine auf 'gilt für alle Gruppen' (keine Gruppe zugewiesen) plus die übergebenen Gruppen ein."""
-    return queryset.filter(Q(gruppen__isnull=True) | Q(gruppen__in=gruppen)).distinct()
+    """Schränkt Termine auf 'gilt für alle Gruppen' (keine Gruppe zugewiesen) plus die übergebenen
+    Gruppen ein, und blendet Entwürfe (noch nicht veröffentlichte Termine) aus."""
+    return queryset.exclude(ist_entwurf=True).filter(
+        Q(gruppen__isnull=True) | Q(gruppen__in=gruppen)
+    ).distinct()
 
 
 def _offener_termin_id(request):
@@ -477,7 +480,9 @@ def veranstaltung_oeffentlich(request, token):
     """Öffentliche Seite zu einer Veranstaltung (ohne Login), zum Teilen z.B. in einer
     WhatsApp-Gruppe für Eltern ohne App-Konto - zeigt die Termin-Infos und erlaubt das
     Eintragen in die Helfer-/Mitbringlisten per Namenseingabe."""
-    termin = get_object_or_404(Termin, oeffentlicher_token=token, art=Termin.ART_VERANSTALTUNG)
+    termin = get_object_or_404(
+        Termin, oeffentlicher_token=token, art=Termin.ART_VERANSTALTUNG, ist_entwurf=False
+    )
 
     if request.method == "POST":
         punkt = get_object_or_404(Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin)

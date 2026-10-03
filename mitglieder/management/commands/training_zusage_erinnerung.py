@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         heute = timezone.localdate()
-        trainings_heute = Termin.objects.filter(art=Termin.ART_TRAINING, beginn__date=heute)
+        trainings_heute = Termin.objects.filter(art=Termin.ART_TRAINING, beginn__date=heute, ist_entwurf=False)
 
         angeschrieben = 0
         for training in trainings_heute:

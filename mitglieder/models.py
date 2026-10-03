@@ -215,6 +215,12 @@ class Termin(models.Model):
 
     titel = models.CharField("Titel", max_length=200)
     art = models.CharField("Art", max_length=20, choices=ART_CHOICES, default=ART_TRAINING)
+    ist_entwurf = models.BooleanField(
+        "Entwurf (für Mitglieder noch nicht sichtbar)", default=False,
+        help_text="Aktiviert: Der Termin ist im Mitgliederbereich (Übersicht, Kalender, "
+        "Erinnerungs-Mails, öffentlicher Teilen-Link) unsichtbar - praktisch, um erst alles "
+        "vorzubereiten, bevor er veröffentlicht wird. Hier im Admin-Bereich bleibt er sichtbar.",
+    )
     gruppen = models.ManyToManyField(
         Gruppe, blank=True, verbose_name="Gruppen",
         help_text="Wenn ausgewählt: Auftritt für diese Gruppe(n). Leer lassen = kein Auftritt "
