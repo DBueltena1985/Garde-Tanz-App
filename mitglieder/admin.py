@@ -801,10 +801,10 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             obj.taenzerinnen_erforderlich = automatisch_erforderlich
             obj.save(update_fields=["taenzerinnen_erforderlich"])
 
-        if war_neu and obj.art == Termin.ART_VERANSTALTUNG:
+        if war_neu and obj.art == Termin.ART_VERANSTALTUNG and not obj.ist_entwurf:
             from .signals import neue_veranstaltung_benachrichtigen
             neue_veranstaltung_benachrichtigen(obj)
-        if change and "_save_and_notify" in request.POST:
+        if change and "_save_and_notify" in request.POST and not obj.ist_entwurf:
             from .signals import termin_update_benachrichtigen
             termin_update_benachrichtigen(obj)
             messages.success(request, "Mitglieder wurden per E-Mail über die Änderung informiert.")
