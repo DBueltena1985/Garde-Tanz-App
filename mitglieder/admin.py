@@ -559,7 +559,7 @@ class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
     classes = ("collapse",)
-    fields = ("titel", "beschreibung", "max_anzahl", "mit_kommentar", "status_anzeige")
+    fields = ("titel", "beschreibung", "benoetigt_am", "max_anzahl", "mit_kommentar", "status_anzeige")
     readonly_fields = ("status_anzeige",)
 
     def status_anzeige(self, obj):
@@ -1340,7 +1340,8 @@ class AnmeldepunktOffenFilter(admin.SimpleListFilter):
 @admin.register(Anmeldepunkt)
 class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
-        "titel", "termin", "mit_kommentar", "max_anzahl", "anzahl_angemeldet", "noch_offen", "loeschen_link",
+        "titel", "termin", "benoetigt_am", "mit_kommentar", "max_anzahl", "anzahl_angemeldet", "noch_offen",
+        "loeschen_link",
     )
     list_filter = ("termin", "mit_kommentar", AnmeldepunktOffenFilter)
     inlines = [AnmeldungInline]

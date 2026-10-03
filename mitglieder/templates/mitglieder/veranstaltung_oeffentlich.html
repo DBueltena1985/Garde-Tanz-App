@@ -71,6 +71,7 @@
     <div class="card">
         <strong>{{ punkt.titel }}</strong>
         {% if punkt.max_anzahl %}<span class="meta">({{ punkt.anzahl_angemeldet }}/{{ punkt.max_anzahl }} belegt)</span>{% endif %}
+        {% if punkt.benoetigt_am %}<div class="meta">🕒 Benötigt am {{ punkt.benoetigt_am|date:"d.m.Y H:i" }} Uhr</div>{% endif %}
         {% if punkt.beschreibung %}<div class="meta">{{ punkt.beschreibung }}</div>{% endif %}
 
         {% if punkt.anmeldungen.all %}

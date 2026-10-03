@@ -352,6 +352,11 @@ class Anmeldepunkt(models.Model):
     )
     titel = models.CharField("Titel", max_length=200, help_text="z.B. 'Kuchen mitbringen', 'Aufbauhelfer', 'Fahrdienst'")
     beschreibung = models.TextField("Beschreibung", blank=True)
+    benoetigt_am = models.DateTimeField(
+        "Benötigt am", null=True, blank=True,
+        help_text="Optional: bei mehrtägigen Terminen, für welchen Tag/welche Uhrzeit genau das "
+        "gebraucht bzw. abgegeben werden soll (z.B. Frühstück am 2. Tag, 8 Uhr).",
+    )
     max_anzahl = models.PositiveIntegerField(
         "Benötigte Anzahl", null=True, blank=True,
         help_text="Leer lassen für unbegrenzt viele Anmeldungen",
