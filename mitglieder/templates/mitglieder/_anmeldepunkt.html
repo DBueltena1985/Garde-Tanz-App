@@ -8,7 +8,7 @@
     <ul style="margin:0.3rem 0; padding-left:1.2rem; font-size:0.9rem;">
         {% for anmeldung in ap.anmeldungen %}
         <li>
-            {{ anmeldung.eltern.first_name|default:anmeldung.eltern.username }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}
+            {{ anmeldung.anzeigename }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}
             {% if ap.punkt.mit_kommentar and anmeldung.eltern_id == request.user.id %}
             <form method="post" action="{% url 'anmeldepunkt_austragen' anmeldung.id %}" style="display:inline;">
                 {% csrf_token %}

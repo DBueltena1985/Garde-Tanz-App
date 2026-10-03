@@ -1,3 +1,5 @@
+import secrets
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -251,6 +253,10 @@ class Termin(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="erstellte_termine"
     )
     erstellt_am = models.DateTimeField(auto_now_add=True)
+    oeffentlicher_token = models.CharField(
+        max_length=43, unique=True, default=secrets.token_urlsafe,
+        help_text="Für den öffentlichen Link zum Teilen (z.B. per WhatsApp an Eltern ohne App-Konto).",
+    )
 
     class Meta:
         verbose_name = "Termin"
@@ -372,7 +378,13 @@ class Anmeldung(models.Model):
 
     anmeldepunkt = models.ForeignKey(Anmeldepunkt, on_delete=models.CASCADE, related_name="anmeldungen")
     eltern = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="helfer_anmeldungen"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="helfer_anmeldungen",
+        null=True, blank=True,
+        help_text="Leer, falls über den öffentlichen Link ohne Konto eingetragen (siehe 'Name ohne Konto').",
+    )
+    name_ohne_konto = models.CharField(
+        "Name (ohne Konto)", max_length=150, blank=True,
+        help_text="Nur ausgefüllt bei einer Anmeldung über den öffentlichen WhatsApp-Link ohne App-Konto.",
     )
     kommentar = models.CharField("Kommentar", max_length=300, blank=True, help_text="z.B. was du mitbringst")
     erstellt_am = models.DateTimeField(auto_now_add=True)
@@ -381,8 +393,14 @@ class Anmeldung(models.Model):
         verbose_name = "Anmeldung"
         verbose_name_plural = "Anmeldungen"
 
+    @property
+    def anzeigename(self):
+        if self.eltern_id:
+            return self.eltern.first_name or self.eltern.username
+        return self.name_ohne_konto or "Unbekannt"
+
     def __str__(self):
-        return f"{self.eltern} - {self.anmeldepunkt}"
+        return f"{self.anzeigename} - {self.anmeldepunkt}"
 
 
 class Aufgabe(models.Model):

@@ -473,6 +473,41 @@ def anmeldepunkt_eintragen(request, punkt_id):
     return redirect("dashboard")
 
 
+def veranstaltung_oeffentlich(request, token):
+    """Öffentliche Seite zu einer Veranstaltung (ohne Login), zum Teilen z.B. in einer
+    WhatsApp-Gruppe für Eltern ohne App-Konto - zeigt die Termin-Infos und erlaubt das
+    Eintragen in die Helfer-/Mitbringlisten per Namenseingabe."""
+    termin = get_object_or_404(Termin, oeffentlicher_token=token, art=Termin.ART_VERANSTALTUNG)
+
+    if request.method == "POST":
+        punkt = get_object_or_404(Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin)
+        name = request.POST.get("name", "").strip()
+        kommentar = request.POST.get("kommentar", "").strip()
+        if not name:
+            messages.error(request, "Bitte gib deinen Namen ein.")
+        elif punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
+            messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
+        else:
+            Anmeldung.objects.create(anmeldepunkt=punkt, name_ohne_konto=name, kommentar=kommentar)
+            messages.success(request, f"Danke {name}, du bist bei '{punkt.titel}' eingetragen.")
+            zusatz = f" Kommentar: {kommentar}" if kommentar else ""
+            _admins_benachrichtigen(
+                subject=f"Neue Anmeldung ohne Konto: {punkt.titel}",
+                message=(
+                    f"{name} hat sich über den öffentlichen Link bei '{punkt.titel}' "
+                    f"({termin.titel}) eingetragen.{zusatz}\n\n"
+                    "Im Admin-Bereich unter Helfer-/Mitbringlisten einsehbar."
+                ),
+            )
+        return redirect("veranstaltung_oeffentlich", token=token)
+
+    anmeldepunkte = termin.anmeldepunkte.all().prefetch_related("anmeldungen")
+    return render(request, "mitglieder/veranstaltung_oeffentlich.html", {
+        "termin": termin,
+        "anmeldepunkte": anmeldepunkte,
+    })
+
+
 @login_required
 def anmeldepunkt_austragen(request, anmeldung_id):
     anmeldung = get_object_or_404(Anmeldung, pk=anmeldung_id, eltern=request.user)

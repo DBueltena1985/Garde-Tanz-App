@@ -1,0 +1,104 @@
+{% load static %}
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ termin.titel }}</title>
+<style>
+    :root {
+        --accent: #c31c2b; --accent-strong: #841019; --accent-soft: #fbe1e2;
+        --bg: #faf7f6; --surface: #ffffff; --ink: #271b1a; --ink-soft: #6e5b58; --ink-faint: #a4908d;
+        --line: #f0dcda;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --accent-soft: #3a1216; --bg: #17100f; --surface: #241a18; --ink: #f3ebe9;
+            --ink-soft: #c9b4b0; --ink-faint: #8a726e; --line: #3a2926;
+        }
+    }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--ink); padding-bottom: 2rem; }
+    .page { max-width: 600px; margin: 0 auto; padding: 1rem; }
+    .kopf {
+        display: flex; align-items: center; gap: 0.6rem; background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+        color: #fff; padding: 0.9rem 1rem; font-weight: 700; font-size: 1.05rem;
+    }
+    .kopf img { height: 34px; width: 34px; border-radius: 50%; }
+    .card { background: var(--surface); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .meta { font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.3rem; }
+    .btn { display: inline-block; padding: 0.4rem 0.9rem; border-radius: 6px; border: none; cursor: pointer; text-decoration: none; font-size: 0.9rem; background: var(--accent); color: #fff; }
+    input[type="text"] { padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 0.9rem; }
+    .messages { list-style: none; padding: 0; margin: 0 0 1rem; }
+    .messages li { padding: 0.6rem 0.9rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .messages .success { background: #d7f0dd; color: #1a7a3c; }
+    .messages .error { background: #f7d9d6; color: #b3261e; }
+    .anmeldung-liste { margin: 0.4rem 0 0.6rem; padding-left: 1.2rem; font-size: 0.9rem; }
+    .hinweis { font-size: 0.8rem; color: var(--ink-faint); margin-top: 1.2rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="kopf">
+    <img src="{% static 'mitglieder/garde-icon.png' %}" alt="DJK Oberasbach">
+    Weiße &amp; Rote Garde
+</div>
+
+<div class="page">
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="card">
+        <h1 style="margin:0 0 0.3rem; font-size:1.3rem;">{{ termin.titel }}</h1>
+        <div class="meta">
+            📅 {{ termin.beginn|date:"d.m.Y H:i" }} Uhr
+            {% if termin.ort %}<br>📍 {{ termin.ort }}{% endif %}
+        </div>
+        {% if termin.beschreibung %}
+        <div style="margin-top:0.8rem;">{{ termin.beschreibung|linebreaksbr }}</div>
+        {% endif %}
+    </div>
+
+    {% if anmeldepunkte %}
+    <h2 style="font-size:1.1rem;">Helfer-/Mitbringliste</h2>
+    {% for punkt in anmeldepunkte %}
+    <div class="card">
+        <strong>{{ punkt.titel }}</strong>
+        {% if punkt.max_anzahl %}<span class="meta">({{ punkt.anzahl_angemeldet }}/{{ punkt.max_anzahl }} belegt)</span>{% endif %}
+        {% if punkt.beschreibung %}<div class="meta">{{ punkt.beschreibung }}</div>{% endif %}
+
+        {% if punkt.anmeldungen.all %}
+        <ul class="anmeldung-liste">
+            {% for anmeldung in punkt.anmeldungen.all %}
+            <li>{{ anmeldung.anzeigename }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if punkt.max_anzahl and punkt.plaetze_frei == 0 %}
+        <div class="meta">Bereits voll.</div>
+        {% else %}
+        <form method="post" style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">
+            {% csrf_token %}
+            <input type="hidden" name="punkt_id" value="{{ punkt.id }}">
+            <input type="text" name="name" placeholder="Dein Name" required>
+            {% if punkt.mit_kommentar %}
+            <input type="text" name="kommentar" placeholder="z.B. was du mitbringst (optional)">
+            {% endif %}
+            <button type="submit" class="btn">Eintragen</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="hinweis">Kein App-Konto nötig – nur dieser Link.</div>
+</div>
+</body>
+</html>

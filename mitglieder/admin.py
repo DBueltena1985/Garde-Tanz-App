@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 from django import forms
 from django.conf import settings
@@ -17,6 +18,7 @@ from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 from formulare.models import Formular
+from .utils import absolute_url
 
 from .models import (
     Anmeldepunkt, Anmeldung, Aufgabe, AufgabeDatei, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild,
@@ -1229,12 +1231,26 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
             {"classes": ("collapse",), "fields": ("wichtige_trainings", "interne_notiz", "erstellt_von")},
         ),
     )
-    list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben")
+    list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben", "teilen_link")
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
     # Ueberschreibt sowohl BildBulkUploadMixin.change_form_template als auch
     # TerminAdminBase.change_form_template mit einer Variante, die beides kombiniert
     # (Bilder-hochladen-Button UND Speichern-und-benachrichtigen-Button).
     change_form_template = "admin/mitglieder_veranstaltung_change_form.html"
+
+    def teilen_link(self, obj):
+        """Button, der WhatsApp mit einem vorausgefuellten Link zur oeffentlichen
+        Veranstaltungsseite oeffnet - fuer Eltern ohne App-Konto, die sich dort auch in die
+        Helfer-/Mitbringlisten eintragen koennen."""
+        link = absolute_url("veranstaltung_oeffentlich", obj.oeffentlicher_token)
+        text = f"Hier die Infos zu '{obj.titel}' (inkl. Helfer-/Mitbringliste): {link}"
+        wa_url = f"https://wa.me/?text={quote(text)}"
+        return format_html(
+            '<a class="button" href="{}" target="_blank" rel="noopener" style="background:#25D366;">📱 Teilen</a>',
+            wa_url,
+        )
+
+    teilen_link.short_description = "Teilen"
 
     def loeschen_link(self, obj):
         """Versteckte Markierung mit dem Beginn-Zeitpunkt (als Unix-Millisekunden, um
