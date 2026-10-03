@@ -57,8 +57,12 @@
     <div class="card">
         <h1 style="margin:0 0 0.3rem; font-size:1.3rem;">{{ termin.titel }}</h1>
         <div class="meta">
-            📅 {{ termin.beginn|date:"d.m.Y H:i" }} Uhr
-            {% if termin.mehrtaegig %} – {{ termin.ende|date:"d.m.Y H:i" }} Uhr{% elif termin.ende %}–{{ termin.ende|date:"H:i" }} Uhr{% endif %}
+            {% if termin.mehrtaegig %}
+            📅 {{ termin.beginn|date:"d.m.Y H:i" }} Uhr<br>
+            &nbsp;&nbsp;&nbsp;bis {{ termin.ende|date:"d.m.Y H:i" }} Uhr
+            {% else %}
+            📅 {{ termin.beginn|date:"d.m.Y H:i" }} Uhr{% if termin.ende %}–{{ termin.ende|date:"H:i" }} Uhr{% endif %}
+            {% endif %}
             {% if termin.ort %}<br>📍 {{ termin.ort }}{% endif %}
         </div>
         {% if termin.beschreibung %}

@@ -26,7 +26,10 @@
             {% if eintrag.termin.uhrzeit_unbekannt %}
             {{ eintrag.termin.beginn|date:"d.m.Y" }} – Uhrzeit folgt noch
             {% elif eintrag.termin.mehrtaegig %}
-            {{ eintrag.termin.beginn|date:"d.m.Y H:i" }} Uhr – {{ eintrag.termin.ende|date:"d.m.Y H:i" }} Uhr
+            <span style="display:flex; flex-direction:column;">
+                <span>{{ eintrag.termin.beginn|date:"d.m.Y H:i" }} Uhr</span>
+                <span>bis {{ eintrag.termin.ende|date:"d.m.Y H:i" }} Uhr</span>
+            </span>
             {% else %}
             {{ eintrag.termin.beginn|date:"d.m.Y H:i" }}{% if eintrag.termin.ende %}–{{ eintrag.termin.ende|date:"H:i" }}{% endif %} Uhr
             {% endif %}
