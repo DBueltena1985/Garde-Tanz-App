@@ -1,0 +1,64 @@
+{% load i18n admin_urls %}
+<div class="submit-row garde-submit-row">
+{% block submit-row %}
+{% if show_save or show_save_as_new or show_save_and_add_another or show_save_and_continue %}
+<div class="garde-save-gruppe">
+    {% if show_save %}<input type="submit" value="{% translate 'Save' %}" class="default" name="_save">{% endif %}
+    {% if show_save_as_new or show_save_and_add_another or show_save_and_continue %}
+    <button type="button" class="garde-save-pfeil" aria-label="Weitere Speichern-Optionen">▾</button>
+    <div class="garde-save-dropdown">
+        {% if show_save_as_new %}<input type="submit" value="{% translate 'Save as new' %}" name="_saveasnew">{% endif %}
+        {% if show_save_and_add_another %}<input type="submit" value="{% translate 'Save and add another' %}" name="_addanother">{% endif %}
+        {% if show_save_and_continue %}<input type="submit" value="{% if can_change %}{% translate 'Save and continue editing' %}{% else %}{% translate 'Save and view' %}{% endif %}" name="_continue">{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% if show_close %}
+    {% url opts|admin_urlname:'changelist' as changelist_url %}
+    <a role="button" href="{% add_preserved_filters changelist_url %}" class="closelink">{% translate 'Close' %}</a>
+{% endif %}
+{% if show_delete_link and original %}
+    {% url opts|admin_urlname:'delete' original.pk|admin_urlquote as delete_url %}
+    <a role="button" href="{% add_preserved_filters delete_url %}" class="deletelink garde-loeschen-link">{% translate "Delete" %}</a>
+{% endif %}
+{% endblock %}
+</div>
+
+<style>
+    .garde-submit-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .garde-save-gruppe { display: flex; position: relative; }
+    .garde-save-pfeil {
+        border: none; border-left: 1px solid rgba(255,255,255,0.25); cursor: pointer;
+        background: var(--button-bg); color: var(--button-fg); border-radius: 0 4px 4px 0;
+        padding: 0 10px; font-size: 13px;
+    }
+    .garde-save-pfeil:hover { background: var(--button-hover-bg); }
+    .garde-save-gruppe input[name="_save"] { border-radius: 4px 0 0 4px; }
+    .garde-save-dropdown {
+        display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 20;
+        background: var(--body-bg); border: 1px solid var(--border-color); border-radius: 6px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3); padding: 6px; min-width: 230px;
+        flex-direction: column; gap: 4px;
+    }
+    .garde-save-dropdown.garde-offen { display: flex; }
+    .garde-save-dropdown input[type="submit"] { width: 100%; margin: 0; }
+    .garde-loeschen-link { margin-left: auto; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.garde-save-pfeil').forEach(function (pfeil) {
+        var dropdown = pfeil.nextElementSibling;
+        if (!dropdown) { return; }
+        pfeil.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('garde-offen');
+        });
+    });
+    document.addEventListener('click', function () {
+        document.querySelectorAll('.garde-save-dropdown.garde-offen').forEach(function (d) {
+            d.classList.remove('garde-offen');
+        });
+    });
+});
+</script>
