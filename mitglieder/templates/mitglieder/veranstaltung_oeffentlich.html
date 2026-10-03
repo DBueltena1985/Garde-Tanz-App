@@ -58,6 +58,7 @@
         <h1 style="margin:0 0 0.3rem; font-size:1.3rem;">{{ termin.titel }}</h1>
         <div class="meta">
             📅 {{ termin.beginn|date:"d.m.Y H:i" }} Uhr
+            {% if termin.mehrtaegig %} – {{ termin.ende|date:"d.m.Y H:i" }} Uhr{% elif termin.ende %}–{{ termin.ende|date:"H:i" }} Uhr{% endif %}
             {% if termin.ort %}<br>📍 {{ termin.ort }}{% endif %}
         </div>
         {% if termin.beschreibung %}

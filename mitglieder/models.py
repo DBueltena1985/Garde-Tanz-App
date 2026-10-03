@@ -278,6 +278,14 @@ class Termin(models.Model):
         """Ob es zu dieser Veranstaltung Fotos gibt - direkt zugeordnet oder über einen verlinkten Galerie-Ordner."""
         return self.galeriebilder.exists() or self.galerie_ordner.filter(bilder__isnull=False).exists()
 
+    @property
+    def mehrtaegig(self):
+        """True, wenn Beginn und Ende (in der lokalen Zeitzone) an unterschiedlichen Tagen liegen -
+        damit z.B. ein Sleepover nicht nur mit der Enduhrzeit ohne Enddatum angezeigt wird."""
+        if not self.ende:
+            return False
+        return timezone.localtime(self.beginn).date() != timezone.localtime(self.ende).date()
+
 
 class TrainingManager(models.Manager):
     def get_queryset(self):
