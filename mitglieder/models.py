@@ -359,6 +359,11 @@ class Anmeldepunkt(models.Model):
         "(z.B. 'Leibchen waschen'), zu der sich Mitglieder unabhängig von einem Termin eintragen können.",
     )
     titel = models.CharField("Titel", max_length=200, help_text="z.B. 'Kuchen mitbringen', 'Aufbauhelfer', 'Fahrdienst'")
+    ist_entwurf = models.BooleanField(
+        "Entwurf (noch nicht für Eltern sichtbar)", default=False,
+        help_text="Aktiviert: Eltern sehen diesen Punkt noch nicht, auch wenn die Veranstaltung selbst schon "
+        "sichtbar ist - nützlich, wenn erst später feststeht, welche Helfer-/Mitbringlisten es braucht.",
+    )
     beschreibung = models.TextField("Beschreibung", blank=True)
     benoetigt_am = models.DateTimeField(
         "Benötigt am", null=True, blank=True,

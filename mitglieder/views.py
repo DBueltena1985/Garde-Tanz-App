@@ -109,6 +109,14 @@ def _anmeldepunkt_info(punkt, user):
     return {"punkt": punkt, "anmeldungen": anmeldungen, "eigene_anmeldung": eigene_anmeldung}
 
 
+def _anmeldepunkte_sichtbar(queryset, user):
+    """Blendet Entwürfe (noch nicht veröffentlichte Helfer-/Mitbringlisten-Punkte) für Eltern/
+    Mitglieder aus - Trainer/Orgateam (is_staff) sehen auch Entwürfe, analog zu Termin.ist_entwurf."""
+    if user.is_staff:
+        return queryset
+    return queryset.exclude(ist_entwurf=True)
+
+
 def _verbundene_mitglieder(user):
     """Andere Benutzer, die über eine Familien-Einladung mit diesem Konto verbunden sind."""
     mitverwalter = set()
@@ -254,7 +262,7 @@ def _termin_eintraege(termine, kinder, user):
 
         anmeldepunkte_info = []
         if termin.art == Termin.ART_VERANSTALTUNG:
-            for punkt in termin.anmeldepunkte.all():
+            for punkt in _anmeldepunkte_sichtbar(termin.anmeldepunkte.all(), user):
                 anmeldepunkte_info.append(_anmeldepunkt_info(punkt, user))
 
         termin_liste.append({
@@ -339,7 +347,9 @@ def _aufgaben_kontext(user):
 
     allgemeine_helferpunkte = [
         _anmeldepunkt_info(punkt, user)
-        for punkt in Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern")
+        for punkt in _anmeldepunkte_sichtbar(
+            Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern"), user
+        )
     ]
     return meine_aufgaben, offene_allgemeine_aufgaben, allgemeine_helferpunkte
 
@@ -473,6 +483,8 @@ def anmeldepunkt_eintragen(request, punkt_id):
     punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
 
     if request.method == "POST":
+        if punkt.ist_entwurf and not request.user.is_staff:
+            raise Http404
         if punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
             messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
             return _redirect_nach_anmeldung(punkt)
@@ -499,7 +511,9 @@ def veranstaltung_oeffentlich(request, token):
     )
 
     if request.method == "POST":
-        punkt = get_object_or_404(Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin)
+        punkt = get_object_or_404(
+            Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin, ist_entwurf=False
+        )
         name = request.POST.get("name", "").strip()
         kommentar = request.POST.get("kommentar", "").strip()
         if not name:
@@ -520,7 +534,7 @@ def veranstaltung_oeffentlich(request, token):
             )
         return redirect("veranstaltung_oeffentlich", token=token)
 
-    anmeldepunkte = termin.anmeldepunkte.all().prefetch_related("anmeldungen")
+    anmeldepunkte = termin.anmeldepunkte.filter(ist_entwurf=False).prefetch_related("anmeldungen")
     return render(request, "mitglieder/veranstaltung_oeffentlich.html", {
         "termin": termin,
         "anmeldepunkte": anmeldepunkte,

@@ -1,4 +1,7 @@
 <div id="helferaufgabe-{{ ap.punkt.id }}" style="margin-top:0.6rem;">
+    {% if ap.punkt.ist_entwurf and request.user.is_staff %}
+    <div style="font-size:0.8rem; color:#8a6d00; font-weight:600;">📝 Entwurf – Eltern sehen diesen Punkt noch nicht</div>
+    {% endif %}
     <div>
         {{ ap.punkt.titel }}
         {% if ap.punkt.max_anzahl %}<span style="color:var(--ink-faint); font-size:0.85rem;">({{ ap.anmeldungen|length }}/{{ ap.punkt.max_anzahl }} belegt)</span>{% endif %}
