@@ -107,11 +107,11 @@
     {% endif %}
 
     {% if eintrag.anmeldepunkte %}
-    <div style="margin-top:0.9rem; padding-top:0.7rem; border-top:2px dashed var(--line);">
-        <strong>Helfer-/Mitbringliste</strong>
+    <details class="helferliste-gruppe" {% if eintrag.anmeldepunkte|length <= 3 %}open{% endif %}>
+        <summary class="helferliste-ueberschrift">Helfer-/Mitbringliste ({{ eintrag.anmeldepunkte|length }})</summary>
         {% for ap in eintrag.anmeldepunkte %}
             {% include "mitglieder/_anmeldepunkt.html" %}
         {% endfor %}
-    </div>
+    </details>
     {% endif %}
 </div>

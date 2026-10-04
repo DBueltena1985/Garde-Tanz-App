@@ -341,6 +341,11 @@
 
         /* ---- Termin-Karte ---- */
         .termin-karte { border-left: 4px solid var(--accent); }
+        .helferliste-gruppe { margin-top: 0.9rem; padding-top: 0.7rem; border-top: 2px dashed var(--line); }
+        .helferliste-ueberschrift { cursor: pointer; list-style: none; font-weight: 700; }
+        .helferliste-ueberschrift::-webkit-details-marker { display: none; }
+        .helferliste-ueberschrift::before { content: "▸ "; }
+        .helferliste-gruppe[open] > .helferliste-ueberschrift::before { content: "▾ "; }
         .card-veranstaltung {
             border-left: 5px solid #e0983e;
             background: linear-gradient(to right, var(--veranstaltung-soft), var(--surface) 12%);
