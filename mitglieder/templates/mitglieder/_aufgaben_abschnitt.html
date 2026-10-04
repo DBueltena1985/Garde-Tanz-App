@@ -1,26 +1,30 @@
 {% if meine_aufgaben %}
 <div class="card">
     {% for aufgabe in meine_aufgaben %}
-    <div id="aufgabe-{{ aufgabe.id }}" style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid var(--line);{% endif %}">
-        <strong>{{ aufgabe.titel }}</strong>{% if aufgabe.termin %} <span style="color:var(--ink-faint); font-size:0.85rem;">({{ aufgabe.termin.titel }})</span>{% endif %}
-        {% if aufgabe.faellig_am %}
-        <div style="font-size:0.85rem; {% if aufgabe.ueberfaellig %}color:#b3261e; font-weight:600;{% else %}color:#8a6d00;{% endif %}">
-            📅 Fällig am {{ aufgabe.faellig_am|date:"d.m.Y" }}{% if aufgabe.ueberfaellig %} – überfällig{% endif %}
+    <details id="aufgabe-{{ aufgabe.id }}" class="aufgabe-item" {% if not forloop.first %}style="border-top:1px solid var(--line);"{% endif %} {% if meine_aufgaben|length <= 3 %}open{% endif %}>
+        <summary class="aufgabe-summary">
+            <strong>{{ aufgabe.titel }}</strong>{% if aufgabe.termin %} <span style="color:var(--ink-faint); font-size:0.85rem;">({{ aufgabe.termin.titel }})</span>{% endif %}
+            {% if aufgabe.faellig_am %}
+            <span style="font-size:0.85rem; {% if aufgabe.ueberfaellig %}color:#b3261e; font-weight:600;{% else %}color:#8a6d00;{% endif %}">
+                📅 {{ aufgabe.faellig_am|date:"d.m.Y" }}{% if aufgabe.ueberfaellig %} – überfällig{% endif %}
+            </span>
+            {% endif %}
+        </summary>
+        <div style="padding-top:0.3rem;">
+            {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ aufgabe.beschreibung }}</div>{% endif %}
+            {% if aufgabe.dateien.all %}
+            <div style="margin-top:0.3rem;">
+                {% for datei in aufgabe.dateien.all %}
+                <a href="{{ datei.datei.url }}" target="_blank" rel="noopener" style="display:inline-block; font-size:0.85rem; margin-right:0.6rem;">📎 {{ datei.dateiname }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <form method="post" action="{% url 'aufgabe_erledigt' aufgabe.id %}" style="margin-top:0.4rem;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-zusagen">✅ Erledigt</button>
+            </form>
         </div>
-        {% endif %}
-        {% if aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ aufgabe.beschreibung }}</div>{% endif %}
-        {% if aufgabe.dateien.all %}
-        <div style="margin-top:0.3rem;">
-            {% for datei in aufgabe.dateien.all %}
-            <a href="{{ datei.datei.url }}" target="_blank" rel="noopener" style="display:inline-block; font-size:0.85rem; margin-right:0.6rem;">📎 {{ datei.dateiname }}</a>
-            {% endfor %}
-        </div>
-        {% endif %}
-        <form method="post" action="{% url 'aufgabe_erledigt' aufgabe.id %}" style="margin-top:0.4rem;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-zusagen">✅ Erledigt</button>
-        </form>
-    </div>
+    </details>
     {% endfor %}
 </div>
 {% endif %}
@@ -32,16 +36,19 @@
 </p>
 <div class="card">
     {% for eintrag in offene_allgemeine_aufgaben %}
-    <div style="padding:0.6rem 0; {% if not forloop.first %}border-top:1px solid var(--line);{% endif %}">
-        <strong>{{ eintrag.aufgabe.titel }}</strong>
-        {% if eintrag.aufgabe.termin %}<div style="color:var(--ink-faint); font-size:0.85rem;">{{ eintrag.aufgabe.termin.titel }}</div>{% endif %}
+    <details class="aufgabe-item" {% if not forloop.first %}style="border-top:1px solid var(--line);"{% endif %} {% if offene_allgemeine_aufgaben|length <= 3 %}open{% endif %}>
+        <summary class="aufgabe-summary">
+            <strong>{{ eintrag.aufgabe.titel }}</strong>
+            {% if eintrag.aufgabe.termin %}<span style="color:var(--ink-faint); font-size:0.85rem;">({{ eintrag.aufgabe.termin.titel }})</span>{% endif %}
+            {% if eintrag.aufgabe.faellig_am %}
+            <span style="font-size:0.85rem; {% if eintrag.aufgabe.ueberfaellig %}color:#b3261e; font-weight:600;{% else %}color:#8a6d00;{% endif %}">
+                📅 {{ eintrag.aufgabe.faellig_am|date:"d.m.Y" }}{% if eintrag.aufgabe.ueberfaellig %} – überfällig{% endif %}
+            </span>
+            {% endif %}
+        </summary>
+        <div style="padding-top:0.3rem;">
         {% if eintrag.aufgabe.sichtbar_fuer == "team" %}<span style="color:#8a6d00; font-size:0.8rem;">🔒 Nur Team</span>{% endif %}
         {% if eintrag.aufgabe.sichtbar_fuer == "taenzerinnen" %}<span style="color:#8a6d00; font-size:0.8rem;">💃 Für Tänzerinnen</span>{% endif %}
-        {% if eintrag.aufgabe.faellig_am %}
-        <div style="font-size:0.85rem; {% if eintrag.aufgabe.ueberfaellig %}color:#b3261e; font-weight:600;{% else %}color:#8a6d00;{% endif %}">
-            📅 Fällig am {{ eintrag.aufgabe.faellig_am|date:"d.m.Y" }}{% if eintrag.aufgabe.ueberfaellig %} – überfällig{% endif %}
-        </div>
-        {% endif %}
         {% if eintrag.aufgabe.beschreibung %}<div style="font-size:0.9rem; color:var(--ink-soft);">{{ eintrag.aufgabe.beschreibung }}</div>{% endif %}
         {% if eintrag.aufgabe.dateien.all %}
         <div style="margin-top:0.3rem;">
@@ -65,16 +72,19 @@
                 <button type="submit" class="btn btn-zusagen">Ich übernehme das</button>
             </form>
         {% endif %}
-    </div>
+        </div>
+    </details>
     {% endfor %}
 </div>
 {% endif %}
 
 {% if allgemeine_helferpunkte %}
-<h2 style="margin-top:1.5rem;">🧺 Helferaufgaben</h2>
-<div class="card">
-    {% for ap in allgemeine_helferpunkte %}
-        {% include "mitglieder/_anmeldepunkt.html" %}
-    {% endfor %}
-</div>
+<details class="helferliste-gruppe" style="margin-top:1.5rem; border-top:none;" {% if allgemeine_helferpunkte|length <= 3 %}open{% endif %}>
+    <summary class="helferliste-ueberschrift" style="font-size:1.15rem;">🧺 Helferaufgaben ({{ allgemeine_helferpunkte|length }})</summary>
+    <div class="card" style="margin-top:0.6rem;">
+        {% for ap in allgemeine_helferpunkte %}
+            {% include "mitglieder/_anmeldepunkt.html" %}
+        {% endfor %}
+    </div>
+</details>
 {% endif %}
