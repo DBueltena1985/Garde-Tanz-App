@@ -1,4 +1,5 @@
-<div class="card termin-karte {% if eintrag.termin.art == 'veranstaltung' %}card-veranstaltung{% endif %}" id="termin-{{ eintrag.termin.id }}">
+<details class="card termin-karte {% if eintrag.termin.art == 'veranstaltung' %}card-veranstaltung{% endif %}" id="termin-{{ eintrag.termin.id }}" {% if eintrag.termin.art == "training" or eintrag.ist_offener_termin %}open{% endif %}>
+    <summary class="termin-karte-summary">
     {% if eintrag.termin.ist_entwurf %}
     <div class="banner-warn" style="margin-bottom:0.6rem;">
         📝 <strong>Entwurf</strong> – Eltern wissen noch nicht Bescheid
@@ -41,6 +42,8 @@
         </div>
         {% endif %}
     </div>
+    </summary>
+    <div class="termin-karte-inhalt">
     {% if not eintrag.termin.taenzerinnen_erforderlich %}
     <div style="margin-top:0.4rem; font-size:0.85rem; color:#8a6d00;">ℹ️ Kein Auftritt der Tänzerinnen bei dieser Veranstaltung</div>
     {% endif %}
@@ -114,4 +117,5 @@
         {% endfor %}
     </details>
     {% endif %}
-</div>
+    </div>
+</details>

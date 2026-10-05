@@ -164,14 +164,17 @@ def _offener_termin_id(request):
 
 
 def _nach_monat_gruppieren(termin_liste, offener_termin_id=None):
-    """Gruppiert eine Liste von Termin-Einträgen nach Monat (Reihenfolge bleibt erhalten)."""
+    """Gruppiert eine Liste von Termin-Einträgen nach Monat (Reihenfolge bleibt erhalten). Markiert
+    außerdem den per offener_termin_id angesprungenen Eintrag (z.B. nach einer Zusage/Absage), damit
+    dessen Termin-Karte trotz Einklappens durch die Veranstaltung automatisch aufgeklappt bleibt."""
     gruppen = []
     for eintrag in termin_liste:
         monat_label = f"{MONATSNAMEN[eintrag['termin'].beginn.month - 1]} {eintrag['termin'].beginn.year}"
         if not gruppen or gruppen[-1]["monat_label"] != monat_label:
             gruppen.append({"monat_label": monat_label, "eintraege": [], "force_open": False})
+        eintrag["ist_offener_termin"] = bool(offener_termin_id and eintrag["termin"].id == offener_termin_id)
         gruppen[-1]["eintraege"].append(eintrag)
-        if offener_termin_id and eintrag["termin"].id == offener_termin_id:
+        if eintrag["ist_offener_termin"]:
             gruppen[-1]["force_open"] = True
     return gruppen
 

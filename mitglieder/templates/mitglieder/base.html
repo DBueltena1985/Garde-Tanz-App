@@ -367,6 +367,11 @@
             border-left: 5px solid #e0983e;
             background: linear-gradient(to right, var(--veranstaltung-soft), var(--surface) 12%);
         }
+        .termin-karte-summary { cursor: pointer; list-style: none; }
+        .termin-karte-summary::-webkit-details-marker { display: none; }
+        .termin-karte-summary .termin-title::before { content: "▸ "; color: var(--ink-faint); }
+        .termin-karte[open] > .termin-karte-summary .termin-title::before { content: "▾ "; }
+        .termin-karte-inhalt { margin-top: 0.3rem; }
         .zusagen-badge {
             display: inline-block; margin-top: 0.5rem; font-size: 1.05rem; font-weight: 700;
             color: #1a7a3c; background: #d7f0dd; padding: 0.3rem 0.8rem; border-radius: 999px;
