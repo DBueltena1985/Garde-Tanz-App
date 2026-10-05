@@ -578,7 +578,7 @@ class AufgabeInline(admin.TabularInline):
     model = Aufgabe
     extra = 0
     classes = ("collapse",)
-    fields = ("titel", "beschreibung", "faellig_am", "zugewiesen_an", "erledigt")
+    fields = ("titel", "kategorie", "beschreibung", "faellig_am", "zugewiesen_an", "erledigt")
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -1414,12 +1414,12 @@ class AufgabeDateiInline(admin.TabularInline):
 @admin.register(Aufgabe)
 class AufgabeAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
-        "titel", "termin", "faellig_am", "sichtbar_fuer", "zugewiesen_an", "erledigt", "erstellt_von",
-        "erstellt_am", "loeschen_link",
+        "titel", "termin", "kategorie", "faellig_am", "sichtbar_fuer", "zugewiesen_an", "erledigt",
+        "erstellt_von", "erstellt_am", "loeschen_link",
     )
     list_display_links = ("titel",)
     list_editable = ("erledigt",)
-    list_filter = ("erledigt", "sichtbar_fuer", "zugewiesen_an", "termin")
+    list_filter = ("erledigt", "kategorie", "sichtbar_fuer", "zugewiesen_an", "termin")
     search_fields = ("titel", "beschreibung")
     ordering = ("erledigt", "faellig_am", "termin__beginn", "-erstellt_am")
     inlines = [AufgabeDateiInline, AufgabeErledigungInline]

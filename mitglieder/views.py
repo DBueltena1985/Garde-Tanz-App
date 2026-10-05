@@ -334,6 +334,49 @@ def dashboard(request):
     })
 
 
+def _aufgaben_gruppieren(eintraege):
+    """Gruppiert offene allgemeine Aufgaben fuer die Anzeige: Veranstaltung -> Kategorie -> Datum ->
+    Eintraege, alles standardmaessig eingeklappt - sonst wird die ToDo-Seite bei vielen Schicht-
+    Aufgaben zu einer Veranstaltung (z.B. 'Ladies Night Basar') schnell unuebersichtlich."""
+    nach_termin = {}
+    reihenfolge = []
+    for eintrag in eintraege:
+        termin = eintrag["aufgabe"].termin
+        key = termin.id if termin else None
+        if key not in nach_termin:
+            nach_termin[key] = {"termin": termin, "kategorien": {}}
+            reihenfolge.append(key)
+        tage_nach_kategorie = nach_termin[key]["kategorien"].setdefault(eintrag["aufgabe"].kategorie, {})
+        tage_nach_kategorie.setdefault(eintrag["aufgabe"].faellig_am, []).append(eintrag)
+
+    termin_gruppen = []
+    for key in reihenfolge:
+        gruppe = nach_termin[key]
+        kategorien_liste = []
+        for kategorie_wert, label in Aufgabe.KATEGORIE_CHOICES:
+            tage_nach_datum = gruppe["kategorien"].get(kategorie_wert)
+            if not tage_nach_datum:
+                continue
+            tage_liste = [
+                {"datum": datum, "eintraege": tage_nach_datum[datum]}
+                for datum in sorted(tage_nach_datum, key=lambda d: (d is None, d))
+            ]
+            kategorien_liste.append({
+                "label": label,
+                "tage": tage_liste,
+                "anzahl": sum(len(tag["eintraege"]) for tag in tage_liste),
+            })
+        termin_gruppen.append({
+            "termin": gruppe["termin"],
+            "kategorien": kategorien_liste,
+            "anzahl": sum(k["anzahl"] for k in kategorien_liste),
+        })
+
+    mit_termin = sorted((g for g in termin_gruppen if g["termin"]), key=lambda g: g["termin"].beginn)
+    ohne_termin = [g for g in termin_gruppen if not g["termin"]]
+    return mit_termin + ohne_termin
+
+
 def _aufgaben_kontext(user):
     """Sammelt alle To-Do-bezogenen Daten (eigene Aufgaben, offene allgemeine Aufgaben,
     allgemeine Helferpunkte) - genutzt sowohl von der ToDo-Seite als auch vom Badge-Zaehler."""
@@ -344,6 +387,7 @@ def _aufgaben_kontext(user):
     )
     offene_allgemeine_aufgaben = _aufgaben_fuer_nutzer_sichtbar(offene_allgemeine_aufgaben, user)
     offene_allgemeine_aufgaben = _offene_aufgaben_liste(offene_allgemeine_aufgaben, user)
+    offene_aufgaben_gruppen = _aufgaben_gruppieren(offene_allgemeine_aufgaben)
 
     allgemeine_helferpunkte = [
         _anmeldepunkt_info(punkt, user)
@@ -351,7 +395,7 @@ def _aufgaben_kontext(user):
             Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern"), user
         )
     ]
-    return meine_aufgaben, offene_allgemeine_aufgaben, allgemeine_helferpunkte
+    return meine_aufgaben, offene_aufgaben_gruppen, allgemeine_helferpunkte
 
 
 @login_required
@@ -568,7 +612,7 @@ def aufgabe_erledigt(request, aufgabe_id):
 
 @login_required
 def aufgabe_uebernehmen(request, aufgabe_id):
-    aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id, termin__isnull=True)
+    aufgabe = get_object_or_404(Aufgabe, pk=aufgabe_id)
     zielgruppen = _erlaubte_aufgaben_zielgruppen(request.user)
     if zielgruppen is not None and aufgabe.sichtbar_fuer not in zielgruppen:
         raise PermissionDenied

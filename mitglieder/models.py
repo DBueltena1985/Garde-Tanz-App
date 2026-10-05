@@ -439,6 +439,15 @@ class Aufgabe(models.Model):
         (ZIELGRUPPE_TAENZERINNEN, "Tänzerinnen"),
     ]
 
+    KATEGORIE_HELFERLISTE = "helferliste"
+    KATEGORIE_BRINGLISTE = "bringliste"
+    KATEGORIE_SONSTIGES = "sonstiges"
+    KATEGORIE_CHOICES = [
+        (KATEGORIE_HELFERLISTE, "Helferliste"),
+        (KATEGORIE_BRINGLISTE, "Bringliste"),
+        (KATEGORIE_SONSTIGES, "Sonstiges"),
+    ]
+
     titel = models.CharField("Titel", max_length=200)
     beschreibung = models.TextField("Beschreibung", blank=True)
     termin = models.ForeignKey(
@@ -446,6 +455,11 @@ class Aufgabe(models.Model):
         limit_choices_to={"art": Termin.ART_VERANSTALTUNG},
         help_text="Optional: zu welcher Veranstaltung gehört die Aufgabe? Leer lassen für allgemeine Planung.",
         verbose_name="Veranstaltung",
+    )
+    kategorie = models.CharField(
+        "Kategorie", max_length=20, choices=KATEGORIE_CHOICES, default=KATEGORIE_SONSTIGES,
+        help_text="Dient zur Gruppierung auf der ToDo-Seite, z.B. bei vielen Schichten/Aufgaben zu einer "
+        "Veranstaltung.",
     )
     faellig_am = models.DateField(
         "Fällig am", null=True, blank=True,

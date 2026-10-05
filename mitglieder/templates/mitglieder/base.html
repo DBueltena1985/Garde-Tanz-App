@@ -356,6 +356,13 @@
         .aufgabe-summary::-webkit-details-marker { display: none; }
         .aufgabe-summary::before { content: "▸ "; color: var(--ink-faint); }
         .aufgabe-item[open] > .aufgabe-summary::before { content: "▾ "; }
+
+        .aufgaben-gruppe { padding: 0.5rem 0; }
+        .aufgaben-gruppe-titel { cursor: pointer; list-style: none; font-weight: 700; }
+        .aufgaben-gruppe-titel::-webkit-details-marker { display: none; }
+        .aufgaben-gruppe-titel::before { content: "▸ "; color: var(--ink-faint); }
+        .aufgaben-gruppe[open] > .aufgaben-gruppe-titel::before { content: "▾ "; }
+        .aufgaben-gruppe-inhalt { margin-left: 1.1rem; margin-top: 0.3rem; }
         .card-veranstaltung {
             border-left: 5px solid #e0983e;
             background: linear-gradient(to right, var(--veranstaltung-soft), var(--surface) 12%);
