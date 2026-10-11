@@ -24,8 +24,8 @@ from .forms import (
     TaenzerinForm,
 )
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild, Galerieordner, Nachricht,
-    NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, Zusage,
+    Anmeldepunkt, AnmeldepunktSchicht, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild,
+    Galerieordner, Nachricht, NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, Zusage,
 )
 from .utils import benutzer_name, sichere_mail_senden
 
@@ -104,9 +104,23 @@ def _offene_aufgaben_liste(queryset, user):
 
 
 def _anmeldepunkt_info(punkt, user):
+    """Baut die Anzeige-Infos zu einem Helferpunkt. Ist der Punkt in mehrere Schichten aufgeteilt
+    (z.B. Küche 17-19/19-21/21-23 Uhr), wird pro Schicht einzeln erfasst, wer sich dort eingetragen
+    hat - sonst gilt die Anmeldung/Obergrenze fuer den ganzen Punkt wie bisher."""
+    schichten = list(punkt.schichten.all())
+    if schichten:
+        schichten_info = []
+        for schicht in schichten:
+            anmeldungen = list(schicht.anmeldungen.all())
+            eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == user.id), None)
+            schichten_info.append({
+                "schicht": schicht, "anmeldungen": anmeldungen, "eigene_anmeldung": eigene_anmeldung,
+            })
+        return {"punkt": punkt, "schichten": schichten_info, "anmeldungen": [], "eigene_anmeldung": None}
+
     anmeldungen = list(punkt.anmeldungen.all())
     eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == user.id), None)
-    return {"punkt": punkt, "anmeldungen": anmeldungen, "eigene_anmeldung": eigene_anmeldung}
+    return {"punkt": punkt, "schichten": [], "anmeldungen": anmeldungen, "eigene_anmeldung": eigene_anmeldung}
 
 
 def _anmeldepunkte_sichtbar(queryset, user):
@@ -152,7 +166,7 @@ def _mit_offenen_entwuerfen(termine, user, **filter_kwargs):
         return termine
     entwuerfe = Termin.objects.filter(
         art=Termin.ART_VERANSTALTUNG, ist_entwurf=True, **filter_kwargs
-    ).prefetch_related("anmeldepunkte__anmeldungen__eltern")
+    ).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern")
     return sorted(chain(termine, entwuerfe), key=lambda t: t.beginn)
 
 
@@ -283,7 +297,7 @@ def dashboard(request):
     kinder_gruppen = {kind.gruppe for kind in kinder if kind.gruppe}
 
     termine = _fuer_gruppen_relevant(
-        Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern"),
         kinder_gruppen,
     ).order_by("beginn")
     termine = _mit_offenen_entwuerfen(termine, request.user, beginn__gte=timezone.now())
@@ -421,7 +435,7 @@ def veranstaltungen(request):
     offene_veranstaltungen = _fuer_gruppen_relevant(
         Termin.objects.filter(
             art=Termin.ART_VERANSTALTUNG, beginn__gte=timezone.now(),
-        ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        ).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern"),
         kinder_gruppen,
     ).order_by("beginn")
     offene_veranstaltungen = _mit_offenen_entwuerfen(offene_veranstaltungen, request.user, beginn__gte=timezone.now())
@@ -430,7 +444,7 @@ def veranstaltungen(request):
     abgeschlossene_veranstaltungen = _fuer_gruppen_relevant(
         Termin.objects.filter(
             art=Termin.ART_VERANSTALTUNG, beginn__lt=timezone.now(),
-        ).prefetch_related("anmeldepunkte__anmeldungen__eltern"),
+        ).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern"),
         kinder_gruppen,
     ).order_by("-beginn")
     abgeschlossene_gruppen = _nach_monat_gruppieren(
@@ -532,18 +546,27 @@ def anmeldepunkt_eintragen(request, punkt_id):
     if request.method == "POST":
         if punkt.ist_entwurf and not request.user.is_staff:
             raise Http404
-        if punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
+
+        schicht = None
+        if punkt.schichten.exists():
+            # In mehrere Schichten aufgeteilter Helferpunkt: Kapazitaet gilt pro Schicht.
+            schicht = get_object_or_404(AnmeldepunktSchicht, pk=request.POST.get("schicht_id"), anmeldepunkt=punkt)
+            if schicht.max_anzahl is not None and schicht.plaetze_frei == 0:
+                messages.error(request, f"Für '{punkt.titel}' ({schicht}) sind bereits alle Plätze belegt.")
+                return _redirect_nach_anmeldung(punkt)
+        elif punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
             messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
             return _redirect_nach_anmeldung(punkt)
 
         kommentar = request.POST.get("kommentar", "").strip()
         if punkt.mit_kommentar:
             # Mitbringliste: mehrere Eintraege pro Person erlaubt (z.B. 2x Kuchen).
-            Anmeldung.objects.create(anmeldepunkt=punkt, eltern=request.user, kommentar=kommentar)
+            Anmeldung.objects.create(anmeldepunkt=punkt, schicht=schicht, eltern=request.user, kommentar=kommentar)
         else:
-            # Reine Helferliste: jede Person nur einmal.
-            Anmeldung.objects.get_or_create(anmeldepunkt=punkt, eltern=request.user)
-        messages.success(request, f"Du hast dich bei '{punkt.titel}' eingetragen.")
+            # Reine Helferliste: jede Person nur einmal pro Schicht.
+            Anmeldung.objects.get_or_create(anmeldepunkt=punkt, schicht=schicht, eltern=request.user)
+        zusatz = f" ({schicht})" if schicht else ""
+        messages.success(request, f"Du hast dich bei '{punkt.titel}'{zusatz} eingetragen.")
         return _redirect_nach_anmeldung(punkt)
 
     return redirect("dashboard")
@@ -563,25 +586,37 @@ def veranstaltung_oeffentlich(request, token):
         )
         name = request.POST.get("name", "").strip()
         kommentar = request.POST.get("kommentar", "").strip()
+
+        schicht = None
+        if punkt.schichten.exists():
+            schicht = get_object_or_404(AnmeldepunktSchicht, pk=request.POST.get("schicht_id"), anmeldepunkt=punkt)
+
+        voll = (
+            (schicht and schicht.max_anzahl is not None and schicht.plaetze_frei == 0)
+            or (not schicht and punkt.max_anzahl is not None and punkt.plaetze_frei == 0)
+        )
         if not name:
             messages.error(request, "Bitte gib deinen Namen ein.")
-        elif punkt.max_anzahl is not None and punkt.plaetze_frei == 0:
+        elif voll:
             messages.error(request, f"Für '{punkt.titel}' sind bereits alle Plätze belegt.")
         else:
-            Anmeldung.objects.create(anmeldepunkt=punkt, name_ohne_konto=name, kommentar=kommentar)
-            messages.success(request, f"Danke {name}, du bist bei '{punkt.titel}' eingetragen.")
+            Anmeldung.objects.create(anmeldepunkt=punkt, schicht=schicht, name_ohne_konto=name, kommentar=kommentar)
+            zusatz_schicht = f" ({schicht})" if schicht else ""
+            messages.success(request, f"Danke {name}, du bist bei '{punkt.titel}'{zusatz_schicht} eingetragen.")
             zusatz = f" Kommentar: {kommentar}" if kommentar else ""
             _admins_benachrichtigen(
                 subject=f"Neue Anmeldung ohne Konto: {punkt.titel}",
                 message=(
-                    f"{name} hat sich über den öffentlichen Link bei '{punkt.titel}' "
+                    f"{name} hat sich über den öffentlichen Link bei '{punkt.titel}'{zusatz_schicht} "
                     f"({termin.titel}) eingetragen.{zusatz}\n\n"
                     "Im Admin-Bereich unter Helfer-/Mitbringlisten einsehbar."
                 ),
             )
         return redirect("veranstaltung_oeffentlich", token=token)
 
-    anmeldepunkte = termin.anmeldepunkte.filter(ist_entwurf=False).prefetch_related("anmeldungen")
+    anmeldepunkte = termin.anmeldepunkte.filter(ist_entwurf=False).prefetch_related(
+        "anmeldungen", "schichten__anmeldungen"
+    )
     return render(request, "mitglieder/veranstaltung_oeffentlich.html", {
         "termin": termin,
         "anmeldepunkte": anmeldepunkte,

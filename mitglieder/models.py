@@ -372,11 +372,12 @@ class Anmeldepunkt(models.Model):
     )
     benoetigt_von = models.TimeField(
         "Uhrzeit von", null=True, blank=True,
-        help_text="Optional: Beginn der Uhrzeit/Schicht. Leer lassen, falls noch keine Uhrzeit feststeht.",
+        help_text="Optional: Beginn der Uhrzeit. Leer lassen, falls noch keine Uhrzeit feststeht. Gibt es "
+        "mehrere Schichten an diesem Tag, stattdessen unten unter 'Schichten' mehrere Zeiten eintragen.",
     )
     benoetigt_bis = models.TimeField(
         "Uhrzeit bis", null=True, blank=True,
-        help_text="Optional: Ende der Uhrzeit/Schicht, falls es z.B. mehrere Schichten an diesem Tag gibt.",
+        help_text="Optional: Ende der Uhrzeit.",
     )
     max_anzahl = models.PositiveIntegerField(
         "Benötigte Anzahl", null=True, blank=True,
@@ -419,10 +420,49 @@ class Anmeldepunkt(models.Model):
         return max(self.max_anzahl - self.anzahl_angemeldet, 0)
 
 
+class AnmeldepunktSchicht(models.Model):
+    """Eine von mehreren Schichten/Zeitfenstern innerhalb eines Helferpunkts (z.B. Küche 17-19 Uhr,
+    19-21 Uhr, 21-23 Uhr) - jede Schicht hat ihre eigene Helfer-Obergrenze und eigene Anmeldungen.
+    Wird ein Helferpunkt ohne Schichten verwendet, gilt weiterhin dessen eigene Uhrzeit/Obergrenze."""
+
+    anmeldepunkt = models.ForeignKey(Anmeldepunkt, on_delete=models.CASCADE, related_name="schichten")
+    von = models.TimeField("Uhrzeit von")
+    bis = models.TimeField("Uhrzeit bis", null=True, blank=True)
+    max_anzahl = models.PositiveIntegerField(
+        "Benötigte Anzahl", null=True, blank=True,
+        help_text="Leer lassen für unbegrenzt viele Anmeldungen",
+    )
+
+    class Meta:
+        verbose_name = "Schicht"
+        verbose_name_plural = "Schichten"
+        ordering = ["von"]
+
+    def __str__(self):
+        if self.bis:
+            return f"{self.von:%H:%M}–{self.bis:%H:%M} Uhr"
+        return f"ab {self.von:%H:%M} Uhr"
+
+    @property
+    def anzahl_angemeldet(self):
+        return self.anmeldungen.count()
+
+    @property
+    def plaetze_frei(self):
+        if self.max_anzahl is None:
+            return None
+        return max(self.max_anzahl - self.anzahl_angemeldet, 0)
+
+
 class Anmeldung(models.Model):
-    """Die Anmeldung eines Elternteils zu einem Anmeldepunkt (helfen/mitbringen/fahren)."""
+    """Die Anmeldung eines Elternteils zu einem Anmeldepunkt (helfen/mitbringen/fahren), optional zu
+    einer bestimmten Schicht, falls der Helferpunkt in mehrere Schichten aufgeteilt ist."""
 
     anmeldepunkt = models.ForeignKey(Anmeldepunkt, on_delete=models.CASCADE, related_name="anmeldungen")
+    schicht = models.ForeignKey(
+        AnmeldepunktSchicht, on_delete=models.CASCADE, null=True, blank=True, related_name="anmeldungen",
+        help_text="Nur gesetzt, wenn der Helferpunkt in mehrere Schichten aufgeteilt ist.",
+    )
     eltern = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="helfer_anmeldungen",
         null=True, blank=True,

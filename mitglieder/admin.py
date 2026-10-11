@@ -21,9 +21,9 @@ from formulare.models import Formular
 from .utils import absolute_url
 
 from .models import (
-    Anmeldepunkt, Anmeldung, Aufgabe, AufgabeDatei, AufgabeErledigung, Feedback, Ferienzeitraum, Galeriebild,
-    Galerieordner, Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, TrainingTermin,
-    VeranstaltungTermin, Zusage,
+    Anmeldepunkt, AnmeldepunktSchicht, Anmeldung, Aufgabe, AufgabeDatei, AufgabeErledigung, Feedback,
+    Ferienzeitraum, Galeriebild, Galerieordner, Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin,
+    Trainingsmaterial, TrainingTermin, VeranstaltungTermin, Zusage,
 )
 
 
@@ -559,6 +559,7 @@ class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
     classes = ("collapse",)
+    show_change_link = True
     fields = (
         "titel", "ist_entwurf", "beschreibung", "benoetigt_am", "benoetigt_von", "benoetigt_bis",
         "max_anzahl", "mit_kommentar", "status_anzeige",
@@ -1319,8 +1320,31 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
 class AnmeldungInline(admin.TabularInline):
     model = Anmeldung
     extra = 0
-    fields = ("eltern", "kommentar", "erstellt_am")
+    fields = ("schicht", "eltern", "kommentar", "erstellt_am")
     readonly_fields = ("erstellt_am",)
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form.base_fields["schicht"].queryset = AnmeldepunktSchicht.objects.filter(anmeldepunkt=obj)
+        return formset
+
+
+class AnmeldepunktSchichtInline(admin.TabularInline):
+    model = AnmeldepunktSchicht
+    extra = 0
+    fields = ("von", "bis", "max_anzahl", "status_anzeige")
+    readonly_fields = ("status_anzeige",)
+
+    def status_anzeige(self, obj):
+        if not obj or not obj.pk:
+            return "–"
+        if obj.max_anzahl is None:
+            return f"{obj.anzahl_angemeldet} angemeldet"
+        if obj.plaetze_frei == 0:
+            return format_html('<span style="color:#1a7a3c; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – voll")
+        return format_html('<span style="color:#b3261e; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – {obj.plaetze_frei} offen")
+
+    status_anzeige.short_description = "Status"
 
 
 class AnmeldepunktOffenFilter(admin.SimpleListFilter):
@@ -1347,7 +1371,7 @@ class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
         "noch_offen", "loeschen_link",
     )
     list_filter = ("termin", "ist_entwurf", "mit_kommentar", AnmeldepunktOffenFilter)
-    inlines = [AnmeldungInline]
+    inlines = [AnmeldepunktSchichtInline, AnmeldungInline]
     change_list_template = "admin/mitglieder/anmeldepunkt_change_list.html"
     change_form_template = "admin/mitglieder/anmeldepunkt_change_form.html"
 

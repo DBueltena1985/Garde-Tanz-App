@@ -4,10 +4,56 @@
     {% endif %}
     <div>
         {{ ap.punkt.titel }}
-        {% if ap.punkt.max_anzahl %}<span style="color:var(--ink-faint); font-size:0.85rem;">({{ ap.anmeldungen|length }}/{{ ap.punkt.max_anzahl }} belegt)</span>{% endif %}
+        {% if not ap.schichten and ap.punkt.max_anzahl %}<span style="color:var(--ink-faint); font-size:0.85rem;">({{ ap.anmeldungen|length }}/{{ ap.punkt.max_anzahl }} belegt)</span>{% endif %}
     </div>
-    {% if ap.punkt.benoetigt_anzeige %}<div style="font-size:0.85rem; color:var(--ink-soft);">🕒 Benötigt am {{ ap.punkt.benoetigt_anzeige }}</div>{% endif %}
+    {% if not ap.schichten and ap.punkt.benoetigt_anzeige %}<div style="font-size:0.85rem; color:var(--ink-soft);">🕒 Benötigt am {{ ap.punkt.benoetigt_anzeige }}</div>{% endif %}
     {% if ap.punkt.beschreibung %}<div style="font-size:0.85rem; color:var(--ink-soft);">{{ ap.punkt.beschreibung }}</div>{% endif %}
+
+    {% if ap.schichten %}
+    {% for si in ap.schichten %}
+    <div style="margin-top:0.5rem; padding-top:0.4rem; border-top:1px dashed var(--line);">
+        <div style="font-size:0.9rem; font-weight:600;">
+            🕒 {{ si.schicht }}
+            {% if si.schicht.max_anzahl %}<span style="color:var(--ink-faint); font-weight:normal; font-size:0.85rem;">({{ si.anmeldungen|length }}/{{ si.schicht.max_anzahl }} belegt)</span>{% endif %}
+        </div>
+        {% if si.anmeldungen %}
+        <ul style="margin:0.3rem 0; padding-left:1.2rem; font-size:0.9rem;">
+            {% for anmeldung in si.anmeldungen %}
+            <li>
+                {{ anmeldung.anzeigename }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}
+                {% if ap.punkt.mit_kommentar and anmeldung.eltern_id == request.user.id %}
+                <form method="post" action="{% url 'anmeldepunkt_austragen' anmeldung.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-absagen" style="padding:0.05rem 0.4rem; font-size:0.75rem;">✕</button>
+                </form>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if ap.punkt.mit_kommentar %}
+        <form method="post" action="{% url 'anmeldepunkt_eintragen' ap.punkt.id %}" style="display:flex; gap:0.4rem;">
+            {% csrf_token %}
+            <input type="hidden" name="schicht_id" value="{{ si.schicht.id }}">
+            <input type="text" name="kommentar" placeholder="z.B. was du mitbringst (optional)" style="margin:0;">
+            <button type="submit" class="btn btn-zusagen" style="white-space:nowrap;">Eintragen</button>
+        </form>
+        {% elif si.eigene_anmeldung %}
+        <form method="post" action="{% url 'anmeldepunkt_austragen' si.eigene_anmeldung.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-absagen">Austragen</button>
+        </form>
+        {% else %}
+        <form method="post" action="{% url 'anmeldepunkt_eintragen' ap.punkt.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="schicht_id" value="{{ si.schicht.id }}">
+            <button type="submit" class="btn btn-zusagen">Ich helfe mit</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
     {% if ap.anmeldungen %}
     <ul style="margin:0.3rem 0; padding-left:1.2rem; font-size:0.9rem;">
         {% for anmeldung in ap.anmeldungen %}
@@ -40,5 +86,6 @@
         {% csrf_token %}
         <button type="submit" class="btn btn-zusagen">Ich helfe mit</button>
     </form>
+    {% endif %}
     {% endif %}
 </div>

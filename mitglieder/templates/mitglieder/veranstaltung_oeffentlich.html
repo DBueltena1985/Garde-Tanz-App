@@ -75,10 +75,41 @@
     {% for punkt in anmeldepunkte %}
     <div class="card">
         <strong>{{ punkt.titel }}</strong>
-        {% if punkt.max_anzahl %}<span class="meta">({{ punkt.anzahl_angemeldet }}/{{ punkt.max_anzahl }} belegt)</span>{% endif %}
-        {% if punkt.benoetigt_anzeige %}<div class="meta">🕒 Benötigt am {{ punkt.benoetigt_anzeige }}</div>{% endif %}
+        {% if not punkt.schichten.all and punkt.max_anzahl %}<span class="meta">({{ punkt.anzahl_angemeldet }}/{{ punkt.max_anzahl }} belegt)</span>{% endif %}
+        {% if not punkt.schichten.all and punkt.benoetigt_anzeige %}<div class="meta">🕒 Benötigt am {{ punkt.benoetigt_anzeige }}</div>{% endif %}
         {% if punkt.beschreibung %}<div class="meta">{{ punkt.beschreibung }}</div>{% endif %}
 
+        {% if punkt.schichten.all %}
+        {% for schicht in punkt.schichten.all %}
+        <div style="border-top:1px solid var(--line); margin-top:0.7rem; padding-top:0.6rem;">
+            <strong>🕒 {{ schicht }}</strong>
+            {% if schicht.max_anzahl %}<span class="meta">({{ schicht.anzahl_angemeldet }}/{{ schicht.max_anzahl }} belegt)</span>{% endif %}
+
+            {% if schicht.anmeldungen.all %}
+            <ul class="anmeldung-liste">
+                {% for anmeldung in schicht.anmeldungen.all %}
+                <li>{{ anmeldung.anzeigename }}{% if anmeldung.kommentar %} – {{ anmeldung.kommentar }}{% endif %}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if schicht.max_anzahl and schicht.plaetze_frei == 0 %}
+            <div class="meta">Bereits voll.</div>
+            {% else %}
+            <form method="post" style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="punkt_id" value="{{ punkt.id }}">
+                <input type="hidden" name="schicht_id" value="{{ schicht.id }}">
+                <input type="text" name="name" placeholder="Dein Name" required>
+                {% if punkt.mit_kommentar %}
+                <input type="text" name="kommentar" placeholder="z.B. was du mitbringst (optional)">
+                {% endif %}
+                <button type="submit" class="btn">Eintragen</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
         {% if punkt.anmeldungen.all %}
         <ul class="anmeldung-liste">
             {% for anmeldung in punkt.anmeldungen.all %}
@@ -99,6 +130,7 @@
             {% endif %}
             <button type="submit" class="btn">Eintragen</button>
         </form>
+        {% endif %}
         {% endif %}
     </div>
     {% endfor %}
