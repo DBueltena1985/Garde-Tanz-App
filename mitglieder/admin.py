@@ -555,6 +555,16 @@ class SerieLoeschenForm(forms.Form):
         self.fields["titel"].choices = titel_choices or []
 
 
+def _belegung_anzeige(obj):
+    """Formatiert Angemeldet/Benoetigt fuer ein Objekt mit anzahl_angemeldet/max_anzahl/plaetze_frei
+    (Anmeldepunkt oder AnmeldepunktSchicht) - gemeinsam genutzt, damit beide Ebenen gleich aussehen."""
+    if obj.max_anzahl is None:
+        return f"{obj.anzahl_angemeldet} angemeldet"
+    if obj.plaetze_frei == 0:
+        return format_html('<span style="color:#1a7a3c; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – voll")
+    return format_html('<span style="color:#b3261e; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – {obj.plaetze_frei} offen")
+
+
 class AnmeldepunktInline(admin.TabularInline):
     model = Anmeldepunkt
     extra = 0
@@ -567,9 +577,10 @@ class AnmeldepunktInline(admin.TabularInline):
     readonly_fields = ("schichten_anzeige", "status_anzeige")
 
     def schichten_anzeige(self, obj):
-        """Zeigt bereits angelegte Schichten an bzw. den Hinweis, wie man welche anlegt - die
-        Schichten selbst werden auf der eigenen Seite des Helferpunkts verwaltet (Link "Ändern"
-        oben in der Zeile), da der Admin keine zwei Ebenen verschachtelter Inlines erlaubt."""
+        """Zeigt bereits angelegte Schichten an (je eine Zeile mit Uhrzeit und Belegung) bzw. den
+        Hinweis, wie man welche anlegt - die Schichten selbst werden auf der eigenen Seite des
+        Helferpunkts verwaltet (Link "Ändern" oben in der Zeile), da der Admin keine zwei Ebenen
+        verschachtelter Inlines erlaubt."""
         if not obj or not obj.pk:
             return "–"
         schichten = list(obj.schichten.all())
@@ -578,18 +589,16 @@ class AnmeldepunktInline(admin.TabularInline):
                 '<span style="color:var(--body-quiet-color); font-size:0.85em;">{}</span>',
                 "Mehrere Schichten? Erst speichern, dann oben auf „Ändern“ klicken.",
             )
-        return ", ".join(str(s) for s in schichten)
+        return format_html_join(
+            "", "<div>{} – {}</div>", ((s, _belegung_anzeige(s)) for s in schichten)
+        )
 
     schichten_anzeige.short_description = "Schichten"
 
     def status_anzeige(self, obj):
         if not obj or not obj.pk:
             return "–"
-        if obj.max_anzahl is None:
-            return f"{obj.anzahl_angemeldet} angemeldet"
-        if obj.plaetze_frei == 0:
-            return format_html('<span style="color:#1a7a3c; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – voll")
-        return format_html('<span style="color:#b3261e; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – {obj.plaetze_frei} offen")
+        return _belegung_anzeige(obj)
 
     status_anzeige.short_description = "Status"
 
@@ -1354,11 +1363,7 @@ class AnmeldepunktSchichtInline(admin.TabularInline):
     def status_anzeige(self, obj):
         if not obj or not obj.pk:
             return "–"
-        if obj.max_anzahl is None:
-            return f"{obj.anzahl_angemeldet} angemeldet"
-        if obj.plaetze_frei == 0:
-            return format_html('<span style="color:#1a7a3c; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – voll")
-        return format_html('<span style="color:#b3261e; font-weight:600;">{}</span>', f"{obj.anzahl_angemeldet}/{obj.max_anzahl} – {obj.plaetze_frei} offen")
+        return _belegung_anzeige(obj)
 
     status_anzeige.short_description = "Status"
 
