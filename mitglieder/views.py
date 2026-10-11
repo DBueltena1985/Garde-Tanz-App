@@ -294,9 +294,23 @@ def _termin_eintraege(termine, kinder, user):
             "termin": termin,
             "kinder_status": kinder_status,
             "anmeldepunkte": anmeldepunkte_info,
+            "anmeldepunkte_gruppen": _anmeldepunkte_nach_datum_gruppieren(anmeldepunkte_info),
             "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
         })
     return termin_liste
+
+
+def _anmeldepunkte_nach_datum_gruppieren(anmeldepunkte_info):
+    """Gruppiert die Helfer-/Mitbringlisten-Eintraege eines Termins nach Datum (benoetigt_am) -
+    bei vielen Punkten zu einer Veranstaltung (z.B. Kasse, Aufbau, Deko an verschiedenen Tagen)
+    sonst nicht mehr auseinanderzuhalten, welcher Punkt an welchem Tag ansteht."""
+    nach_datum = {}
+    for info in anmeldepunkte_info:
+        nach_datum.setdefault(info["punkt"].benoetigt_am, []).append(info)
+    return [
+        {"datum": datum, "eintraege": nach_datum[datum]}
+        for datum in sorted(nach_datum, key=lambda d: (d is None, d))
+    ]
 
 
 @login_required

@@ -2,9 +2,9 @@
     {% if ap.punkt.ist_entwurf and request.user.is_staff %}
     <div style="font-size:0.8rem; color:#8a6d00; font-weight:600;">📝 Entwurf – Eltern sehen diesen Punkt noch nicht</div>
     {% endif %}
-    <div>
+    <div style="font-weight:700;">
         {{ ap.punkt.titel }}
-        {% if not ap.schichten and ap.punkt.max_anzahl %}<span style="color:var(--ink-faint); font-size:0.85rem;">({{ ap.anmeldungen|length }}/{{ ap.punkt.max_anzahl }} belegt)</span>{% endif %}
+        {% if not ap.schichten and ap.punkt.max_anzahl %}<span style="color:var(--ink-faint); font-weight:normal; font-size:0.85rem;">({{ ap.anmeldungen|length }}/{{ ap.punkt.max_anzahl }} belegt)</span>{% endif %}
     </div>
     {% if not ap.schichten and ap.punkt.benoetigt_anzeige %}<div style="font-size:0.85rem; color:var(--ink-soft);">🕒 Benötigt am {{ ap.punkt.benoetigt_anzeige }}</div>{% endif %}
     {% if ap.punkt.beschreibung %}<div style="font-size:0.85rem; color:var(--ink-soft);">{{ ap.punkt.beschreibung }}</div>{% endif %}

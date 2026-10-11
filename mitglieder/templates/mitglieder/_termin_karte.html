@@ -112,8 +112,20 @@
     {% if eintrag.anmeldepunkte %}
     <details class="helferliste-gruppe" {% if eintrag.anmeldepunkte|length <= 3 %}open{% endif %}>
         <summary class="helferliste-ueberschrift">Helfer-/Mitbringliste ({{ eintrag.anmeldepunkte|length }})</summary>
-        {% for ap in eintrag.anmeldepunkte %}
-            {% include "mitglieder/_anmeldepunkt.html" %}
+        {% for datumsgruppe in eintrag.anmeldepunkte_gruppen %}
+        <details class="aufgaben-gruppe">
+            <summary class="aufgaben-gruppe-titel">
+                {% if datumsgruppe.datum %}📅 {{ datumsgruppe.datum|date:"d.m.Y" }}{% else %}Ohne festes Datum{% endif %}
+                <span style="color:var(--ink-faint); font-weight:normal;">({{ datumsgruppe.eintraege|length }})</span>
+            </summary>
+            <div class="aufgaben-gruppe-inhalt">
+            {% for ap in datumsgruppe.eintraege %}
+                <div class="helferpunkt-box">
+                    {% include "mitglieder/_anmeldepunkt.html" %}
+                </div>
+            {% endfor %}
+            </div>
+        </details>
         {% endfor %}
     </details>
     {% endif %}
