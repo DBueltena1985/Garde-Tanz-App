@@ -365,10 +365,18 @@ class Anmeldepunkt(models.Model):
         "sichtbar ist - nützlich, wenn erst später feststeht, welche Helfer-/Mitbringlisten es braucht.",
     )
     beschreibung = models.TextField("Beschreibung", blank=True)
-    benoetigt_am = models.DateTimeField(
+    benoetigt_am = models.DateField(
         "Benötigt am", null=True, blank=True,
-        help_text="Optional: bei mehrtägigen Terminen, für welchen Tag/welche Uhrzeit genau das "
-        "gebraucht bzw. abgegeben werden soll (z.B. Frühstück am 2. Tag, 8 Uhr).",
+        help_text="Optional: bei mehrtägigen Terminen, an welchem Tag genau das gebraucht bzw. "
+        "abgegeben werden soll (z.B. Frühstück am 2. Tag).",
+    )
+    benoetigt_von = models.TimeField(
+        "Uhrzeit von", null=True, blank=True,
+        help_text="Optional: Beginn der Uhrzeit/Schicht. Leer lassen, falls noch keine Uhrzeit feststeht.",
+    )
+    benoetigt_bis = models.TimeField(
+        "Uhrzeit bis", null=True, blank=True,
+        help_text="Optional: Ende der Uhrzeit/Schicht, falls es z.B. mehrere Schichten an diesem Tag gibt.",
     )
     max_anzahl = models.PositiveIntegerField(
         "Benötigte Anzahl", null=True, blank=True,
@@ -385,6 +393,20 @@ class Anmeldepunkt(models.Model):
 
     def __str__(self):
         return f"{self.titel} ({self.termin.titel})" if self.termin else self.titel
+
+    @property
+    def benoetigt_anzeige(self):
+        """Formatierte Anzeige von Datum/Uhrzeit, z.B. '06.11.2026, 17:00-19:00 Uhr' (Schicht),
+        '06.11.2026, ab 17:00 Uhr' (nur Beginn) oder nur das Datum, falls die Uhrzeit noch nicht
+        feststeht."""
+        if not self.benoetigt_am:
+            return None
+        text = f"{self.benoetigt_am:%d.%m.%Y}"
+        if self.benoetigt_von and self.benoetigt_bis:
+            text += f", {self.benoetigt_von:%H:%M}–{self.benoetigt_bis:%H:%M} Uhr"
+        elif self.benoetigt_von:
+            text += f", ab {self.benoetigt_von:%H:%M} Uhr"
+        return text
 
     @property
     def anzahl_angemeldet(self):
