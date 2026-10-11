@@ -562,9 +562,25 @@ class AnmeldepunktInline(admin.TabularInline):
     show_change_link = True
     fields = (
         "titel", "ist_entwurf", "beschreibung", "benoetigt_am", "benoetigt_von", "benoetigt_bis",
-        "max_anzahl", "mit_kommentar", "status_anzeige",
+        "max_anzahl", "mit_kommentar", "schichten_anzeige", "status_anzeige",
     )
-    readonly_fields = ("status_anzeige",)
+    readonly_fields = ("schichten_anzeige", "status_anzeige")
+
+    def schichten_anzeige(self, obj):
+        """Zeigt bereits angelegte Schichten an bzw. den Hinweis, wie man welche anlegt - die
+        Schichten selbst werden auf der eigenen Seite des Helferpunkts verwaltet (Link "Ändern"
+        oben in der Zeile), da der Admin keine zwei Ebenen verschachtelter Inlines erlaubt."""
+        if not obj or not obj.pk:
+            return "–"
+        schichten = list(obj.schichten.all())
+        if not schichten:
+            return format_html(
+                '<span style="color:var(--body-quiet-color); font-size:0.85em;">{}</span>',
+                "Mehrere Schichten? Erst speichern, dann oben auf „Ändern“ klicken.",
+            )
+        return ", ".join(str(s) for s in schichten)
+
+    schichten_anzeige.short_description = "Schichten"
 
     def status_anzeige(self, obj):
         if not obj or not obj.pk:
