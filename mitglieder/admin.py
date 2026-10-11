@@ -562,7 +562,7 @@ class AnmeldepunktInline(admin.TabularInline):
     show_change_link = True
     fields = (
         "titel", "ist_entwurf", "beschreibung", "benoetigt_am", "benoetigt_von", "benoetigt_bis",
-        "max_anzahl", "mit_kommentar", "schichten_anzeige", "status_anzeige",
+        "max_anzahl", "mit_kommentar", "nur_orga", "schichten_anzeige", "status_anzeige",
     )
     readonly_fields = ("schichten_anzeige", "status_anzeige")
 
@@ -1348,7 +1348,7 @@ class AnmeldungInline(admin.TabularInline):
 class AnmeldepunktSchichtInline(admin.TabularInline):
     model = AnmeldepunktSchicht
     extra = 0
-    fields = ("von", "bis", "max_anzahl", "status_anzeige")
+    fields = ("von", "bis", "max_anzahl", "nur_orga", "status_anzeige")
     readonly_fields = ("status_anzeige",)
 
     def status_anzeige(self, obj):
@@ -1383,10 +1383,10 @@ class AnmeldepunktOffenFilter(admin.SimpleListFilter):
 @admin.register(Anmeldepunkt)
 class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
-        "titel_anzeige", "termin", "benoetigt_anzeige", "mit_kommentar", "max_anzahl", "anzahl_angemeldet",
-        "noch_offen", "loeschen_link",
+        "titel_anzeige", "termin", "benoetigt_anzeige", "mit_kommentar", "nur_orga", "max_anzahl",
+        "anzahl_angemeldet", "noch_offen", "loeschen_link",
     )
-    list_filter = ("termin", "ist_entwurf", "mit_kommentar", AnmeldepunktOffenFilter)
+    list_filter = ("termin", "ist_entwurf", "nur_orga", "mit_kommentar", AnmeldepunktOffenFilter)
     inlines = [AnmeldepunktSchichtInline, AnmeldungInline]
     change_list_template = "admin/mitglieder/anmeldepunkt_change_list.html"
     change_form_template = "admin/mitglieder/anmeldepunkt_change_form.html"
@@ -1422,6 +1422,15 @@ class AnmeldepunktAdmin(LoeschLinkMixin, admin.ModelAdmin):
         return format_html('<span data-beginn-ms="{}" style="display:none;"></span>{}', beginn_ms, link)
 
     loeschen_link.short_description = ""
+
+    def response_post_save_change(self, request, obj):
+        """Nach einfachem Speichern (nicht 'weiter bearbeiten'/'neu hinzufuegen') zurueck zur
+        zugehoerigen Veranstaltung statt zur unuebersichtlichen Gesamtliste aller Helfer-/
+        Mitbringlisten - man kommt ueber den Aendern-Link ja von dort, um z.B. Schichten
+        anzulegen, und will danach i.d.R. dorthin zurueck."""
+        if obj.termin_id:
+            return redirect("admin:mitglieder_veranstaltungtermin_change", obj.termin_id)
+        return super().response_post_save_change(request, obj)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

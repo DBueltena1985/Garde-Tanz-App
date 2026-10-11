@@ -104,13 +104,19 @@ def _offene_aufgaben_liste(queryset, user):
 
 
 def _anmeldepunkt_info(punkt, user):
-    """Baut die Anzeige-Infos zu einem Helferpunkt. Ist der Punkt in mehrere Schichten aufgeteilt
-    (z.B. Küche 17-19/19-21/21-23 Uhr), wird pro Schicht einzeln erfasst, wer sich dort eingetragen
-    hat - sonst gilt die Anmeldung/Obergrenze fuer den ganzen Punkt wie bisher."""
-    schichten = list(punkt.schichten.all())
-    if schichten:
+    """Baut die Anzeige-Infos zu einem Helferpunkt, oder None, wenn fuer diesen Nutzer nichts davon
+    sichtbar ist. Ist der Punkt in mehrere Schichten aufgeteilt (z.B. Küche 17-19/19-21/21-23 Uhr),
+    wird pro Schicht einzeln erfasst, wer sich dort eingetragen hat - sonst gilt die Anmeldung/
+    Obergrenze fuer den ganzen Punkt wie bisher. Nur-Orga-Schichten sehen Eltern/Mitglieder gar
+    nicht; hat ein in Schichten aufgeteilter Punkt dadurch fuer sie gar keine sichtbare Schicht
+    mehr, wird der ganze Punkt fuer sie ausgeblendet (None)."""
+    alle_schichten = list(punkt.schichten.all())
+    if alle_schichten:
+        sichtbare_schichten = alle_schichten if user.is_staff else [s for s in alle_schichten if not s.nur_orga]
+        if not sichtbare_schichten:
+            return None
         schichten_info = []
-        for schicht in schichten:
+        for schicht in sichtbare_schichten:
             anmeldungen = list(schicht.anmeldungen.all())
             eigene_anmeldung = next((a for a in anmeldungen if a.eltern_id == user.id), None)
             schichten_info.append({
@@ -124,11 +130,11 @@ def _anmeldepunkt_info(punkt, user):
 
 
 def _anmeldepunkte_sichtbar(queryset, user):
-    """Blendet Entwürfe (noch nicht veröffentlichte Helfer-/Mitbringlisten-Punkte) für Eltern/
-    Mitglieder aus - Trainer/Orgateam (is_staff) sehen auch Entwürfe, analog zu Termin.ist_entwurf."""
+    """Blendet Entwürfe (noch nicht veröffentlichte Helfer-/Mitbringlisten-Punkte) sowie reine
+    Orga-/Trainerteam-Punkte für Eltern/Mitglieder aus - Trainer/Orgateam (is_staff) sehen alles."""
     if user.is_staff:
         return queryset
-    return queryset.exclude(ist_entwurf=True)
+    return queryset.exclude(ist_entwurf=True).exclude(nur_orga=True)
 
 
 def _verbundene_mitglieder(user):
@@ -280,7 +286,9 @@ def _termin_eintraege(termine, kinder, user):
         anmeldepunkte_info = []
         if termin.art == Termin.ART_VERANSTALTUNG:
             for punkt in _anmeldepunkte_sichtbar(termin.anmeldepunkte.all(), user):
-                anmeldepunkte_info.append(_anmeldepunkt_info(punkt, user))
+                info = _anmeldepunkt_info(punkt, user)
+                if info:
+                    anmeldepunkte_info.append(info)
 
         termin_liste.append({
             "termin": termin,
@@ -407,10 +415,12 @@ def _aufgaben_kontext(user):
     offene_aufgaben_gruppen = _aufgaben_gruppieren(offene_allgemeine_aufgaben)
 
     allgemeine_helferpunkte = [
-        _anmeldepunkt_info(punkt, user)
-        for punkt in _anmeldepunkte_sichtbar(
-            Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern"), user
-        )
+        info for info in (
+            _anmeldepunkt_info(punkt, user)
+            for punkt in _anmeldepunkte_sichtbar(
+                Anmeldepunkt.objects.filter(termin__isnull=True).prefetch_related("anmeldungen__eltern"), user
+            )
+        ) if info
     ]
     return meine_aufgaben, offene_aufgaben_gruppen, allgemeine_helferpunkte
 
@@ -544,13 +554,15 @@ def anmeldepunkt_eintragen(request, punkt_id):
     punkt = get_object_or_404(Anmeldepunkt, pk=punkt_id)
 
     if request.method == "POST":
-        if punkt.ist_entwurf and not request.user.is_staff:
+        if (punkt.ist_entwurf or punkt.nur_orga) and not request.user.is_staff:
             raise Http404
 
         schicht = None
         if punkt.schichten.exists():
             # In mehrere Schichten aufgeteilter Helferpunkt: Kapazitaet gilt pro Schicht.
             schicht = get_object_or_404(AnmeldepunktSchicht, pk=request.POST.get("schicht_id"), anmeldepunkt=punkt)
+            if schicht.nur_orga and not request.user.is_staff:
+                raise Http404
             if schicht.max_anzahl is not None and schicht.plaetze_frei == 0:
                 messages.error(request, f"Für '{punkt.titel}' ({schicht}) sind bereits alle Plätze belegt.")
                 return _redirect_nach_anmeldung(punkt)
@@ -582,14 +594,16 @@ def veranstaltung_oeffentlich(request, token):
 
     if request.method == "POST":
         punkt = get_object_or_404(
-            Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin, ist_entwurf=False
+            Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin, ist_entwurf=False, nur_orga=False
         )
         name = request.POST.get("name", "").strip()
         kommentar = request.POST.get("kommentar", "").strip()
 
         schicht = None
         if punkt.schichten.exists():
-            schicht = get_object_or_404(AnmeldepunktSchicht, pk=request.POST.get("schicht_id"), anmeldepunkt=punkt)
+            schicht = get_object_or_404(
+                AnmeldepunktSchicht, pk=request.POST.get("schicht_id"), anmeldepunkt=punkt, nur_orga=False
+            )
 
         voll = (
             (schicht and schicht.max_anzahl is not None and schicht.plaetze_frei == 0)
@@ -614,7 +628,7 @@ def veranstaltung_oeffentlich(request, token):
             )
         return redirect("veranstaltung_oeffentlich", token=token)
 
-    anmeldepunkte = termin.anmeldepunkte.filter(ist_entwurf=False).prefetch_related(
+    anmeldepunkte = termin.anmeldepunkte.filter(ist_entwurf=False, nur_orga=False).prefetch_related(
         "anmeldungen", "schichten__anmeldungen"
     )
     return render(request, "mitglieder/veranstaltung_oeffentlich.html", {

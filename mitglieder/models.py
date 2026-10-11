@@ -387,6 +387,12 @@ class Anmeldepunkt(models.Model):
         "Mit Kommentar (z.B. für Mitbringen)", default=True,
         help_text="Aktiviert: Eltern können angeben, was sie mitbringen. Deaktiviert: reine Helferliste, einfach nur eintragen.",
     )
+    nur_orga = models.BooleanField(
+        "Nur für Orga-/Trainerteam sichtbar", default=False,
+        help_text="Aktiviert: nur das Orga-/Trainerteam sieht diesen Punkt und kann sich eintragen - "
+        "nützlich, wenn z.B. zusätzlich zu normalen Helfern jemand aus dem Orgateam dabei sein muss "
+        "(dafür eine eigene Schicht mit diesem Haken anlegen).",
+    )
 
     class Meta:
         verbose_name = "Helfer-/Mitbringliste"
@@ -432,6 +438,10 @@ class AnmeldepunktSchicht(models.Model):
         "Benötigte Anzahl", null=True, blank=True,
         help_text="Leer lassen für unbegrenzt viele Anmeldungen",
     )
+    nur_orga = models.BooleanField(
+        "Nur für Orga-/Trainerteam sichtbar", default=False,
+        help_text="Aktiviert: nur das Orga-/Trainerteam sieht diese Schicht und kann sich eintragen.",
+    )
 
     class Meta:
         verbose_name = "Schicht"
@@ -439,9 +449,10 @@ class AnmeldepunktSchicht(models.Model):
         ordering = ["von"]
 
     def __str__(self):
+        zusatz = " (nur Orga)" if self.nur_orga else ""
         if self.bis:
-            return f"{self.von:%H:%M}–{self.bis:%H:%M} Uhr"
-        return f"ab {self.von:%H:%M} Uhr"
+            return f"{self.von:%H:%M}–{self.bis:%H:%M} Uhr{zusatz}"
+        return f"ab {self.von:%H:%M} Uhr{zusatz}"
 
     @property
     def anzahl_angemeldet(self):
