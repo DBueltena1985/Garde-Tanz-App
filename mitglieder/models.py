@@ -384,7 +384,7 @@ class Anmeldepunkt(models.Model):
         help_text="Leer lassen für unbegrenzt viele Anmeldungen",
     )
     mit_kommentar = models.BooleanField(
-        "Mit Kommentar (z.B. für Mitbringen)", default=True,
+        "Mit Kommentar (z.B. für Mitbringen)", default=False,
         help_text="Aktiviert: Eltern können angeben, was sie mitbringen. Deaktiviert: reine Helferliste, einfach nur eintragen.",
     )
     nur_orga = models.BooleanField(
