@@ -1,5 +1,32 @@
 {% extends "admin/change_form.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .field-schichten_anzeige, th.column-schichten_anzeige { display: none; }
+    .garde-schichten-hinweis { margin-top: 0.3rem; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function schichtenHinweiseVerschieben() {
+        document.querySelectorAll('.field-schichten_anzeige').forEach(function (zelle) {
+            if (zelle.dataset.gardeVerschoben) return;
+            var zeile = zelle.closest('tr');
+            var titelZelle = zeile ? zeile.querySelector('.field-titel') : null;
+            if (!titelZelle) return;
+            var hinweis = document.createElement('div');
+            hinweis.className = 'garde-schichten-hinweis';
+            hinweis.innerHTML = zelle.innerHTML;
+            titelZelle.appendChild(hinweis);
+            zelle.dataset.gardeVerschoben = '1';
+        });
+    }
+    schichtenHinweiseVerschieben();
+    document.addEventListener('formset:added', schichtenHinweiseVerschieben);
+});
+</script>
+{% endblock %}
+
 {% block submit_buttons_bottom %}
 {{ block.super }}
 {% if change %}
