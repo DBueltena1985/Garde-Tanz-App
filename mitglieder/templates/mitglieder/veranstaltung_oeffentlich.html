@@ -5,6 +5,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ termin.titel }}</title>
+<meta name="theme-color" content="#c31c2b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Weiße & Rote Garde">
+<meta property="og:title" content="{{ termin.titel }}">
+<meta property="og:description" content="{{ termin.beginn|date:'d.m.Y H:i' }} Uhr{% if termin.ort %} · {{ termin.ort }}{% endif %} – Helfer-/Mitbringliste zum Eintragen, kein App-Konto nötig.">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'mitglieder/garde-banner.png' %}">
+<meta name="twitter:card" content="summary_large_image">
 <style>
     :root {
         --accent: #c31c2b; --accent-strong: #841019; --accent-soft: #fbe1e2;
