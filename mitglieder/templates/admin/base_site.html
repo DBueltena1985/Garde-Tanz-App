@@ -92,6 +92,24 @@
             z-index: 2;
             background: var(--darkened-bg);
         }
+        /* Djangos "Ändern"-Beschriftung (z.B. "Fingerfood (Veranstaltung) Ändern") ist normalerweise
+           mit position:absolute relativ zum AEUSSEREN .inline-related-Container ueber die jeweilige
+           Zeile gelegt. Da jetzt .wrapper (innen) statt .inline-related (aussen) scrollt, blieb diese
+           Beschriftung beim Scrollen an ihrer urspruenglichen Stelle haengen, waehrend die Zeilen
+           darunter wegscrollten. Deshalb hier auf normale Positionierung in der Zelle umgestellt. */
+        .inline-related.tabular td.original,
+        .inline-related.tabular th.original {
+            width: auto;
+            white-space: nowrap;
+        }
+        .inline-related.tabular td.original p {
+            position: static;
+            height: auto;
+            padding: 2px 9px 4px;
+        }
+        .inline-related.tabular tr.has_original td {
+            padding-top: 2px;
+        }
     }
 </style>
 <script>
