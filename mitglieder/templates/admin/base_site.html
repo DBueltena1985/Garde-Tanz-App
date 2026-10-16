@@ -69,6 +69,20 @@
             content: none;
         }
     }
+
+    /* Spaltenueberschriften bleiben beim Scrollen durch lange Listen/Inline-Tabellen (z.B. viele
+       Helfer-/Mitbringlisten-Punkte) oben sichtbar, statt dass man zum Nachschauen, welche Spalte
+       was ist, immer wieder hochscrollen muss. Nur ab Desktop-Breite, auf dem Handy gilt stattdessen
+       oben die Kartenansicht ohne Kopfzeile. */
+    @media (min-width: 768px) {
+        #changelist-form table#result_list thead th,
+        .tabular.inline-related table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--darkened-bg);
+        }
+    }
 </style>
 <script>
     // Fuer die Handy-Kartenansicht (siehe <style> oben): jeder Zelle einer Listen-Tabelle
