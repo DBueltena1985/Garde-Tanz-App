@@ -6,6 +6,8 @@
     .field-schichten_anzeige, th.column-schichten_anzeige { display: none; }
     .garde-schichten-hinweis { margin-top: 0.3rem; font-size: 0.85em; }
     .garde-schichten-hinweis div { margin-bottom: 0.15rem; }
+    .garde-original-beschriftung { margin-bottom: 0.4rem; }
+    .garde-original-beschriftung p { margin: 0; }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -22,8 +24,29 @@ document.addEventListener('DOMContentLoaded', function () {
             zelle.dataset.gardeVerschoben = '1';
         });
     }
-    schichtenHinweiseVerschieben();
-    document.addEventListener('formset:added', schichtenHinweiseVerschieben);
+    function originalBeschriftungVerschieben() {
+        // Verschiebt Djangos Ändern-Beschriftung (z.B. "Fingerfood (Veranstaltung) Ändern") von
+        // der eigenen schmalen Spalte an den Anfang der Titel-Zelle, damit sie ueber statt neben
+        // dem Eingabefeld steht - spart Platz und ist auf dem Handy besser lesbar.
+        document.querySelectorAll('.tabular.inline-related td.original').forEach(function (zelle) {
+            if (zelle.dataset.gardeVerschoben) return;
+            zelle.dataset.gardeVerschoben = '1';
+            var zeile = zelle.closest('tr');
+            var titelZelle = zeile ? zeile.querySelector('.field-titel') : null;
+            if (!titelZelle || !zelle.textContent.trim()) return;
+            var beschriftung = document.createElement('div');
+            beschriftung.className = 'garde-original-beschriftung';
+            beschriftung.innerHTML = zelle.innerHTML;
+            titelZelle.insertBefore(beschriftung, titelZelle.firstChild);
+            zelle.style.display = 'none';
+        });
+    }
+    function allesVerschieben() {
+        schichtenHinweiseVerschieben();
+        originalBeschriftungVerschieben();
+    }
+    allesVerschieben();
+    document.addEventListener('formset:added', allesVerschieben);
 });
 </script>
 {% endblock %}
