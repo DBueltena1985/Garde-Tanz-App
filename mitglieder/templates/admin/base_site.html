@@ -73,8 +73,18 @@
     /* Spaltenueberschriften bleiben beim Scrollen durch lange Listen/Inline-Tabellen (z.B. viele
        Helfer-/Mitbringlisten-Punkte) oben sichtbar, statt dass man zum Nachschauen, welche Spalte
        was ist, immer wieder hochscrollen muss. Nur ab Desktop-Breite, auf dem Handy gilt stattdessen
-       oben die Kartenansicht ohne Kopfzeile. */
+       oben die Kartenansicht ohne Kopfzeile.
+       Django's eigene ".results"/"div.wrapper"-Container haben overflow-x:auto fuer seitwaerts
+       scrollbare breite Tabellen - das verhindert technisch bedingt (CSS-Spezifikation koppelt
+       overflow-x und -y) ein einfaches "position: sticky" auf die Kopfzeile. Deshalb bekommt der
+       Container stattdessen selbst eine Hoehenbegrenzung mit eigenem Scrollbalken, darin
+       funktioniert "sticky" zuverlaessig. */
     @media (min-width: 768px) {
+        #changelist-form .results,
+        .inline-related.tabular div.wrapper {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
         #changelist-form table#result_list thead th,
         .tabular.inline-related table thead th {
             position: sticky;
