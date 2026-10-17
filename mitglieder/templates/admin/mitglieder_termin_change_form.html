@@ -8,6 +8,18 @@
     .garde-schichten-hinweis div { margin-bottom: 0.15rem; }
     .garde-original-beschriftung { margin-bottom: 0.4rem; }
     .garde-original-beschriftung p { margin: 0; }
+
+    /* "Jetzt"-Schnellausfuellen bei Uhrzeit von/bis spart hier keine Zeit (Zeiten sind idR nicht
+       "jetzt"), nimmt aber Platz weg - raus, damit die Beschreibung breiter sein kann. */
+    .field-benoetigt_von .datetimeshortcuts, .field-benoetigt_bis .datetimeshortcuts { display: none; }
+
+    /* Checkbox-Spalten mittig statt linksbuendig, passend unter der Beschriftung. */
+    .tabular.inline-related th.column-ist_entwurf, .tabular.inline-related td.field-ist_entwurf,
+    .tabular.inline-related th.column-mit_kommentar, .tabular.inline-related td.field-mit_kommentar,
+    .tabular.inline-related th.column-nur_orga, .tabular.inline-related td.field-nur_orga,
+    .tabular.inline-related td.delete {
+        text-align: center;
+    }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

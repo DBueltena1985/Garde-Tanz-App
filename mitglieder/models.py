@@ -399,7 +399,7 @@ class Anmeldepunkt(models.Model):
         "Deaktiviert: reine Helferliste, einfach nur eintragen.",
     )
     nur_orga = models.BooleanField(
-        "Nur Orga sichtbar", default=False,
+        "Nur Orga", default=False,
         help_text="Aktiviert: nur das Orga-/Trainerteam sieht diesen Punkt und kann sich eintragen - "
         "nützlich, wenn z.B. zusätzlich zu normalen Helfern jemand aus dem Orgateam dabei sein muss "
         "(dafür eine eigene Schicht mit diesem Haken anlegen).",
