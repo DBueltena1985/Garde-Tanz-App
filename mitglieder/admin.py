@@ -582,7 +582,7 @@ class AnmeldepunktInline(admin.TabularInline):
             # Deutlich schmaler und weniger hoch als Djangos Standard-Textarea (cols=40, rows=10) -
             # feste Breite in px statt nur "cols", damit die ganze Tabelle inkl. Loeschen-Spalte am
             # PC ohne seitliches Scrollen passt.
-            formfield.widget.attrs.update({"rows": 2, "style": "width: 140px;"})
+            formfield.widget.attrs.update({"rows": 2, "style": "width: 220px;"})
         return formfield
 
     def schichten_anzeige(self, obj):
