@@ -87,8 +87,16 @@
                 {% else %}Noch offen{% endif %}
             </span>
         </span>
+        {% if eintrag.termin.zusage_notiz_frage %}
+        <div class="zusage-notiz-frage">
+            <label for="zusage-notiz-{{ eintrag.termin.id }}-{{ ks.kind.id }}">{{ eintrag.termin.zusage_notiz_frage }}</label>
+            <input type="text" id="zusage-notiz-{{ eintrag.termin.id }}-{{ ks.kind.id }}" name="notiz"
+                   form="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}"
+                   value="{{ ks.kommentar }}" placeholder="Antwort (nur bei Zusagen, optional)">
+        </div>
+        {% endif %}
         <div class="termin-actions">
-            <form method="post" class="zusage-form" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}">
+            <form method="post" id="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}" class="zusage-form" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
                 <button type="submit" class="btn-chip btn-chip-zusagen">

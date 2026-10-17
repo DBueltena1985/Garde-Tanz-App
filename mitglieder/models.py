@@ -248,6 +248,12 @@ class Termin(models.Model):
         "Interne Notiz", blank=True,
         help_text="Nicht öffentlich – nur für Orga-/Admin-Team sichtbar, z.B. im Mitgliederbereich.",
     )
+    zusage_notiz_frage = models.CharField(
+        "Zusatzfrage bei Zusage", max_length=200, blank=True,
+        help_text="Optional: Frage, die Eltern nur beim Zusagen (nicht beim Absagen) zusätzlich "
+        "beantworten können, z.B. 'Gibt es Unverträglichkeiten oder Besonderheiten beim Essen?'. "
+        "Leer lassen für kein Zusatzfeld.",
+    )
     wichtige_trainings = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="wichtig_fuer_veranstaltungen",
         limit_choices_to={"art": ART_TRAINING},
@@ -334,7 +340,11 @@ class Zusage(models.Model):
     )
     termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="zusagen")
     status = models.CharField("Status", max_length=20, choices=STATUS_CHOICES, default=STATUS_OFFEN)
-    kommentar = models.CharField("Kommentar", max_length=300, blank=True)
+    kommentar = models.CharField(
+        "Anmerkung der Eltern", max_length=300, blank=True,
+        help_text="Antwort auf die Zusage-Frage des Termins (z.B. Unverträglichkeiten) - nur bei "
+        "einer Zusage abgefragt.",
+    )
     anwesend = models.BooleanField(
         "Anwesend", null=True, blank=True,
         help_text="Von Admin/Betreuer nach dem Termin bestätigt. Leer = noch nicht erfasst.",

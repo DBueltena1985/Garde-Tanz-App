@@ -894,6 +894,7 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
                 "kind": kind,
                 "status": status,
                 "anwesend": zusage.anwesend if zusage else None,
+                "kommentar": zusage.kommentar if zusage else "",
                 "neue_gruppe": vorheriger_status is not None and status != vorheriger_status,
             })
             vorheriger_status = status
@@ -1149,7 +1150,7 @@ class TrainingAdmin(TerminAdminBase):
         ("Für wen", {"fields": ("gruppen",)}),
         (
             "Weitere Einstellungen",
-            {"classes": ("collapse",), "fields": ("wichtige_trainings", "erstellt_von")},
+            {"classes": ("collapse",), "fields": ("wichtige_trainings", "zusage_notiz_frage", "erstellt_von")},
         ),
     )
 
@@ -1267,7 +1268,10 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
         ("Für wen", {"fields": ("gruppen",)}),
         (
             "Weitere Einstellungen",
-            {"classes": ("collapse",), "fields": ("wichtige_trainings", "interne_notiz", "erstellt_von")},
+            {
+                "classes": ("collapse",),
+                "fields": ("wichtige_trainings", "interne_notiz", "zusage_notiz_frage", "erstellt_von"),
+            },
         ),
     )
     list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben", "teilen_link")
@@ -1500,7 +1504,10 @@ class AufgabeAdmin(LoeschLinkMixin, admin.ModelAdmin):
 
 @admin.register(Zusage)
 class ZusageAdmin(LoeschLinkMixin, admin.ModelAdmin):
-    list_display = ("termin_datum", "termin", "taenzerin", "status", "anwesend", "aktualisiert_am", "loeschen_link")
+    list_display = (
+        "termin_datum", "termin", "taenzerin", "status", "kommentar", "anwesend", "aktualisiert_am",
+        "loeschen_link",
+    )
     list_editable = ("anwesend",)
     list_filter = ("status", "anwesend", "termin")
     search_fields = ("taenzerin__vorname", "taenzerin__nachname")

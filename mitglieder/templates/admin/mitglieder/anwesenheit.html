@@ -19,6 +19,7 @@
             <tr>
                 <th style="text-align:left; padding:6px 12px 6px 0;">Tänzerin</th>
                 <th style="text-align:left; padding:6px 12px;">Zu-/Absage</th>
+                <th style="text-align:left; padding:6px 12px;">Anmerkung</th>
                 <th style="text-align:left; padding:6px 12px;">Anwesend</th>
             </tr>
         </thead>
@@ -31,6 +32,7 @@
                     {% elif zeile.status == "abgesagt" %}Abgesagt
                     {% else %}Noch offen{% endif %}
                 </td>
+                <td style="padding:4px 12px;">{{ zeile.kommentar|default:"–" }}</td>
                 <td style="padding:4px 12px;">
                     <input type="checkbox" name="anwesend_{{ zeile.kind.id }}" {% if zeile.anwesend %}checked{% endif %}>
                 </td>

@@ -409,7 +409,12 @@
         .status-chip-zugesagt { background: #d7f0dd; color: #1a7a3c; }
         .status-chip-abgesagt { background: #f7d9d6; color: #b3261e; }
         .status-chip-offen { background: #fff3cd; color: #8a6d00; }
-        .termin-actions { display: flex; gap: 0.4rem; }
+        .termin-actions { display: flex; gap: 0.4rem; order: 2; }
+        .zusage-notiz-frage {
+            order: 1; flex-basis: 100%; display: flex; flex-direction: column; gap: 0.2rem;
+            font-size: 0.82rem; color: var(--ink-soft);
+        }
+        .zusage-notiz-frage input[type="text"] { font: inherit; }
         .btn-chip {
             display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.38rem 0.7rem; border-radius: 8px;
             border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; font-family: inherit;

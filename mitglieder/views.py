@@ -281,6 +281,7 @@ def _termin_eintraege(termine, kinder, user):
             kinder_status.append({
                 "kind": kind,
                 "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
+                "kommentar": zusage.kommentar if zusage else "",
             })
 
         anmeldepunkte_info = []
@@ -529,6 +530,10 @@ def termin_zusage(request, termin_id, kind_id, status):
 
     zusage, _ = Zusage.objects.get_or_create(taenzerin=kind, termin=termin)
     zusage.status = status
+    if status == Zusage.STATUS_ZUGESAGT and termin.zusage_notiz_frage:
+        zusage.kommentar = request.POST.get("notiz", "").strip()
+    elif status != Zusage.STATUS_ZUGESAGT:
+        zusage.kommentar = ""
     zusage.save()
     messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
     return _zurueck_zu_termin_seite(request, termin_id)
