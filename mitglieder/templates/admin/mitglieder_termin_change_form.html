@@ -38,7 +38,10 @@ document.addEventListener('DOMContentLoaded', function () {
             beschriftung.className = 'garde-original-beschriftung';
             beschriftung.innerHTML = zelle.innerHTML;
             titelZelle.insertBefore(beschriftung, titelZelle.firstChild);
-            zelle.style.display = 'none';
+            // Inhalt leeren statt display:none auf der Zelle - sonst haette diese Zeile eine
+            // Tabellenspalte weniger als die Kopfzeile, was alle nachfolgenden Spalten (bis hin zum
+            // Loeschen-Kaestchen ganz rechts) um eine Position verschiebt.
+            zelle.innerHTML = '';
         });
     }
     function allesVerschieben() {

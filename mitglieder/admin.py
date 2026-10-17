@@ -576,6 +576,14 @@ class AnmeldepunktInline(admin.TabularInline):
     )
     readonly_fields = ("schichten_anzeige", "status_anzeige")
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == "beschreibung":
+            # Schmaler und weniger hoch als Djangos Standard-Textarea (cols=40, rows=10) - spart
+            # Platz in der Zeile, damit insgesamt weniger seitlich gescrollt werden muss.
+            formfield.widget.attrs.update({"cols": 30, "rows": 3})
+        return formfield
+
     def schichten_anzeige(self, obj):
         """Zeigt bereits angelegte Schichten an (je eine Zeile mit Uhrzeit und Belegung) bzw. den
         Hinweis, wie man welche anlegt - die Schichten selbst werden auf der eigenen Seite des
