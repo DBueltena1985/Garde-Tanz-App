@@ -370,7 +370,7 @@ class Anmeldepunkt(models.Model):
     )
     titel = models.CharField("Titel", max_length=200, help_text="z.B. 'Kuchen mitbringen', 'Aufbauhelfer', 'Fahrdienst'")
     ist_entwurf = models.BooleanField(
-        "Entwurf (noch nicht für Eltern sichtbar)", default=False,
+        "Entwurf", default=False,
         help_text="Aktiviert: Eltern sehen diesen Punkt noch nicht, auch wenn die Veranstaltung selbst schon "
         "sichtbar ist - nützlich, wenn erst später feststeht, welche Helfer-/Mitbringlisten es braucht.",
     )
@@ -394,11 +394,12 @@ class Anmeldepunkt(models.Model):
         help_text="Leer lassen für unbegrenzt viele Anmeldungen",
     )
     mit_kommentar = models.BooleanField(
-        "Mit Kommentar (z.B. für Mitbringen)", default=False,
-        help_text="Aktiviert: Eltern können angeben, was sie mitbringen. Deaktiviert: reine Helferliste, einfach nur eintragen.",
+        "Mit Kommentar", default=False,
+        help_text="Aktiviert: Eltern können angeben, was sie mitbringen (z.B. für Mitbringen). "
+        "Deaktiviert: reine Helferliste, einfach nur eintragen.",
     )
     nur_orga = models.BooleanField(
-        "Nur für Orga-/Trainerteam sichtbar", default=False,
+        "Nur Orga sichtbar", default=False,
         help_text="Aktiviert: nur das Orga-/Trainerteam sieht diesen Punkt und kann sich eintragen - "
         "nützlich, wenn z.B. zusätzlich zu normalen Helfern jemand aus dem Orgateam dabei sein muss "
         "(dafür eine eigene Schicht mit diesem Haken anlegen).",
@@ -449,7 +450,7 @@ class AnmeldepunktSchicht(models.Model):
         help_text="Leer lassen für unbegrenzt viele Anmeldungen",
     )
     nur_orga = models.BooleanField(
-        "Nur für Orga-/Trainerteam sichtbar", default=False,
+        "Nur Orga sichtbar", default=False,
         help_text="Aktiviert: nur das Orga-/Trainerteam sieht diese Schicht und kann sich eintragen.",
     )
 
