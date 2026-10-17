@@ -92,7 +92,7 @@
             <label for="zusage-notiz-{{ eintrag.termin.id }}-{{ ks.kind.id }}">{{ eintrag.termin.zusage_notiz_frage }}</label>
             <input type="text" id="zusage-notiz-{{ eintrag.termin.id }}-{{ ks.kind.id }}" name="notiz"
                    form="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}"
-                   value="{{ ks.kommentar }}" placeholder="Antwort (nur bei Zusagen, optional)">
+                   value="{{ ks.kommentar }}" placeholder="Antwort (optional)">
         </div>
         {% endif %}
         <div class="termin-actions">
