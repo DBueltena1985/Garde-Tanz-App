@@ -579,9 +579,10 @@ class AnmeldepunktInline(admin.TabularInline):
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
         if db_field.name == "beschreibung":
-            # Schmaler und weniger hoch als Djangos Standard-Textarea (cols=40, rows=10) - spart
-            # Platz in der Zeile, damit insgesamt weniger seitlich gescrollt werden muss.
-            formfield.widget.attrs.update({"cols": 30, "rows": 3})
+            # Deutlich schmaler und weniger hoch als Djangos Standard-Textarea (cols=40, rows=10) -
+            # feste Breite in px statt nur "cols", damit die ganze Tabelle inkl. Loeschen-Spalte am
+            # PC ohne seitliches Scrollen passt.
+            formfield.widget.attrs.update({"rows": 2, "style": "width: 140px;"})
         return formfield
 
     def schichten_anzeige(self, obj):
