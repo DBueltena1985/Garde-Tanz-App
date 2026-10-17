@@ -25,7 +25,7 @@ from .forms import (
 )
 from .models import (
     Anmeldepunkt, AnmeldepunktSchicht, Anmeldung, Aufgabe, AufgabeErledigung, Ferienzeitraum, Galeriebild,
-    Galerieordner, Nachricht, NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, Zusage,
+    Galerieordner, Nachricht, NewsPost, Profil, Taenzerin, Termin, Trainingsmaterial, Zusage, ZusageOhneKonto,
 )
 from .utils import benutzer_name, sichere_mail_senden
 
@@ -611,6 +611,39 @@ def veranstaltung_oeffentlich(request, token):
         Termin, oeffentlicher_token=token, art=Termin.ART_VERANSTALTUNG, ist_entwurf=False
     )
 
+    if request.method == "POST" and request.POST.get("aktion") == "zusage_ohne_konto":
+        name = request.POST.get("name", "").strip()
+        status = request.POST.get("status")
+        kommentar = request.POST.get("kommentar", "").strip()
+        gueltige_status = {s for s, _ in Zusage.STATUS_CHOICES}
+
+        if not name:
+            messages.error(request, "Bitte gib deinen Namen ein.")
+        elif status not in gueltige_status:
+            messages.error(request, "Ungültiger Status.")
+        else:
+            eintrag = ZusageOhneKonto.objects.filter(termin=termin, name__iexact=name).first()
+            if not eintrag:
+                eintrag = ZusageOhneKonto(termin=termin, name=name)
+            eintrag.status = status
+            if status == Zusage.STATUS_ZUGESAGT and termin.zusage_notiz_frage:
+                eintrag.kommentar = kommentar
+            elif status != Zusage.STATUS_ZUGESAGT:
+                eintrag.kommentar = ""
+            eintrag.save()
+            request.session["zusage_ohne_konto_name"] = name
+            messages.success(request, f"Danke {name}, deine Antwort zu '{termin.titel}' wurde gespeichert.")
+            zusatz = f" Kommentar: {eintrag.kommentar}" if eintrag.kommentar else ""
+            _admins_benachrichtigen(
+                subject=f"Neue Zu-/Absage ohne Konto: {termin.titel}",
+                message=(
+                    f"{name} hat über den öffentlichen Link bei '{termin.titel}' mit "
+                    f"'{eintrag.get_status_display()}' geantwortet.{zusatz}\n\n"
+                    "Im Admin-Bereich unter Zu-/Absagen ohne Konto einsehbar."
+                ),
+            )
+        return redirect("veranstaltung_oeffentlich", token=token)
+
     if request.method == "POST":
         punkt = get_object_or_404(
             Anmeldepunkt, pk=request.POST.get("punkt_id"), termin=termin, ist_entwurf=False, nur_orga=False
@@ -647,12 +680,28 @@ def veranstaltung_oeffentlich(request, token):
             )
         return redirect("veranstaltung_oeffentlich", token=token)
 
+    kinder_status = []
+    if request.user.is_authenticated and termin.taenzerinnen_erforderlich:
+        kinder = _kinder_fuer_termine(request.user)
+        eintraege = _termin_eintraege([termin], kinder, request.user)
+        kinder_status = eintraege[0]["kinder_status"] if eintraege else []
+
+    eigene_zusage_ohne_konto = None
+    if not request.user.is_authenticated:
+        voriger_name = request.session.get("zusage_ohne_konto_name")
+        if voriger_name:
+            eigene_zusage_ohne_konto = ZusageOhneKonto.objects.filter(
+                termin=termin, name__iexact=voriger_name
+            ).first()
+
     anmeldepunkte = termin.anmeldepunkte.filter(ist_entwurf=False, nur_orga=False).prefetch_related(
         "anmeldungen", "schichten__anmeldungen"
     )
     return render(request, "mitglieder/veranstaltung_oeffentlich.html", {
         "termin": termin,
         "anmeldepunkte": anmeldepunkte,
+        "kinder_status": kinder_status,
+        "eigene_zusage_ohne_konto": eigene_zusage_ohne_konto,
     })
 
 

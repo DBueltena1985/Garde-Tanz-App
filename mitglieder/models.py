@@ -360,6 +360,27 @@ class Zusage(models.Model):
         return f"{self.taenzerin} - {self.termin} - {self.get_status_display()}"
 
 
+class ZusageOhneKonto(models.Model):
+    """Zu-/Absage über den öffentlichen Veranstaltungs-Link, ohne App-Konto und ohne Zuordnung zu
+    einem bestimmten Kind - erfasst nur per freiem Namen (analog Anmeldung.name_ohne_konto)."""
+
+    termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="zusagen_ohne_konto")
+    name = models.CharField("Name", max_length=100)
+    status = models.CharField("Status", max_length=20, choices=Zusage.STATUS_CHOICES)
+    kommentar = models.CharField(
+        "Anmerkung", max_length=300, blank=True,
+        help_text="Antwort auf die Zusage-Frage des Termins - nur bei einer Zusage abgefragt.",
+    )
+    aktualisiert_am = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Zu-/Absage ohne Konto"
+        verbose_name_plural = "Zu-/Absagen ohne Konto"
+
+    def __str__(self):
+        return f"{self.name} - {self.termin} - {self.get_status_display()}"
+
+
 class Anmeldepunkt(models.Model):
     """Ein Punkt auf einer Helfer- oder Mitbringliste, optional zu einem Termin, sonst allgemeine Aufgabe."""
 

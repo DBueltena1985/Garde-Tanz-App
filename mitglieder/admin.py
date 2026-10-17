@@ -23,7 +23,7 @@ from .utils import absolute_url
 from .models import (
     Anmeldepunkt, AnmeldepunktSchicht, Anmeldung, Aufgabe, AufgabeDatei, AufgabeErledigung, Feedback,
     Ferienzeitraum, Galeriebild, Galerieordner, Gruppe, Nachricht, NewsPost, Profil, Taenzerin, Termin,
-    Trainingsmaterial, TrainingTermin, VeranstaltungTermin, Zusage,
+    Trainingsmaterial, TrainingTermin, VeranstaltungTermin, Zusage, ZusageOhneKonto,
 )
 
 
@@ -1523,6 +1523,22 @@ class ZusageAdmin(LoeschLinkMixin, admin.ModelAdmin):
     date_hierarchy = "termin__beginn"
     ordering = ("termin__beginn", "taenzerin__vorname")
     change_list_template = "admin/mitglieder/zusage_change_list.html"
+
+    def termin_datum(self, obj):
+        lokal = timezone.localtime(obj.termin.beginn)
+        return format_html('<span data-tag="{}">{}</span>', lokal.date().isoformat(), lokal.strftime("%d.%m.%Y %H:%M"))
+
+    termin_datum.short_description = "Datum"
+    termin_datum.admin_order_field = "termin__beginn"
+
+
+@admin.register(ZusageOhneKonto)
+class ZusageOhneKontoAdmin(LoeschLinkMixin, admin.ModelAdmin):
+    list_display = ("termin_datum", "termin", "name", "status", "kommentar", "aktualisiert_am", "loeschen_link")
+    list_filter = ("status", "termin")
+    search_fields = ("name",)
+    date_hierarchy = "termin__beginn"
+    ordering = ("termin__beginn", "name")
 
     def termin_datum(self, obj):
         lokal = timezone.localtime(obj.termin.beginn)

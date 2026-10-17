@@ -78,6 +78,67 @@
         {% endif %}
     </div>
 
+    {% if termin.taenzerinnen_erforderlich %}
+    <div class="card">
+        <h2 style="font-size:1.1rem; margin-top:0;">Zu-/Absagen</h2>
+        {% if request.user.is_authenticated %}
+            {% if kinder_status %}
+            {% for ks in kinder_status %}
+            <div style="{% if not forloop.last %}border-bottom:1px solid var(--line); padding-bottom:0.7rem; margin-bottom:0.7rem;{% endif %}">
+                <div style="font-weight:600;">{{ ks.kind.vorname }}
+                    <span class="meta">({% if ks.status == "zugesagt" %}Zugesagt{% elif ks.status == "abgesagt" %}Abgesagt{% else %}Noch offen{% endif %})</span>
+                </div>
+                {% if termin.zusage_notiz_frage %}
+                <div style="margin:0.4rem 0;">
+                    <label for="notiz-{{ ks.kind.id }}" class="meta">{{ termin.zusage_notiz_frage }}</label><br>
+                    <input type="text" id="notiz-{{ ks.kind.id }}" name="notiz"
+                           form="zusage-form-{{ termin.id }}-{{ ks.kind.id }}"
+                           value="{{ ks.kommentar }}" placeholder="Antwort (optional)" style="width:100%; margin-top:0.2rem;">
+                </div>
+                {% endif %}
+                <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
+                    <form method="post" id="zusage-form-{{ termin.id }}-{{ ks.kind.id }}" action="{% url 'termin_zusage' termin.id ks.kind.id 'zugesagt' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn">✅ Zusagen</button>
+                    </form>
+                    <form method="post" action="{% url 'termin_zusage' termin.id ks.kind.id 'abgesagt' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn" style="background:var(--ink-faint);">❌ Absagen</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="meta">Kein Kind deines Kontos ist für diese Veranstaltung vorgesehen.</div>
+            {% endif %}
+        {% else %}
+            <div class="meta" style="margin-bottom:0.7rem;">
+                Hast du ein App-Konto? <a href="{% url 'login' %}?next={{ request.path|urlencode }}">Hier einloggen</a>,
+                um pro Kind zu-/abzusagen.
+            </div>
+            <div style="border-top:1px solid var(--line); padding-top:0.7rem;">
+                <div class="meta" style="margin-bottom:0.4rem;">Ohne Konto:</div>
+                {% if eigene_zusage_ohne_konto %}
+                <div class="meta" style="margin-bottom:0.4rem;">
+                    Deine letzte Antwort: <strong>{{ eigene_zusage_ohne_konto.get_status_display }}</strong>
+                    – du kannst sie unten ändern.
+                </div>
+                {% endif %}
+                <form method="post" style="display:flex; gap:0.4rem; flex-wrap:wrap; align-items:flex-start;">
+                    {% csrf_token %}
+                    <input type="hidden" name="aktion" value="zusage_ohne_konto">
+                    <input type="text" name="name" placeholder="Dein Name" required value="{{ eigene_zusage_ohne_konto.name|default:'' }}">
+                    {% if termin.zusage_notiz_frage %}
+                    <input type="text" name="kommentar" placeholder="{{ termin.zusage_notiz_frage }} (optional)" style="flex-basis:100%;" value="{{ eigene_zusage_ohne_konto.kommentar|default:'' }}">
+                    {% endif %}
+                    <button type="submit" name="status" value="zugesagt" class="btn">✅ Zusagen</button>
+                    <button type="submit" name="status" value="abgesagt" class="btn" style="background:var(--ink-faint);">❌ Absagen</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     {% if anmeldepunkte %}
     <h2 style="font-size:1.1rem;">Helfer-/Mitbringliste</h2>
     {% for punkt in anmeldepunkte %}
