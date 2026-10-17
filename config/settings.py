@@ -137,6 +137,15 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Uhrzeit-Felder im Admin standardmaessig 4-stellig (z.B. "11:30") statt mit Sekunden anzeigen -
+# betrifft sowohl bestehende Werte als auch den "Jetzt"-Schnellausfuell-Button. Mit Sekunden
+# eingeben (z.B. "11:30:00") wird weiterhin akzeptiert, da das Format zusaetzlich in der Liste steht.
+TIME_INPUT_FORMATS = [
+    "%H:%M",
+    "%H:%M:%S",
+    "%H:%M:%S.%f",
+]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
