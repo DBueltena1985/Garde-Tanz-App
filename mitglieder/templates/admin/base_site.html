@@ -106,6 +106,34 @@
         });
     });
 
+    // Auf-/zugeklappte Inline-Gruppen (z.B. Helfer-/Mitbringlisten) merken sich ihren Zustand
+    // ueber die aktuelle Seite hinweg - sonst sind sie nach jedem Speichern (z.B. einer Schicht,
+    // was zurueck auf die Veranstaltungs-Seite fuehrt) wieder zugeklappt und man muss staendig
+    // neu aufklappen, um weiterzuarbeiten.
+    document.addEventListener('DOMContentLoaded', function () {
+        var praefix = 'garde-admin-details-offen:' + window.location.pathname + ':';
+        document.querySelectorAll('#content-main details').forEach(function (details) {
+            var summary = details.querySelector(':scope > summary');
+            var kennung = summary ? summary.textContent.replace(/\s+/g, ' ').trim() : '';
+            if (!kennung) { return; }
+            var schluessel = praefix + kennung;
+            var gespeichert = null;
+            try {
+                gespeichert = sessionStorage.getItem(schluessel);
+            } catch (e) { /* z.B. privater Modus - dann halt ohne Erinnerung */ }
+            if (gespeichert === '1') {
+                details.open = true;
+            } else if (gespeichert === '0') {
+                details.open = false;
+            }
+            details.addEventListener('toggle', function () {
+                try {
+                    sessionStorage.setItem(schluessel, details.open ? '1' : '0');
+                } catch (e) { /* z.B. privater Modus - dann halt ohne Erinnerung */ }
+            });
+        });
+    });
+
     // Datei-/Bild-Upload-Felder per Drag-and-Drop bedienbar machen.
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('input[type="file"]').forEach(function (input) {
