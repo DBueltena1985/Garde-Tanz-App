@@ -589,7 +589,9 @@ class AnmeldepunktInline(admin.TabularInline):
         """Zeigt bereits angelegte Schichten an (je eine Zeile mit Uhrzeit und Belegung) bzw. den
         Hinweis, wie man welche anlegt - die Schichten selbst werden auf der eigenen Seite des
         Helferpunkts verwaltet (Link "Ändern" oben in der Zeile), da der Admin keine zwei Ebenen
-        verschachtelter Inlines erlaubt."""
+        verschachtelter Inlines erlaubt. Gibt es bereits Schichten, werden Uhrzeit/Anzahl oben in
+        der Hauptzeile NICHT mehr verwendet (siehe status_anzeige) - darauf wird hier hingewiesen,
+        damit nicht versehentlich eine Zeit dort statt als eigene Schicht eingetragen wird."""
         if not obj or not obj.pk:
             return "–"
         schichten = list(obj.schichten.all())
@@ -598,8 +600,16 @@ class AnmeldepunktInline(admin.TabularInline):
                 '<span style="color:var(--body-quiet-color); font-size:0.85em;">{}</span>',
                 "Mehrere Schichten? Erst speichern, dann oben auf „Ändern“ klicken.",
             )
-        return format_html_join(
-            "", "<div>{} – {}</div>", ((s, _belegung_anzeige(s)) for s in schichten)
+        warnung = ""
+        if obj.benoetigt_von or obj.max_anzahl is not None:
+            warnung = format_html(
+                '<div style="color:#b3261e; font-size:0.85em;">{}</div>',
+                "⚠️ Uhrzeit/Anzahl oben werden ignoriert - bitte auch dafür eine Schicht anlegen.",
+            )
+        return format_html(
+            "{}{}",
+            warnung,
+            format_html_join("", "<div>{} – {}</div>", ((s, _belegung_anzeige(s)) for s in schichten)),
         )
 
     schichten_anzeige.short_description = "Schichten"
@@ -607,6 +617,8 @@ class AnmeldepunktInline(admin.TabularInline):
     def status_anzeige(self, obj):
         if not obj or not obj.pk:
             return "–"
+        if obj.schichten.exists():
+            return format_html('<span style="color:var(--body-quiet-color);">{}</span>', "siehe Schichten")
         return _belegung_anzeige(obj)
 
     status_anzeige.short_description = "Status"
