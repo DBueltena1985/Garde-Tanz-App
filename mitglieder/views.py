@@ -157,12 +157,16 @@ MONATSNAMEN = [
 ]
 
 
-def _fuer_gruppen_relevant(queryset, gruppen):
+def _fuer_gruppen_relevant(queryset, gruppen, alle_sichtbar=False):
     """Schränkt Termine auf 'gilt für alle Gruppen' (keine Gruppe zugewiesen) plus die übergebenen
-    Gruppen ein, und blendet Entwürfe (noch nicht veröffentlichte Termine) aus."""
-    return queryset.exclude(ist_entwurf=True).filter(
-        Q(gruppen__isnull=True) | Q(gruppen__in=gruppen)
-    ).distinct()
+    Gruppen ein, und blendet Entwürfe (noch nicht veröffentlichte Termine) aus. Trainer/Orgateam
+    (alle_sichtbar=True, meist via request.user.is_staff) sehen unabhängig von eigenen Kindern/
+    Gruppen alle Termine - sonst wären z.B. gruppen-spezifische Veranstaltungen für Trainerinnen
+    ohne eigenes Kind in dieser Gruppe gar nicht sichtbar."""
+    ohne_entwuerfe = queryset.exclude(ist_entwurf=True)
+    if alle_sichtbar:
+        return ohne_entwuerfe.distinct()
+    return ohne_entwuerfe.filter(Q(gruppen__isnull=True) | Q(gruppen__in=gruppen)).distinct()
 
 
 def _mit_offenen_entwuerfen(termine, user, **filter_kwargs):
@@ -220,10 +224,10 @@ def _ferien_fuer_monat(jahr, monat):
     return ferien_nach_tag, zeitraeume
 
 
-def _kalender_monat(jahr, monat, gruppen):
+def _kalender_monat(jahr, monat, gruppen, alle_sichtbar=False):
     """Baut ein Wochenraster (Mo-So) für den Monat, inkl. relevanter Termine pro Tag."""
     termine_im_monat = _fuer_gruppen_relevant(
-        Termin.objects.filter(beginn__year=jahr, beginn__month=monat), gruppen
+        Termin.objects.filter(beginn__year=jahr, beginn__month=monat), gruppen, alle_sichtbar=alle_sichtbar
     )
     termine_nach_tag = {}
     for termin in termine_im_monat:
@@ -321,7 +325,7 @@ def dashboard(request):
 
     termine = _fuer_gruppen_relevant(
         Termin.objects.filter(beginn__gte=timezone.now()).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern"),
-        kinder_gruppen,
+        kinder_gruppen, alle_sichtbar=request.user.is_staff,
     ).order_by("beginn")
     termine = _mit_offenen_entwuerfen(termine, request.user, beginn__gte=timezone.now())
 
@@ -349,7 +353,7 @@ def dashboard(request):
     vorheriger_monat = (jahr, monat - 1) if monat > 1 else (jahr - 1, 12)
     naechster_monat = (jahr, monat + 1) if monat < 12 else (jahr + 1, 1)
 
-    kalender_wochen, kalender_legende = _kalender_monat(jahr, monat, kinder_gruppen)
+    kalender_wochen, kalender_legende = _kalender_monat(jahr, monat, kinder_gruppen, alle_sichtbar=request.user.is_staff)
 
     neueste_news = NewsPost.objects.aktuell()[:3]
 
@@ -461,7 +465,7 @@ def veranstaltungen(request):
         Termin.objects.filter(
             art=Termin.ART_VERANSTALTUNG, beginn__gte=timezone.now(),
         ).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern"),
-        kinder_gruppen,
+        kinder_gruppen, alle_sichtbar=request.user.is_staff,
     ).order_by("beginn")
     offene_veranstaltungen = _mit_offenen_entwuerfen(offene_veranstaltungen, request.user, beginn__gte=timezone.now())
     offene_gruppen = _nach_monat_gruppieren(_termin_eintraege(offene_veranstaltungen, kinder, request.user))
@@ -470,7 +474,7 @@ def veranstaltungen(request):
         Termin.objects.filter(
             art=Termin.ART_VERANSTALTUNG, beginn__lt=timezone.now(),
         ).prefetch_related("anmeldepunkte__anmeldungen__eltern", "anmeldepunkte__schichten__anmeldungen__eltern"),
-        kinder_gruppen,
+        kinder_gruppen, alle_sichtbar=request.user.is_staff,
     ).order_by("-beginn")
     abgeschlossene_gruppen = _nach_monat_gruppieren(
         _termin_eintraege(abgeschlossene_veranstaltungen, kinder, request.user)
@@ -490,7 +494,7 @@ def trainings_liste(request):
 
     anstehende_trainings = _fuer_gruppen_relevant(
         Termin.objects.filter(art=Termin.ART_TRAINING, beginn__gte=timezone.now()),
-        kinder_gruppen,
+        kinder_gruppen, alle_sichtbar=request.user.is_staff,
     ).order_by("beginn")
     anstehende_gruppen = _nach_monat_gruppieren(
         _termin_eintraege(anstehende_trainings, kinder, request.user), _offener_termin_id(request)
