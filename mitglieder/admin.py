@@ -1196,10 +1196,17 @@ class TerminAutocompleteAdmin(admin.ModelAdmin):
     globalen Autocomplete-Endpunkt fest auf AutocompleteJsonView verdrahtet."""
 
     search_fields = ("titel",)
-    ordering = ("-beginn",)
+    ordering = ("beginn",)
 
     def get_model_perms(self, request):
         return {}
+
+    def get_queryset(self, request):
+        # Nur zukuenftige Trainings zur Suche anbieten - vergangene sind fuer einen Verweis
+        # ("Anwesenheit wichtig bei diesem Training") nicht mehr relevant. Bereits verlinkte
+        # Trainings bleiben davon unberuehrt sichtbar (siehe formfield_for_manytomany - die
+        # dortige Queryset fuer bereits ausgewaehlte Chips ist nicht eingeschraenkt).
+        return super().get_queryset(request).filter(beginn__gte=timezone.now())
 
 
 @admin.register(TrainingTermin)
