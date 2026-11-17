@@ -804,8 +804,14 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     gruppe_anzeige.short_description = "Gruppen"
 
     def _zusagen_link(self, obj, status):
-        anzahl = obj.zusagen.filter(status=status).count()
-        url = reverse("admin:mitglieder_zusage_changelist")
+        if obj.familien_zusage:
+            # Bei allgemeiner Familien-Zusage gibt es keine (sinnvollen) einzelnen Zusagen je
+            # Taenzerin - stattdessen zaehlen die Familien-Zusagen (ZusageOhneKonto).
+            anzahl = obj.zusagen_ohne_konto.filter(status=status).count()
+            url = reverse("admin:mitglieder_zusageohnekonto_changelist")
+        else:
+            anzahl = obj.zusagen.filter(status=status).count()
+            url = reverse("admin:mitglieder_zusage_changelist")
         url += f"?termin__id__exact={obj.pk}&status__exact={status}"
         return format_html('<a href="{}">{}</a>', url, anzahl)
 

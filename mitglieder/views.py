@@ -272,6 +272,12 @@ def _termin_eintraege(termine, kinder, user):
         .values("termin_id")
         .annotate(anzahl=Count("id"))
     }
+    familien_zusagen_anzahl = {
+        row["termin_id"]: row["anzahl"]
+        for row in ZusageOhneKonto.objects.filter(termin__in=termine, status=Zusage.STATUS_ZUGESAGT)
+        .values("termin_id")
+        .annotate(anzahl=Count("id"))
+    }
 
     eigene_familien_zusagen = {
         z.termin_id: z
@@ -322,7 +328,10 @@ def _termin_eintraege(termine, kinder, user):
             "kinder_status": kinder_status,
             "anmeldepunkte": anmeldepunkte_info,
             "anmeldepunkte_gruppen": _anmeldepunkte_nach_datum_gruppieren(anmeldepunkte_info),
-            "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
+            "anzahl_zusagen": (
+                familien_zusagen_anzahl.get(termin.id, 0) if termin.familien_zusage
+                else zusagen_anzahl.get(termin.id, 0)
+            ),
             "personenanzahl_summe": personen_summe.get(termin.id, 0),
             "familien_zusage": eigene_familien_zusagen.get(termin.id),
         })
