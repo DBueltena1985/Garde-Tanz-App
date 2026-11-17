@@ -254,6 +254,13 @@ class Termin(models.Model):
         "beantworten können, z.B. 'Gibt es Unverträglichkeiten oder Besonderheiten beim Essen?'. "
         "Leer lassen für kein Zusatzfeld.",
     )
+    personenanzahl_frage = models.CharField(
+        "Personenanzahl bei Zusage abfragen", max_length=200, blank=True,
+        help_text="Optional: Frage/Beschriftung für ein Eingabefeld, in dem Eltern beim Zusagen "
+        "angeben, mit wie vielen Personen sie insgesamt kommen (z.B. inkl. Eltern/Geschwister bei "
+        "einer Feier), z.B. 'Mit wie vielen Personen kommt ihr insgesamt?'. Leer lassen für kein "
+        "Eingabefeld. Bei mehreren Kindern derselben Familie wird das Feld nur einmal angezeigt.",
+    )
     wichtige_trainings = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="wichtig_fuer_veranstaltungen",
         limit_choices_to={"art": ART_TRAINING},
@@ -345,6 +352,10 @@ class Zusage(models.Model):
         help_text="Antwort auf die Zusage-Frage des Termins (z.B. Unverträglichkeiten) - nur bei "
         "einer Zusage abgefragt.",
     )
+    anzahl_personen = models.PositiveSmallIntegerField(
+        "Anzahl Personen", null=True, blank=True,
+        help_text="Antwort auf die Personenanzahl-Frage des Termins - nur bei einer Zusage abgefragt.",
+    )
     anwesend = models.BooleanField(
         "Anwesend", null=True, blank=True,
         help_text="Von Admin/Betreuer nach dem Termin bestätigt. Leer = noch nicht erfasst.",
@@ -370,6 +381,10 @@ class ZusageOhneKonto(models.Model):
     kommentar = models.CharField(
         "Anmerkung", max_length=300, blank=True,
         help_text="Antwort auf die Zusage-Frage des Termins - nur bei einer Zusage abgefragt.",
+    )
+    anzahl_personen = models.PositiveSmallIntegerField(
+        "Anzahl Personen", null=True, blank=True,
+        help_text="Antwort auf die Personenanzahl-Frage des Termins - nur bei einer Zusage abgefragt.",
     )
     aktualisiert_am = models.DateTimeField(auto_now=True)
 

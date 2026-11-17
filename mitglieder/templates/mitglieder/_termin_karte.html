@@ -95,6 +95,14 @@
                    value="{{ ks.kommentar }}" placeholder="Antwort (optional)">
         </div>
         {% endif %}
+        {% if eintrag.termin.personenanzahl_frage and forloop.first %}
+        <div class="zusage-notiz-frage">
+            <label for="zusage-anzahl-{{ eintrag.termin.id }}-{{ ks.kind.id }}">{{ eintrag.termin.personenanzahl_frage }}</label>
+            <input type="number" min="1" id="zusage-anzahl-{{ eintrag.termin.id }}-{{ ks.kind.id }}" name="anzahl_personen"
+                   form="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}"
+                   value="{{ ks.anzahl_personen|default:'' }}" placeholder="Anzahl" style="max-width:6rem;">
+        </div>
+        {% endif %}
         <div class="termin-actions">
             <form method="post" id="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}" class="zusage-form" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}">
                 {% csrf_token %}

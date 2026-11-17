@@ -286,6 +286,7 @@ def _termin_eintraege(termine, kinder, user):
                 "kind": kind,
                 "status": zusage.status if zusage else Zusage.STATUS_OFFEN,
                 "kommentar": zusage.kommentar if zusage else "",
+                "anzahl_personen": zusage.anzahl_personen if zusage else None,
             })
 
         anmeldepunkte_info = []
@@ -511,6 +512,16 @@ def trainings_liste(request):
 SEITEN_MIT_TERMIN_KARTEN = {"dashboard", "veranstaltungen", "trainings_liste", "offene_trainings"}
 
 
+def _positive_int_oder_none(wert):
+    """Wandelt eine POST-Eingabe (Personenanzahl) in eine positive Ganzzahl um, oder None bei
+    leerer/ungueltiger Eingabe - damit ein Tippfehler die Zusage nicht mit einem Serverfehler abbricht."""
+    try:
+        zahl = int(wert)
+    except (TypeError, ValueError):
+        return None
+    return zahl if zahl > 0 else None
+
+
 def _zurueck_zu_termin_seite(request, termin_id):
     """Leitet zurueck zu der Seite, von der das Formular abgeschickt wurde (Dashboard,
     Veranstaltungen, Training, Offene Trainings), damit man nach Zu-/Absagen dort bleibt,
@@ -538,6 +549,10 @@ def termin_zusage(request, termin_id, kind_id, status):
         zusage.kommentar = request.POST.get("notiz", "").strip()
     elif status != Zusage.STATUS_ZUGESAGT:
         zusage.kommentar = ""
+    if status == Zusage.STATUS_ZUGESAGT and termin.personenanzahl_frage:
+        zusage.anzahl_personen = _positive_int_oder_none(request.POST.get("anzahl_personen"))
+    elif status != Zusage.STATUS_ZUGESAGT:
+        zusage.anzahl_personen = None
     zusage.save()
     messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
     return _zurueck_zu_termin_seite(request, termin_id)
@@ -634,10 +649,15 @@ def veranstaltung_oeffentlich(request, token):
                 eintrag.kommentar = kommentar
             elif status != Zusage.STATUS_ZUGESAGT:
                 eintrag.kommentar = ""
+            if status == Zusage.STATUS_ZUGESAGT and termin.personenanzahl_frage:
+                eintrag.anzahl_personen = _positive_int_oder_none(request.POST.get("anzahl_personen"))
+            elif status != Zusage.STATUS_ZUGESAGT:
+                eintrag.anzahl_personen = None
             eintrag.save()
             request.session["zusage_ohne_konto_name"] = name
             messages.success(request, f"Danke {name}, deine Antwort zu '{termin.titel}' wurde gespeichert.")
             zusatz = f" Kommentar: {eintrag.kommentar}" if eintrag.kommentar else ""
+            zusatz += f" Personenanzahl: {eintrag.anzahl_personen}" if eintrag.anzahl_personen else ""
             _admins_benachrichtigen(
                 subject=f"Neue Zu-/Absage ohne Konto: {termin.titel}",
                 message=(

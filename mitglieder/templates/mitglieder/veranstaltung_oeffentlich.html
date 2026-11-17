@@ -96,6 +96,14 @@
                            value="{{ ks.kommentar }}" placeholder="Antwort (optional)" style="width:100%; margin-top:0.2rem;">
                 </div>
                 {% endif %}
+                {% if termin.personenanzahl_frage and forloop.first %}
+                <div style="margin:0.4rem 0;">
+                    <label for="anzahl-{{ ks.kind.id }}" class="meta">{{ termin.personenanzahl_frage }}</label><br>
+                    <input type="number" min="1" id="anzahl-{{ ks.kind.id }}" name="anzahl_personen"
+                           form="zusage-form-{{ termin.id }}-{{ ks.kind.id }}"
+                           value="{{ ks.anzahl_personen|default:'' }}" placeholder="Anzahl" style="width:6rem; margin-top:0.2rem;">
+                </div>
+                {% endif %}
                 <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
                     <form method="post" id="zusage-form-{{ termin.id }}-{{ ks.kind.id }}" action="{% url 'termin_zusage' termin.id ks.kind.id 'zugesagt' %}">
                         {% csrf_token %}
@@ -128,6 +136,9 @@
                     {% csrf_token %}
                     <input type="hidden" name="aktion" value="zusage_ohne_konto">
                     <input type="text" name="name" placeholder="Dein Name" required value="{{ eigene_zusage_ohne_konto.name|default:'' }}">
+                    {% if termin.personenanzahl_frage %}
+                    <input type="number" min="1" name="anzahl_personen" placeholder="{{ termin.personenanzahl_frage }}" style="width:9rem;" value="{{ eigene_zusage_ohne_konto.anzahl_personen|default:'' }}">
+                    {% endif %}
                     {% if termin.zusage_notiz_frage %}
                     <input type="text" name="kommentar" placeholder="{{ termin.zusage_notiz_frage }} (optional)" style="flex-basis:100%;" value="{{ eigene_zusage_ohne_konto.kommentar|default:'' }}">
                     {% endif %}
