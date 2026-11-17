@@ -762,7 +762,10 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     DUPLIKAT_FELDER = ["titel", "beginn", "ende", "ort", "beschreibung"]
 
     form = TerminForm
-    filter_horizontal = ("wichtige_trainings",)
+    # filter_vertical statt filter_horizontal: die Boxen stehen untereinander statt nebeneinander,
+    # auf dem Handy dadurch jeweils volle Breite statt gequetscht nebeneinander mit eigenem
+    # seitlichem Scrollbalken - siehe formfield_for_manytomany fuer die Vorauswahl/Beschriftung.
+    filter_vertical = ("wichtige_trainings",)
     list_display = (
         "titel_anzeige", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort",
         "anzahl_zusagen", "anzahl_absagen", "loeschen_link",
@@ -773,6 +776,35 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     ordering = ("beginn",)
     exclude = ("art",)
     change_list_template = "admin/mitglieder/termin_change_list.html"
+
+    def get_form(self, request, obj=None, **kwargs):
+        # Fuer formfield_for_manytomany gemerkt, damit bereits verlinkte "Wichtige Trainings"
+        # in der Auswahl bleiben, auch wenn sie ausserhalb des unten gesetzten Zeitfensters
+        # liegen - sonst wuerden alte Verweise beim naechsten Speichern unbemerkt verschwinden.
+        request._obj_ = obj
+        return super().get_form(request, obj, **kwargs)
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "wichtige_trainings":
+            # Ohne Einschraenkung stehen hier irgendwann Jahre an laengst vergangenen
+            # Trainings zur Auswahl - das macht die Suche gerade am Handy muehsam. Nur
+            # kuerzlich vergangene/kommende Trainings zur Auswahl anbieten, nach Datum
+            # sortiert (nicht alphabetisch), mit kurzer Beschriftung ohne das doppelte
+            # "Training: Training ...". Bereits verlinkte Trainings bleiben zusaetzlich
+            # verfuegbar, auch wenn sie ausserhalb des Zeitfensters liegen.
+            queryset = Termin.objects.filter(
+                art=Termin.ART_TRAINING, beginn__gte=timezone.now() - timedelta(days=14),
+            )
+            obj = getattr(request, "_obj_", None)
+            if obj and obj.pk:
+                queryset = queryset | obj.wichtige_trainings.all()
+            kwargs["queryset"] = queryset.distinct().order_by("beginn")
+        formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
+        if db_field.name == "wichtige_trainings":
+            formfield.label_from_instance = lambda obj: (
+                f"{timezone.localtime(obj.beginn):%d.%m.%Y %H:%M} – {obj.titel}"
+            )
+        return formfield
 
     def titel_anzeige(self, obj):
         if obj.ist_entwurf:
