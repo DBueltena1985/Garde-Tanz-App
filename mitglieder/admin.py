@@ -762,10 +762,11 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     DUPLIKAT_FELDER = ["titel", "beginn", "ende", "ort", "beschreibung"]
 
     form = TerminForm
-    # filter_vertical statt filter_horizontal: die Boxen stehen untereinander statt nebeneinander,
-    # auf dem Handy dadurch jeweils volle Breite statt gequetscht nebeneinander mit eigenem
-    # seitlichem Scrollbalken - siehe formfield_for_manytomany fuer die Vorauswahl/Beschriftung.
-    filter_vertical = ("wichtige_trainings",)
+    # Autocomplete (Such-Dropdown) statt der frueheren Verfuegbar/Ausgewaehlt-Box - viel
+    # kompakter und gerade am Handy einfacher zu bedienen, vor allem bei vielen Trainings.
+    # Sucht ueber die Admin-Seite TerminAutocompleteAdmin weiter unten (eigene, versteckte
+    # Registrierung des Basismodells Termin, nur fuer diese Suche).
+    autocomplete_fields = ("wichtige_trainings",)
     list_display = (
         "titel_anzeige", "anwesenheit_link", "gruppe_anzeige", "beginn", "ende", "ort",
         "anzahl_zusagen", "anzahl_absagen", "loeschen_link",
@@ -777,30 +778,12 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
     exclude = ("art",)
     change_list_template = "admin/mitglieder/termin_change_list.html"
 
-    def get_form(self, request, obj=None, **kwargs):
-        # Fuer formfield_for_manytomany gemerkt, damit bereits verlinkte "Wichtige Trainings"
-        # in der Auswahl bleiben, auch wenn sie ausserhalb des unten gesetzten Zeitfensters
-        # liegen - sonst wuerden alte Verweise beim naechsten Speichern unbemerkt verschwinden.
-        request._obj_ = obj
-        return super().get_form(request, obj, **kwargs)
-
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        if db_field.name == "wichtige_trainings":
-            # Ohne Einschraenkung stehen hier irgendwann Jahre an laengst vergangenen
-            # Trainings zur Auswahl - das macht die Suche gerade am Handy muehsam. Nur
-            # kuerzlich vergangene/kommende Trainings zur Auswahl anbieten, nach Datum
-            # sortiert (nicht alphabetisch), mit kurzer Beschriftung ohne das doppelte
-            # "Training: Training ...". Bereits verlinkte Trainings bleiben zusaetzlich
-            # verfuegbar, auch wenn sie ausserhalb des Zeitfensters liegen.
-            queryset = Termin.objects.filter(
-                art=Termin.ART_TRAINING, beginn__gte=timezone.now() - timedelta(days=14),
-            )
-            obj = getattr(request, "_obj_", None)
-            if obj and obj.pk:
-                queryset = queryset | obj.wichtige_trainings.all()
-            kwargs["queryset"] = queryset.distinct().order_by("beginn")
         formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
         if db_field.name == "wichtige_trainings":
+            # Kurze Beschriftung (Datum - Titel) fuer bereits ausgewaehlte Trainings beim
+            # Laden der Seite - ohne das doppelte "Training: Training ...". Fuer neu per
+            # Suche gefundene Trainings siehe WichtigeTrainingsAutocompleteJsonView unten.
             formfield.label_from_instance = lambda obj: (
                 f"{timezone.localtime(obj.beginn):%d.%m.%Y %H:%M} – {obj.titel}"
             )
@@ -1199,6 +1182,24 @@ class TerminAdminBase(LoeschLinkMixin, admin.ModelAdmin):
             "admin/mitglieder/serie_erstellen.html",
             {"form": form, "opts": self.model._meta, "title": "Terminserie erstellen"},
         )
+
+
+@admin.register(Termin)
+class TerminAutocompleteAdmin(admin.ModelAdmin):
+    """Nur fuer die Autocomplete-Suche von TerminAdminBase.wichtige_trainings - Training und
+    Veranstaltung haben eigene, vollwertige Admin-Seiten (ueber ihre Proxy-Modelle), daher taucht
+    diese Registrierung des Basismodells selbst nicht in der Admin-Uebersicht auf. Die
+    Suchergebnisse zeigen Djangos Standard-Beschriftung str(Termin); nur bereits ausgewaehlte
+    Trainings bekommen beim Laden der Seite die kuerzere Beschriftung (siehe
+    TerminAdminBase.formfield_for_manytomany) - eine komplette Kurz-Beschriftung auch in den
+    Live-Suchergebnissen wuerde eine eigene AdminSite-Unterklasse erfordern, da Django den
+    globalen Autocomplete-Endpunkt fest auf AutocompleteJsonView verdrahtet."""
+
+    search_fields = ("titel",)
+    ordering = ("-beginn",)
+
+    def get_model_perms(self, request):
+        return {}
 
 
 @admin.register(TrainingTermin)
