@@ -14,10 +14,19 @@
             </span>
             {% endif %}
         </div>
-        {% if eintrag.termin.taenzerinnen_erforderlich %}
-        <div class="termin-summary-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
-            {{ eintrag.anzahl_zusagen }}
+        {% if eintrag.termin.taenzerinnen_erforderlich or eintrag.termin.personenanzahl_frage %}
+        <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-end; flex-shrink:0;">
+            {% if eintrag.termin.taenzerinnen_erforderlich %}
+            <div class="termin-summary-chip" title="Zugesagte Tänzerinnen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
+                {{ eintrag.anzahl_zusagen }}
+            </div>
+            {% endif %}
+            {% if request.user.is_staff and eintrag.termin.personenanzahl_frage %}
+            <div class="termin-summary-chip" style="background:var(--accent-soft); color:var(--accent);" title="Angemeldete Personen insgesamt (nur für Trainer/Orgateam sichtbar)">
+                👪 {{ eintrag.personenanzahl_summe }}
+            </div>
+            {% endif %}
         </div>
         {% endif %}
     </div>

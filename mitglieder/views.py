@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -273,6 +273,22 @@ def _termin_eintraege(termine, kinder, user):
         .annotate(anzahl=Count("id"))
     }
 
+    personen_summe = {}
+    if user.is_staff:
+        # Nur fuer Trainer/Orgateam berechnet - Summe der angegebenen Personenanzahl (Zusagen mit
+        # und ohne Konto), damit sie auf der Terminkarte sofort sichtbar ist, ohne erst in die
+        # Anwesenheitsliste klicken zu muessen.
+        for row in (
+            Zusage.objects.filter(termin__in=termine, anzahl_personen__isnull=False)
+            .values("termin_id").annotate(summe=Sum("anzahl_personen"))
+        ):
+            personen_summe[row["termin_id"]] = personen_summe.get(row["termin_id"], 0) + row["summe"]
+        for row in (
+            ZusageOhneKonto.objects.filter(termin__in=termine, anzahl_personen__isnull=False)
+            .values("termin_id").annotate(summe=Sum("anzahl_personen"))
+        ):
+            personen_summe[row["termin_id"]] = personen_summe.get(row["termin_id"], 0) + row["summe"]
+
     termin_liste = []
     for termin in termine:
         termin_gruppen_ids = set(termin.gruppen.values_list("id", flat=True))
@@ -302,6 +318,7 @@ def _termin_eintraege(termine, kinder, user):
             "anmeldepunkte": anmeldepunkte_info,
             "anmeldepunkte_gruppen": _anmeldepunkte_nach_datum_gruppieren(anmeldepunkte_info),
             "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
+            "personenanzahl_summe": personen_summe.get(termin.id, 0),
         })
     return termin_liste
 

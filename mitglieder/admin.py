@@ -9,7 +9,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
@@ -1343,7 +1343,9 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
             },
         ),
     )
-    list_display = TerminAdminBase.list_display + ("offene_helferpunkte", "offene_aufgaben", "teilen_link")
+    list_display = TerminAdminBase.list_display + (
+        "personenanzahl_anzeige", "offene_helferpunkte", "offene_aufgaben", "teilen_link",
+    )
     change_list_template = "admin/mitglieder/veranstaltung_change_list.html"
     # Ueberschreibt sowohl BildBulkUploadMixin.change_form_template als auch
     # TerminAdminBase.change_form_template mit einer Variante, die beides kombiniert
@@ -1401,6 +1403,24 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
                 instanz.hochgeladen_von = request.user
             instanz.save()
         formset.save_m2m()
+
+    def personenanzahl_anzeige(self, obj):
+        if not obj.personenanzahl_frage:
+            return "–"
+        summe = Zusage.objects.filter(
+            termin=obj, anzahl_personen__isnull=False
+        ).aggregate(summe=Sum("anzahl_personen"))["summe"] or 0
+        summe += ZusageOhneKonto.objects.filter(
+            termin=obj, anzahl_personen__isnull=False
+        ).aggregate(summe=Sum("anzahl_personen"))["summe"] or 0
+        if not summe:
+            return "–"
+        if obj.taenzerinnen_erforderlich:
+            url = reverse(f"admin:{self._url_name('anwesenheit')}", args=[obj.pk])
+            return format_html('<a href="{}">👪 {}</a>', url, summe)
+        return format_html("👪 {}", summe)
+
+    personenanzahl_anzeige.short_description = "Personen"
 
     def offene_helferpunkte(self, obj):
         offene = [a for a in obj.anmeldepunkte.all() if a.max_anzahl is not None and a.plaetze_frei > 0]
