@@ -85,7 +85,56 @@
     </div>
     {% endif %}
 
-    {% if eintrag.termin.taenzerinnen_erforderlich %}
+    {% if eintrag.termin.familien_zusage %}
+    <div class="termin-divider"></div>
+    {% with fz=eintrag.familien_zusage %}
+    <div class="kind-row">
+        <span class="kind-name">
+            <span class="status-chip status-chip-{{ fz.status|default:'offen' }}">
+                {% if fz.status == "zugesagt" %}Zugesagt
+                {% elif fz.status == "abgesagt" %}Abgesagt
+                {% else %}Noch offen{% endif %}
+            </span>
+        </span>
+        {% if eintrag.termin.zusage_notiz_frage %}
+        <div class="zusage-notiz-frage">
+            <label for="familie-notiz-{{ eintrag.termin.id }}">{{ eintrag.termin.zusage_notiz_frage }}</label>
+            <input type="text" id="familie-notiz-{{ eintrag.termin.id }}" name="notiz"
+                   form="familie-zusage-form-{{ eintrag.termin.id }}"
+                   value="{{ fz.kommentar|default:'' }}" placeholder="Antwort (optional)">
+        </div>
+        {% endif %}
+        {% if eintrag.termin.personenanzahl_frage %}
+        <form method="post" class="zusage-notiz-frage" action="{% url 'familie_personenanzahl_speichern' eintrag.termin.id %}" style="flex-direction:row; align-items:center; gap:0.4rem;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
+            <label for="familie-anzahl-{{ eintrag.termin.id }}">{{ eintrag.termin.personenanzahl_frage }}</label>
+            <input type="number" min="1" id="familie-anzahl-{{ eintrag.termin.id }}" name="anzahl_personen"
+                   value="{{ fz.anzahl_personen|default:'' }}" placeholder="Anzahl" style="max-width:5rem;">
+            <button type="submit" class="btn-chip">Speichern</button>
+        </form>
+        {% endif %}
+        <div class="termin-actions">
+            <form method="post" id="familie-zusage-form-{{ eintrag.termin.id }}" class="zusage-form" action="{% url 'termin_familien_zusage' eintrag.termin.id 'zugesagt' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
+                <button type="submit" class="btn-chip btn-chip-zusagen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    Zusagen
+                </button>
+            </form>
+            <form method="post" class="zusage-form" action="{% url 'termin_familien_zusage' eintrag.termin.id 'abgesagt' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
+                <button type="submit" class="btn-chip btn-chip-absagen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    Absagen
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endwith %}
+    {% elif eintrag.termin.taenzerinnen_erforderlich %}
     <div class="termin-divider"></div>
     {% for ks in eintrag.kinder_status %}
     <div class="kind-row">
@@ -105,12 +154,14 @@
         </div>
         {% endif %}
         {% if eintrag.termin.personenanzahl_frage and forloop.first %}
-        <div class="zusage-notiz-frage">
+        <form method="post" class="zusage-notiz-frage" action="{% url 'kind_personenanzahl_speichern' eintrag.termin.id ks.kind.id %}" style="flex-direction:row; align-items:center; gap:0.4rem;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.resolver_match.url_name }}">
             <label for="zusage-anzahl-{{ eintrag.termin.id }}-{{ ks.kind.id }}">{{ eintrag.termin.personenanzahl_frage }}</label>
             <input type="number" min="1" id="zusage-anzahl-{{ eintrag.termin.id }}-{{ ks.kind.id }}" name="anzahl_personen"
-                   form="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}"
-                   value="{{ ks.anzahl_personen|default:'' }}" placeholder="Anzahl" style="max-width:6rem;">
-        </div>
+                   value="{{ ks.anzahl_personen|default:'' }}" placeholder="Anzahl" style="max-width:5rem;">
+            <button type="submit" class="btn-chip">Speichern</button>
+        </form>
         {% endif %}
         <div class="termin-actions">
             <form method="post" id="zusage-form-{{ eintrag.termin.id }}-{{ ks.kind.id }}" class="zusage-form" action="{% url 'termin_zusage' eintrag.termin.id ks.kind.id 'zugesagt' %}">

@@ -256,10 +256,16 @@ class Termin(models.Model):
     )
     personenanzahl_frage = models.CharField(
         "Personenanzahl bei Zusage abfragen", max_length=200, blank=True,
-        help_text="Optional: Frage/Beschriftung für ein Eingabefeld, in dem Eltern beim Zusagen "
-        "angeben, mit wie vielen Personen sie insgesamt kommen (z.B. inkl. Eltern/Geschwister bei "
-        "einer Feier), z.B. 'Mit wie vielen Personen kommt ihr insgesamt?'. Leer lassen für kein "
-        "Eingabefeld. Bei mehreren Kindern derselben Familie wird das Feld nur einmal angezeigt.",
+        help_text="Optional: Frage/Beschriftung für ein Eingabefeld, in dem Eltern angeben, mit wie "
+        "vielen Personen sie insgesamt kommen (z.B. inkl. Eltern/Geschwister bei einer Feier), z.B. "
+        "'Mit wie vielen Personen kommt ihr insgesamt?'. Leer lassen für kein Eingabefeld. Wird "
+        "unabhängig von Zu-/Absage über einen eigenen Speichern-Button erfasst.",
+    )
+    familien_zusage = models.BooleanField(
+        "Allgemeine Familien-Zusage (ohne Kind-Zuordnung)", default=False,
+        help_text="Statt einer einzelnen Zu-/Absage je Tänzerin gibt es nur eine gemeinsame Zusage "
+        "pro Familie/Konto - sinnvoll z.B. bei einer Feier, bei der nicht der Auftritt einzelner "
+        "Tänzerinnen im Vordergrund steht, sondern ob die Familie insgesamt kommt.",
     )
     wichtige_trainings = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="wichtig_fuer_veranstaltungen",
@@ -372,10 +378,18 @@ class Zusage(models.Model):
 
 
 class ZusageOhneKonto(models.Model):
-    """Zu-/Absage über den öffentlichen Veranstaltungs-Link, ohne App-Konto und ohne Zuordnung zu
-    einem bestimmten Kind - erfasst nur per freiem Namen (analog Anmeldung.name_ohne_konto)."""
+    """Zu-/Absage ohne Zuordnung zu einem bestimmten Kind - entweder ganz ohne App-Konto über den
+    öffentlichen Veranstaltungs-Link (erfasst per freiem Namen, analog Anmeldung.name_ohne_konto)
+    oder, bei Terminen mit familien_zusage=True, auch von eingeloggten Eltern als eine gemeinsame
+    Zusage pro Familie statt einzeln je Tänzerin (dann über eltern statt name zugeordnet)."""
 
     termin = models.ForeignKey(Termin, on_delete=models.CASCADE, related_name="zusagen_ohne_konto")
+    eltern = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="familien_zusagen",
+        help_text="Nur gesetzt bei einer allgemeinen Familien-Zusage von eingeloggten Eltern "
+        "(familien_zusage) - sonst leer (Zusage ohne Konto über den öffentlichen Link).",
+    )
     name = models.CharField("Name", max_length=100)
     status = models.CharField("Status", max_length=20, choices=Zusage.STATUS_CHOICES)
     kommentar = models.CharField(

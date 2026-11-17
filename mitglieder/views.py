@@ -273,6 +273,11 @@ def _termin_eintraege(termine, kinder, user):
         .annotate(anzahl=Count("id"))
     }
 
+    eigene_familien_zusagen = {
+        z.termin_id: z
+        for z in ZusageOhneKonto.objects.filter(termin__in=termine, eltern=user)
+    }
+
     personen_summe = {}
     if user.is_staff:
         # Nur fuer Trainer/Orgateam berechnet - Summe der angegebenen Personenanzahl (Zusagen mit
@@ -319,6 +324,7 @@ def _termin_eintraege(termine, kinder, user):
             "anmeldepunkte_gruppen": _anmeldepunkte_nach_datum_gruppieren(anmeldepunkte_info),
             "anzahl_zusagen": zusagen_anzahl.get(termin.id, 0),
             "personenanzahl_summe": personen_summe.get(termin.id, 0),
+            "familien_zusage": eigene_familien_zusagen.get(termin.id),
         })
     return termin_liste
 
@@ -566,12 +572,64 @@ def termin_zusage(request, termin_id, kind_id, status):
         zusage.kommentar = request.POST.get("notiz", "").strip()
     elif status != Zusage.STATUS_ZUGESAGT:
         zusage.kommentar = ""
-    if status == Zusage.STATUS_ZUGESAGT and termin.personenanzahl_frage:
-        zusage.anzahl_personen = _positive_int_oder_none(request.POST.get("anzahl_personen"))
-    elif status != Zusage.STATUS_ZUGESAGT:
-        zusage.anzahl_personen = None
     zusage.save()
     messages.success(request, f"Antwort für {kind.vorname} bei '{termin.titel}' gespeichert.")
+    return _zurueck_zu_termin_seite(request, termin_id)
+
+
+@login_required
+def kind_personenanzahl_speichern(request, termin_id, kind_id):
+    """Personenanzahl unabhängig von der Zu-/Absage speicherbar - nicht erst beim Klick auf
+    Zusagen, sondern über einen eigenen Button, jederzeit änderbar."""
+    termin = get_object_or_404(Termin, pk=termin_id)
+    kind = get_object_or_404(_kinder_fuer_nutzer(request.user), pk=kind_id)
+
+    if request.method == "POST" and termin.personenanzahl_frage:
+        zusage, _ = Zusage.objects.get_or_create(taenzerin=kind, termin=termin)
+        zusage.anzahl_personen = _positive_int_oder_none(request.POST.get("anzahl_personen"))
+        zusage.save()
+        messages.success(request, f"Personenanzahl für '{termin.titel}' gespeichert.")
+    return _zurueck_zu_termin_seite(request, termin_id)
+
+
+@login_required
+def termin_familien_zusage(request, termin_id, status):
+    """Wie termin_zusage, aber als EINE gemeinsame Zusage pro Familie/Konto statt einzeln je
+    Tänzerin - für Termine mit familien_zusage=True (z.B. eine Feier ohne Fokus auf den Auftritt
+    einzelner Tänzerinnen)."""
+    termin = get_object_or_404(Termin, pk=termin_id, familien_zusage=True)
+
+    gueltige_status = {s for s, _ in Zusage.STATUS_CHOICES}
+    if status not in gueltige_status:
+        messages.error(request, "Ungültiger Status.")
+        return redirect("dashboard")
+
+    eintrag, _ = ZusageOhneKonto.objects.get_or_create(
+        termin=termin, eltern=request.user, defaults={"name": benutzer_name(request.user)}
+    )
+    eintrag.status = status
+    if status == Zusage.STATUS_ZUGESAGT and termin.zusage_notiz_frage:
+        eintrag.kommentar = request.POST.get("notiz", "").strip()
+    elif status != Zusage.STATUS_ZUGESAGT:
+        eintrag.kommentar = ""
+    eintrag.save()
+    messages.success(request, f"Antwort bei '{termin.titel}' gespeichert.")
+    return _zurueck_zu_termin_seite(request, termin_id)
+
+
+@login_required
+def familie_personenanzahl_speichern(request, termin_id):
+    """Wie kind_personenanzahl_speichern, aber für die allgemeine Familien-Zusage (siehe
+    termin_familien_zusage) - unabhängig von der Zu-/Absage jederzeit änderbar."""
+    termin = get_object_or_404(Termin, pk=termin_id, familien_zusage=True)
+
+    if request.method == "POST" and termin.personenanzahl_frage:
+        eintrag, _ = ZusageOhneKonto.objects.get_or_create(
+            termin=termin, eltern=request.user, defaults={"name": benutzer_name(request.user)}
+        )
+        eintrag.anzahl_personen = _positive_int_oder_none(request.POST.get("anzahl_personen"))
+        eintrag.save()
+        messages.success(request, f"Personenanzahl für '{termin.titel}' gespeichert.")
     return _zurueck_zu_termin_seite(request, termin_id)
 
 
@@ -722,10 +780,13 @@ def veranstaltung_oeffentlich(request, token):
         return redirect("veranstaltung_oeffentlich", token=token)
 
     kinder_status = []
-    if request.user.is_authenticated and termin.taenzerinnen_erforderlich:
+    eigene_familien_zusage = None
+    if request.user.is_authenticated and (termin.taenzerinnen_erforderlich or termin.familien_zusage):
         kinder = _kinder_fuer_termine(request.user)
         eintraege = _termin_eintraege([termin], kinder, request.user)
-        kinder_status = eintraege[0]["kinder_status"] if eintraege else []
+        if eintraege:
+            kinder_status = eintraege[0]["kinder_status"]
+            eigene_familien_zusage = eintraege[0]["familien_zusage"]
 
     eigene_zusage_ohne_konto = None
     if not request.user.is_authenticated:
@@ -743,6 +804,7 @@ def veranstaltung_oeffentlich(request, token):
         "anmeldepunkte": anmeldepunkte,
         "kinder_status": kinder_status,
         "eigene_zusage_ohne_konto": eigene_zusage_ohne_konto,
+        "eigene_familien_zusage": eigene_familien_zusage,
     })
 
 

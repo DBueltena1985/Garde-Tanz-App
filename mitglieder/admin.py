@@ -1222,7 +1222,10 @@ class TrainingAdmin(TerminAdminBase):
             "Weitere Einstellungen",
             {
                 "classes": ("collapse",),
-                "fields": ("wichtige_trainings", "zusage_notiz_frage", "personenanzahl_frage", "erstellt_von"),
+                "fields": (
+                    "wichtige_trainings", "zusage_notiz_frage", "personenanzahl_frage", "familien_zusage",
+                    "erstellt_von",
+                ),
             },
         ),
     )
@@ -1345,7 +1348,7 @@ class VeranstaltungAdmin(BildBulkUploadMixin, TerminAdminBase):
                 "classes": ("collapse",),
                 "fields": (
                     "wichtige_trainings", "interne_notiz", "zusage_notiz_frage", "personenanzahl_frage",
-                    "erstellt_von",
+                    "familien_zusage", "erstellt_von",
                 ),
             },
         ),
@@ -1622,11 +1625,11 @@ class ZusageAdmin(LoeschLinkMixin, admin.ModelAdmin):
 @admin.register(ZusageOhneKonto)
 class ZusageOhneKontoAdmin(LoeschLinkMixin, admin.ModelAdmin):
     list_display = (
-        "termin_datum", "termin", "name", "status", "kommentar", "anzahl_personen", "aktualisiert_am",
-        "loeschen_link",
+        "termin_datum", "termin", "name", "eltern", "status", "kommentar", "anzahl_personen",
+        "aktualisiert_am", "loeschen_link",
     )
     list_filter = ("status", "termin")
-    search_fields = ("name",)
+    search_fields = ("name", "eltern__username", "eltern__first_name", "eltern__last_name")
     date_hierarchy = "termin__beginn"
     ordering = ("termin__beginn", "name")
 

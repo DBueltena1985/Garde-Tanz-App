@@ -78,11 +78,44 @@
         {% endif %}
     </div>
 
-    {% if termin.taenzerinnen_erforderlich %}
+    {% if termin.taenzerinnen_erforderlich or termin.familien_zusage %}
     <div class="card">
         <h2 style="font-size:1.1rem; margin-top:0;">Zu-/Absagen</h2>
         {% if request.user.is_authenticated %}
-            {% if kinder_status %}
+            {% if termin.familien_zusage %}
+            {% with fz=eigene_familien_zusage %}
+            <div style="font-weight:600;">
+                <span class="meta">({% if fz.status == "zugesagt" %}Zugesagt{% elif fz.status == "abgesagt" %}Abgesagt{% else %}Noch offen{% endif %})</span>
+            </div>
+            {% if termin.zusage_notiz_frage %}
+            <div style="margin:0.4rem 0;">
+                <label for="familie-notiz" class="meta">{{ termin.zusage_notiz_frage }}</label><br>
+                <input type="text" id="familie-notiz" name="notiz"
+                       form="familie-zusage-form-{{ termin.id }}"
+                       value="{{ fz.kommentar|default:'' }}" placeholder="Antwort (optional)" style="width:100%; margin-top:0.2rem;">
+            </div>
+            {% endif %}
+            {% if termin.personenanzahl_frage %}
+            <form method="post" action="{% url 'familie_personenanzahl_speichern' termin.id %}" style="display:flex; gap:0.4rem; align-items:center; margin:0.4rem 0;">
+                {% csrf_token %}
+                <label for="familie-anzahl" class="meta">{{ termin.personenanzahl_frage }}</label>
+                <input type="number" min="1" id="familie-anzahl" name="anzahl_personen"
+                       value="{{ fz.anzahl_personen|default:'' }}" placeholder="Anzahl" style="width:5rem;">
+                <button type="submit" class="btn">Speichern</button>
+            </form>
+            {% endif %}
+            <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
+                <form method="post" id="familie-zusage-form-{{ termin.id }}" action="{% url 'termin_familien_zusage' termin.id 'zugesagt' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn">✅ Zusagen</button>
+                </form>
+                <form method="post" action="{% url 'termin_familien_zusage' termin.id 'abgesagt' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="background:var(--ink-faint);">❌ Absagen</button>
+                </form>
+            </div>
+            {% endwith %}
+            {% elif kinder_status %}
             {% for ks in kinder_status %}
             <div style="{% if not forloop.last %}border-bottom:1px solid var(--line); padding-bottom:0.7rem; margin-bottom:0.7rem;{% endif %}">
                 <div style="font-weight:600;">{{ ks.kind.vorname }}
@@ -97,12 +130,13 @@
                 </div>
                 {% endif %}
                 {% if termin.personenanzahl_frage and forloop.first %}
-                <div style="margin:0.4rem 0;">
-                    <label for="anzahl-{{ ks.kind.id }}" class="meta">{{ termin.personenanzahl_frage }}</label><br>
+                <form method="post" action="{% url 'kind_personenanzahl_speichern' termin.id ks.kind.id %}" style="display:flex; gap:0.4rem; align-items:center; margin:0.4rem 0;">
+                    {% csrf_token %}
+                    <label for="anzahl-{{ ks.kind.id }}" class="meta">{{ termin.personenanzahl_frage }}</label>
                     <input type="number" min="1" id="anzahl-{{ ks.kind.id }}" name="anzahl_personen"
-                           form="zusage-form-{{ termin.id }}-{{ ks.kind.id }}"
-                           value="{{ ks.anzahl_personen|default:'' }}" placeholder="Anzahl" style="width:6rem; margin-top:0.2rem;">
-                </div>
+                           value="{{ ks.anzahl_personen|default:'' }}" placeholder="Anzahl" style="width:5rem;">
+                    <button type="submit" class="btn">Speichern</button>
+                </form>
                 {% endif %}
                 <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
                     <form method="post" id="zusage-form-{{ termin.id }}-{{ ks.kind.id }}" action="{% url 'termin_zusage' termin.id ks.kind.id 'zugesagt' %}">
